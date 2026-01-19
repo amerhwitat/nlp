@@ -1,0 +1,7 @@
+# address ; balance_sats ; pubkey_hex_or_NOT_FOUND ; provider_used ; status
+1111111111111111111114oLvT2 ; 69504675854 ; 02cf020357e5b6dc07faf0904b055429cb6399b2490bb276adb571767ebf317127 ; Blockstream ; OK
+1CounterpartyXXXXXXXXXXXXXXXUWLpVr ; 213099755552 ; 02ba9dcb2aca2c4a4267578d6033c1f76f0df64b03b2d6281a8b7fb89a9e85b596 ; Blockstream ; OK
+1xPPxProfitProphetSyndicatev6F9Ce ; 6071538 ; 02ec4f8b2b7282cbafba2029c24513d2abe978a179c602281904c951455baf3f17 ; Blockstream ; OK
+1KToEddieAndELLieLoveYouDadXWz9SPM ; 100000 ; 022020e4c41ceb6800d06fad76e4fdd8bd92505ad23d9b29ce1d2d0a2d06704fc4 ; Blockstream ; OK
+1ChancecoinXXXXXXXXXXXXXXXXXZELUFD ; 48019572127 ; 02fd93fe95402e45544a5a287e80fd4f2ff2560245701e1f074455ed59d6209739 ; Blockstream ; OK
+1BitcoinEaterAddressDontSendf59kuE ; 1339977425 ; 02a01e6265f4e91ea69342b38f8b42f8e00f1bd6dc06d5ffe54112aa3080e0bb62 ; Blockstream ; OK
