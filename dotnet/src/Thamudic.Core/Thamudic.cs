@@ -1,0 +1,2 @@
+namespace Chimera.Thamudic;
+public static class Thamudic { public const int First=0x10A80, Last=0x10A9F; public static bool IsThamudic(Rune r)=>r.Value is >= First and <= Last; public static string Extract(string text)=>string.Concat(text.EnumerateRunes().Where(IsThamudic)); public static string Transliterate(string text,IReadOnlyDictionary<int,string> map)=>string.Concat(text.EnumerateRunes().Select(r=>map.TryGetValue(r.Value,out var v)?v:IsThamudic(r)?"?":Rune.IsWhiteSpace(r)?" ":string.Empty)); public readonly record struct Box(int X1,int Y1,int X2,int Y2); }
