@@ -3,3 +3,4 @@ Pillow
 pytest
 requests
 PyMuPDF
+Flask
