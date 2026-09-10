@@ -1,0 +1,1 @@
+using Chimera.Thamudic;using Xunit;public class ThamudicTests{[Fact]public void DetectsRange(){Assert.True(Thamudic.IsThamudic(new System.Text.Rune(0x10A80)));Assert.False(Thamudic.IsThamudic(new System.Text.Rune('A')));Assert.Equal("𐪀𐪁",Thamudic.Extract("A𐪀B𐪁"));}}
