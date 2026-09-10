@@ -1,20 +1,23 @@
 # Thamudic cross-language implementation
 
-The Python Thamudic/North Arabian research stack is now mirrored by language-specific implementations while the Python originals remain backward-compatible.
+The Python Thamudic/North Arabian research stack is mirrored by language-specific implementations while the original Python applications remain backward-compatible.
 
 ## Layout
 
 ```text
 nlp/
-  python/                         # future consolidated Python package; legacy scripts remain at root
-  cpp/thamudic/                   # C++20 portable core + CTest
-  java/thamudic/                  # Java 21 Maven module + JUnit
-  node/thamudic/                  # Node.js ESM package + node:test
-  vcpp/ThamudicScanner.sln       # Visual C++ / MSVC x64 solution
+  python/thamudic/               consolidated Python facade
+  cpp/thamudic/                  C++20 portable core + CTest
+  java/thamudic/                 Java 21 Maven module + JUnit
+  node/thamudic/                 Node.js ESM package + node:test
+  vcpp/ThamudicScanner.sln       Visual C++ / MSVC x64 solution
   dotnet/
-    src/Thamudic.Core/            # C# multi-target library: net8.0;net9.0;net10.0
-    src/Thamudic.Cli/             # cross-version CLI
-  docs/                            # interoperability and research documentation
+    src/Thamudic.Core/           C# multi-target library: net8.0;net9.0;net10.0
+    src/Thamudic.Cli/            cross-version CLI
+    src/Thamudic.Web/            ASP.NET Core API, net8/net9/net10
+    src/Thamudic.Desktop/        WPF Windows desktop, net8/net9/net10
+    tests/                        .NET conformance tests
+  docs/                           specifications and interoperability
 ```
 
 ## Shared behavior
@@ -25,7 +28,7 @@ nlp/
 - UTF-8/UTF-32-safe processing.
 - English, Arabic and Hebrew text can remain in surrounding metadata without being forced through the Thamudic classifier.
 - The architecture does not require Tesseract or camel_tools; OCR/model adapters are optional external layers.
-- Safaitic, Hismaic, Dadanitic and Early Arabic remain dataset/classifier extensions rather than being incorrectly treated as identical glyph inventories.
+- Safaitic, Hismaic, Dadanitic and Early Arabic remain independently classified dataset/model extensions.
 
 ## Python-to-native mapping
 
@@ -36,17 +39,17 @@ nlp/
 | transliteration | `transliterate` | `transliterate` | `transliterate` | `Transliterate` |
 | image components | `connectedComponents` | `connectedComponents` | `connectedComponents` | `Box` foundation |
 
-The original Python files such as `thamudic.py`, `thamudic-scanner.py`, `thamudic_desktop.py`, `thamudic_web_app.py`, and related tests remain available. This migration is additive rather than destructive.
+Legacy Python applications such as `thamudic.py`, `thamudic-scanner.py`, `thamudic_desktop.py`, `thamudic_web_app.py`, and their tests remain available. The migration is additive rather than destructive.
 
 ## .NET policy
 
-The C# library targets .NET 8, 9 and 10. Microsoft currently lists .NET 10 as LTS and .NET 8 as LTS, while .NET 9 is STS; the project therefore multi-targets all three and allows deployment policy to select the supported runtime appropriate to the host.
+The C# library targets .NET 8, 9 and 10. Microsoft currently lists .NET 10 as LTS, .NET 9 as STS, and .NET 8 as LTS; all three are therefore available as explicit target frameworks. citeturn0search1turn0search10
 
 ## Build
 
 - C++: CMake 3.20+, C++20, CTest.
 - Java: JDK 21+, Maven.
-- Node: Node.js 20+ with ESM and `node:test`.
+- Node: Node.js 20+ with ESM and `node:test`; ESM is a stable Node.js module system. citeturn0search0
 - C#: `dotnet build` for net8.0/net9.0/net10.0.
 - Visual C++: Visual Studio/MSVC v143, x64.
 
