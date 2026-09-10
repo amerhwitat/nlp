@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Populate a Softr Database table from the reviewed Jordan heritage seed.
+"""Populate a Softr Database table from reviewed Jordan heritage seeds.
 
 Credentials are read from SOFTR_API_KEY and are never written to the repository.
-The script supports dry-run mode so the generated payload can be reviewed first.
+Use --dry-run to inspect the exact Softr payload before writing records.
 """
 from __future__ import annotations
-import argparse, json
+import argparse
+import json
 from pathlib import Path
 import sys
 
@@ -14,24 +15,33 @@ sys.path.insert(0, str(ROOT))
 from softr_api import SoftrDatabaseClient  # noqa: E402
 from softr_export import object_to_softr_row  # noqa: E402
 
+DEFAULT_SEEDS = [
+    ROOT / "data" / "jordan_heritage_seed.json",
+    ROOT / "data" / "jordan_high_value_artifacts_seed.json",
+]
 
-def load_rows(path: Path):
-    data = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(data, list):
-        raise ValueError("Seed file must contain a JSON list")
-    return [object_to_softr_row(row) for row in data]
+
+def load_rows(paths: list[Path]):
+    rows = []
+    for path in paths:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, list):
+            raise ValueError(f"Seed file must contain a JSON list: {path}")
+        rows.extend(object_to_softr_row(row) for row in data)
+    return rows
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--database-id", required=True)
     ap.add_argument("--table-id", required=True)
-    ap.add_argument("--seed", type=Path, default=ROOT / "data" / "jordan_heritage_seed.json")
+    ap.add_argument("--seed", type=Path, action="append", help="Additional JSON seed; repeatable")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--limit", type=int, default=0)
     args = ap.parse_args()
 
-    rows = load_rows(args.seed)
+    paths = DEFAULT_SEEDS + (args.seed or [])
+    rows = load_rows(paths)
     if args.limit > 0:
         rows = rows[:args.limit]
 
