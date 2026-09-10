@@ -1,0 +1,1 @@
+using System.Windows;using Chimera.Thamudic;namespace Chimera.Thamudic.Desktop;public partial class MainWindow:Window{public MainWindow(){InitializeComponent();}private void Extract(object sender,RoutedEventArgs e)=>Output.Text=Thamudic.Extract(Input.Text);}
