@@ -18,16 +18,23 @@ from softr_export import object_to_softr_row  # noqa: E402
 DEFAULT_SEEDS = [
     ROOT / "data" / "jordan_heritage_seed.json",
     ROOT / "data" / "jordan_high_value_artifacts_seed.json",
+    ROOT / "data" / "jordan_epigraphy_seed.json",
 ]
 
 
 def load_rows(paths: list[Path]):
     rows = []
+    seen = set()
     for path in paths:
         data = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(data, list):
             raise ValueError(f"Seed file must contain a JSON list: {path}")
-        rows.extend(object_to_softr_row(row) for row in data)
+        for record in data:
+            record_id = record.get("id")
+            if record_id in seen:
+                continue
+            seen.add(record_id)
+            rows.append(object_to_softr_row(record))
     return rows
 
 
