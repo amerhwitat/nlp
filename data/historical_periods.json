@@ -1,0 +1,15 @@
+[
+  {"key":"paleolithic","name":"Paleolithic","parent":"prehistory","start":"-2500000","end":"-40000"},
+  {"key":"epipaleolithic","name":"Epipaleolithic","parent":"prehistory","start":"-40000","end":"-12000"},
+  {"key":"neolithic","name":"Neolithic","parent":"prehistory","start":"-12000","end":"-6000"},
+  {"key":"chalcolithic","name":"Chalcolithic","parent":"ancient","start":"-6000","end":"-3500"},
+  {"key":"bronze_age","name":"Bronze Age","parent":"ancient","start":"-3500","end":"-1250"},
+  {"key":"iron_age","name":"Iron Age","parent":"ancient","start":"-1250","end":"-333"},
+  {"key":"hellenistic","name":"Hellenistic / Greek","parent":"classical","start":"-333","end":"-65"},
+  {"key":"roman","name":"Roman","parent":"classical","start":"-65","end":"324"},
+  {"key":"byzantine","name":"Byzantine / Eastern Roman","parent":"late_antique","start":"324","end":"632"},
+  {"key":"early_islamic","name":"Early Islamic","parent":"islamic","start":"632","end":"900"},
+  {"key":"medieval","name":"Medieval","parent":"islamic","start":"900","end":"1500"},
+  {"key":"early_modern","name":"Early Modern","parent":"modern_era","start":"1500","end":"1800"},
+  {"key":"modern","name":"Modern","parent":"modern_era","start":"1800","end":null}
+]
