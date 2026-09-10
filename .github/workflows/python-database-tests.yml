@@ -1,18 +1,26 @@
-name: Python database tests
+name: Python database and platform tests
 
 on:
   push:
     paths:
       - 'ancient_objects_db.py'
       - 'database_cli.py'
+      - 'thamudic_web_app.py'
+      - 'thamudic_desktop.py'
+      - 'run_thamudic.py'
       - 'historical_periods.py'
+      - 'ancient_script_registry.py'
       - 'tests/**'
       - '.github/workflows/python-database-tests.yml'
   pull_request:
     paths:
       - 'ancient_objects_db.py'
       - 'database_cli.py'
+      - 'thamudic_web_app.py'
+      - 'thamudic_desktop.py'
+      - 'run_thamudic.py'
       - 'historical_periods.py'
+      - 'ancient_script_registry.py'
       - 'tests/**'
       - '.github/workflows/python-database-tests.yml'
 
@@ -27,6 +35,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install --upgrade pip pytest
-      - run: python -m py_compile ancient_objects_db.py database_cli.py
-      - run: PYTHONPATH=. pytest -q tests/test_ancient_objects_db.py
+      - run: python -m pip install --upgrade pip pytest Flask Pillow numpy
+      - run: python -m py_compile ancient_objects_db.py database_cli.py thamudic_web_app.py thamudic_desktop.py run_thamudic.py
+      - run: PYTHONPATH=. pytest -q tests/test_ancient_objects_db.py tests/test_thamudic_web_app.py
