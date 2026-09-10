@@ -43,13 +43,13 @@ Legacy Python applications such as `thamudic.py`, `thamudic-scanner.py`, `thamud
 
 ## .NET policy
 
-The C# library targets .NET 8, 9 and 10. Microsoft currently lists .NET 10 as LTS, .NET 9 as STS, and .NET 8 as LTS; all three are therefore available as explicit target frameworks. citeturn0search1turn0search10
+The C# library targets .NET 8, 9 and 10, allowing deployment to choose the supported runtime appropriate to the host.
 
 ## Build
 
 - C++: CMake 3.20+, C++20, CTest.
 - Java: JDK 21+, Maven.
-- Node: Node.js 20+ with ESM and `node:test`; ESM is a stable Node.js module system. citeturn0search0
+- Node: Node.js 20+ with ESM and `node:test`.
 - C#: `dotnet build` for net8.0/net9.0/net10.0.
 - Visual C++: Visual Studio/MSVC v143, x64.
 
