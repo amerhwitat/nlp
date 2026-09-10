@@ -1,0 +1,8 @@
+[
+ {"name":"OCIANA","homepage":"https://ociana.osu.edu/","type":"Ancient North Arabian inscription corpus","media":"record-level photographs/facsimiles where available","rights":"Preserve provenance and current terms"},
+ {"name":"DASI","homepage":"https://dasi.cnr.it/","type":"Pre-Islamic Arabian inscriptions and anepigraphic objects","media":"source-dependent","rights":"Check item/dataset terms"},
+ {"name":"The Metropolitan Museum of Art","homepage":"https://www.metmuseum.org/","type":"Open Access museum object metadata and images","media":"public-domain images where flagged","rights":"CC0/open-access policy as applicable"},
+ {"name":"Smithsonian Open Access","homepage":"https://www.si.edu/openaccess","type":"Open cultural heritage object metadata/media","media":"open-access media where supplied","rights":"Item-level rights availability"},
+ {"name":"Europeana","homepage":"https://www.europeana.eu/","type":"European cultural heritage aggregation","media":"record media and IIIF where offered","rights":"Item-level rights statements"},
+ {"name":"IIIF","homepage":"https://iiif.io/","type":"Image interoperability standard","media":"Image API / Presentation API","rights":"Not itself a license"}
+]
