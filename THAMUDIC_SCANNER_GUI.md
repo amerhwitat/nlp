@@ -1,34 +1,40 @@
 # Ancient Script Scanner — Python GUI
 
-The main desktop interface is `thamudic_scanner_gui.py` and uses **Tkinter**. It is the primary import/export window for the Thamudic / Ancient North Arabian research scanner and the broader ancient-script registry.
+`thamudic_scanner_gui.py` is the primary Tkinter window for the Thamudic / Ancient North Arabian research scanner **and historical-object catalog**.
 
 ## Run
 
 ```bash
-python3 -m pip install pillow numpy
+python3 -m pip install -r requirements-thamudic.txt
 python3 thamudic_scanner_gui.py
 ```
 
-Tkinter is included with most standard Python installations. On some Linux distributions it is supplied by the `python3-tk` system package.
+## Main functionality
 
-## Workflow
+1. Import PNG/JPEG/TIFF/BMP/WebP images or render the first page of a PDF.
+2. Select script/variety and broad historical period.
+3. Run normalization and connected-component segmentation.
+4. Review transliteration and Arabic/English interpretation separately.
+5. Record provenance, bibliography and reviewer confidence.
+6. Add the evidence record to the local SQLite historical-object database.
+7. Search/filter catalog records by period and text.
+8. Export a stable Softr CSV/JSON schema.
+9. View source institutions and image-rights policies.
 
-1. **Import Image** — PNG/JPEG/TIFF/BMP/WebP inscription photograph.
-2. **Select script/variety** — Old North Arabian, Thamudic B/C/D, Taymanitic, Hismaic, Himaitic, Safaitic, Dadanitic, Dumaitic, Hasaitic, Ancient South Arabian varieties, Phoenician, Aramaic, Nabataean.
-3. **Scan** — normalization and connected-component segmentation.
-4. **Review** — enter or correct transliteration, Arabic notes/translation, English notes/translation and provenance.
-5. **Export JSON/CSV/TXT** — retain machine evidence and human scholarly notes together.
+## Database
 
-## Design principle
+`ancient_objects_db.py` stores objects, annotations and source metadata. `historical_periods.py` covers Paleolithic, Epipaleolithic, Neolithic, Chalcolithic, Bronze Age, Iron Age, Hellenistic/Greek, Roman, Byzantine/Eastern Roman, Early Islamic, Medieval, Early Modern and Modern labels.
 
-The scanner distinguishes **image segmentation**, **recognition candidates**, **transliteration**, and **translation**. It does not present an OCR candidate as an authoritative scholarly translation. Competing readings and provenance should be retained.
+## External object/image sources
 
-## Related sources
+The catalog architecture is prepared for OCIANA, DASI, The Metropolitan Museum of Art Open Access, Smithsonian Open Access, Europeana and IIIF. The application stores image URLs/IIIF references and rights statements instead of assuming that every remotely visible image can be republished.
 
-- OCIANA: https://ociana.osu.edu/
-- Unicode Old North Arabian: https://www.unicode.org/charts/nameslist/n_10A80.html
-- User-provided Bubble prototype: https://thamudicscan.bubbleapps.io/version-test
-- User-provided translator UI: https://thamudicscan-s3wz30.public.builtwithrocket.new/
-- User-provided artifact database UI: https://thamudic-scanner.softr.app/
+## Softr
 
-External applications are reference/demo targets only. Their source code and data are not copied into this repository without permission and license review.
+`softr_export.py` produces a CSV/JSON import shape. `softr_api.py` provides optional REST synchronization using an environment variable (`SOFTR_API_KEY`) and database/table identifiers. No credential is stored in GitHub.
+
+The published Softr app itself could not be fetched by the available crawler during the current update, so private app/database records were not falsely represented as copied. See `SOFTR_DATABASE_MIGRATION.md` for the supported migration/API workflow.
+
+## Research principle
+
+The scanner distinguishes **segmentation**, **recognition candidates**, **transliteration**, and **translation**. It never presents an OCR candidate as an authoritative scholarly reading. Competing readings, provenance, source record IDs and image rights remain explicit fields.
