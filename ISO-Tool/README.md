@@ -12,13 +12,27 @@ Cross-language desktop ISO/image build orchestrator for GitHub and local reposit
 - `docs/` — architecture, ISO formats, toolchains, security and resilience documentation.
 - `python/tests/` — Python resilience and conformance tests.
 
+## New capabilities
+
+### Advanced offline ISO inspection
+
+`python/iso_tool/advanced_inspect.py` provides bounded, read-only analysis of ISO images without mounting or executing their contents. It detects ISO 9660 descriptors, Joliet and Rock Ridge hints, UDF markers, MBR/GPT system-area markers, and enumerates El Torito boot entries including BIOS and EFI platform IDs. It also reports malformed/truncated structures and image alignment warnings.
+
+### Reproducible builds and provenance
+
+`python/iso_tool/reproducible.py` provides SHA-256 hashing, `SOURCE_DATE_EPOCH` handling, and machine-readable build provenance. The image profile model now includes reproducibility intent, explicit volume-ID policy, UDF-hybrid images and large-image boot-order requirements.
+
+Microsoft documents Oscdimg support for ISO 9660, Joliet and UDF, together with BIOS/UEFI El Torito multi-boot entries. citeturn0search0 UEFI specifies EFI System Partitions in El Torito no-emulation entries using platform ID `0xEF`. citeturn0search36
+
+libarchive supports ISO 9660 with Rock Ridge/Joliet and its recent releases emphasize bounded parsing and malformed-input hardening; ISO-Tool treats libarchive as an optional inspection backend rather than bundling or executing image contents. citeturn0search1turn0search5
+
 ## Pipeline and entry points
 
 The application exposes explicit workflow entry points: `analyze-source`, `build-compiled-images`, `import-boot-image`, `build-iso`, and `validate-image`.
 
 The normal pipeline is:
 
-`GitHub/local repository → inventory → toolchain discovery → build-plan preview → C/C++/ASM/C# compilation → compiled images → boot artifact preparation/import → BIOS/UEFI validation → ISO staging → ISO/image backend → validation → checksum/report`
+`GitHub/local repository → inventory → toolchain discovery → build-plan preview → C/C++/ASM/C# compilation → compiled images → boot artifact preparation/import → BIOS/UEFI validation → ISO staging → ISO/image backend → advanced inspection → validation → checksum/provenance report`
 
 ## BIOS and UEFI first-stage boot
 
@@ -34,63 +48,17 @@ If the preferred boot entry is unavailable or fails validation, the deterministi
 
 See `docs/BIOS_UEFI_BOOT_VALIDATION.md`.
 
-## New image-mastering profiles
+## Image-mastering profiles
 
-`python/iso_tool/image_profiles.py` defines explicit `data`, `bios-only`, `uefi-only`, and `bios-uefi` profiles. The mastering layer now passes firmware/filesystem intent to xorriso/xorrisofs or Oscdimg instead of treating every ISO as an undifferentiated data image.
+`python/iso_tool/image_profiles.py` defines `data`, `bios-only`, `uefi-only`, `bios-uefi`, `udf-hybrid`, and `reproducible-bios-uefi` profiles. The mastering layer passes firmware/filesystem intent to xorriso/xorrisofs or Oscdimg instead of treating every ISO as an undifferentiated data image.
 
-Microsoft documents Oscdimg support for ISO 9660, Joliet and UDF, plus BIOS/UEFI El Torito multi-boot entries; ISO-Tool models those choices explicitly. citeturn0search0turn0search1
+For large images, profiles can require explicit boot-file ordering. Microsoft documents boot-order files for images above 4.5 GB; ISO-Tool treats ordering as a reproducible build input rather than relying on filesystem enumeration order. citeturn0search0
 
-xorriso exposes El Torito BIOS and EFI boot images, system-area/MBR handling and EFI partition image concepts; ISO-Tool keeps those operations backend-driven rather than executing image contents on the host. citeturn0search2
-
-## Offline ISO inspection
-
-`python/iso_tool/iso_inspect.py` performs read-only inspection of ISO 9660 descriptors and reports likely Joliet/UDF/El Torito structures, boot-catalog sector information, size and SHA-256. It does not execute or mount untrusted image contents.
-
-This makes ISO analysis useful even when the network is unavailable.
-
-## Local repositories and offline operation
-
-A local repository directory can be supplied directly. Local source inventory and authorized builds do not require Internet access. Remote Git acquisition can periodically check connectivity, wait for restoration, and retry network operations. Network status and retry activity are displayed in the live operation log.
-
-## Boot-sector / ISO import
-
-The GUI includes **Import Boot Sector / ISO**. It accepts local `.iso`, `.img`, and `.bin` files, inspects the first sector, detects `0x55AA`, computes a first-sector SHA-256, and can stage a bounded boot-sector region. Imported bytes are inert and are not executed during import. The source image is never modified.
-
-## Large-image and boot-order preparation
-
-The mastering architecture now reserves a boot-order/profile layer so large images can use explicit boot-file ordering when required by the selected backend. Microsoft documents boot-order files for images above 4.5 GB; ISO-Tool treats ordering as a reproducible build input rather than relying on filesystem enumeration order. citeturn0search0
-
-## Reproducibility and provenance
-
-The engine records the selected profile, source hash, boot-artifact hashes, backend selection, toolchain identity and validation results. Future image-report schemas can consume these records to make generated artifacts auditable and reproducible.
-
-## Fail-forward runtime policy
-
-Recoverable runtime failures in individual compiler, assembler, scanner, boot-artifact, or other independent jobs are isolated rather than terminating the entire pipeline. The job-level exception is logged, the failure is recorded, monotonic progress advances, and the next independent job/step continues.
-
-Fail-forward is **not** fail-open: fatal image-integrity, staging, authorization, or safety conditions can still stop publication.
-
-See `docs/RESILIENT_WORKFLOWS.md`.
-
-## Live GUI details
-
-All three front ends expose a live details section while work is running:
-
-- **Python/Tkinter:** live operation log, status line, progress bar, and background worker.
-- **C# WPF:** timestamped live log, boot-validation status, and progress bar.
-- **VC++ Win32:** native multiline log, boot status, and progress controls updated through the Windows message queue.
-
-Progress is cumulative across the whole operation rather than restarting for every stage.
-
-## Toolchains and image formats
-
-The discovery model supports local MASM (`ml`/`ml64`), NASM, MSVC/CL, MSBuild, GCC/G++, MinGW, CMake, Make and `dotnet`. Image tooling includes xorriso/xorrisofs and Oscdimg where locally installed. The engine models ISO 9660, Joliet, Rock Ridge, UDF, El Torito, BIOS/MBR, GPT, UEFI/EFI System Partition and BIOS+UEFI hybrid images.
-
-QEMU is supported as the isolated validation layer; QEMU provides snapshot mode that writes temporary changes instead of modifying the source image, which is appropriate for disposable boot tests. citeturn0search6turn0search7
-
-## Security
+## Security and resilience
 
 Builds use temporary workspaces, explicit authorization, structured process arguments, timeouts, cancellation, output limits and path validation. Imported boot sectors are bounded and never executed automatically. Physical-disk installation is a separate destructive operation requiring explicit target selection and confirmation.
+
+All image parsing is intended to be bounded and read-only. A malformed ISO can produce validation errors, but it must not cause automatic mounting, execution or host filesystem modification.
 
 ## Status
 
