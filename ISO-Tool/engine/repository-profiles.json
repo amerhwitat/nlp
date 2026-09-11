@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": 3,
+  "version": 4,
   "repositories": [
     {
       "id": "chimera-ii-os",
@@ -14,7 +14,11 @@
       "toolchain_registry": "toolchains/registry.json",
       "memory_bus_profiles": "memory/bus-profiles.json",
       "memory_bus_api": "include/chimera/memory_bus.hpp",
-      "memory_bus_probe": "include/chimera/memory_bus_probe.hpp"
+      "memory_bus_probe": "include/chimera/memory_bus_probe.hpp",
+      "neural_registry": "neural/registry.json",
+      "neural_node_contract": "include/chimera/neural_node.hpp",
+      "neural_database_schema": "database/manifests/neural-network-database.yaml",
+      "trusted_node_implementation": "src/neural/trusted_node.cpp"
     },
     {
       "id": "bizx",
@@ -48,6 +52,10 @@
     "validate_memory_bus_profiles": true,
     "stage_memory_bus_metadata": true,
     "stage_memory_bus_probe_contract": true,
+    "validate_neural_registry": true,
+    "stage_neural_registry": true,
+    "stage_neural_database_schema": true,
+    "stage_trusted_node_contract": true,
     "deterministic_manifests": true,
     "sha256_artifact_manifest": true
   }
