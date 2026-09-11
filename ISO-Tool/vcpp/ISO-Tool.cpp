@@ -6,10 +6,10 @@
 #include <exception>
 #include <stdexcept>
 
-// Unicode is selected by the project files. Do not redefine UNICODE/_UNICODE
-// here because MSVC projects already supply those macros through CharacterSet.
+// Keep the Windows common-controls dependency explicit in the main native source.
+// MSVC consumes this directive; GCC/MinGW safely ignores #pragma comment.
+#pragma comment(lib, "comctl32.lib")
 #if defined(_MSC_VER)
-#pragma comment(lib, "Comctl32.lib")
 #pragma comment(linker, "\"/manifestdependency:type='Win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
@@ -79,9 +79,13 @@ static bool SafeStep(HWND window, const std::wstring& name) {
 static void RunPipeline(HWND window, bool iso) {
     std::vector<std::wstring> steps = {
         L"validate repository",
-        L"discover toolchains",
-        L"prepare build plan",
-        L"compile/assemble jobs",
+        L"recursively inventory GitHub/local checkout",
+        L"discover build manifests and toolchains",
+        L"resolve dependency/build graph",
+        L"prepare recursive build plan",
+        L"compile/assemble source jobs",
+        L"link compatible native targets",
+        L"collect language/runtime artifacts",
         L"prepare boot artifacts"
     };
 
@@ -127,7 +131,7 @@ static void RunPipeline(HWND window, bool iso) {
 static LRESULT CALLBACK WndProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_CREATE:
-        CreateWindowW(L"STATIC", L"ISO-Tool — GitHub / Local Source → Bootable ISO / IMG",
+        CreateWindowW(L"STATIC", L"ISO-Tool — GitHub / Local Source → Recursive Build → Bootable ISO / IMG",
                       WS_CHILD | WS_VISIBLE, 20, 15, 850, 30,
                       window, nullptr, nullptr, nullptr);
 
@@ -173,10 +177,10 @@ static LRESULT CALLBACK WndProc(HWND window, UINT message, WPARAM wParam, LPARAM
             EnableWindow(gBuild, FALSE);
             SendMessageW(gProgress, PBM_SETPOS, 0, 0);
             AppendLog(id == 1
-                          ? L"Analysis started."
+                          ? L"Recursive repository analysis started."
                           : (id == 4
-                                 ? L"Compiled-image workflow started."
-                                 : L"ISO build started; boot validation and fallback are enabled."));
+                                 ? L"Recursive compiled-image workflow started."
+                                 : L"Recursive ISO build started; boot validation and fallback are enabled."));
             std::thread(RunPipeline, window, id == 2).detach();
         } else if (id == 3) {
             AppendLog(L"Import Boot / ISO selected. Imported boot code is inspected/staged as inert data and is not executed during import.");
@@ -209,7 +213,7 @@ static LRESULT CALLBACK WndProc(HWND window, UINT message, WPARAM wParam, LPARAM
         EnableWindow(gImport, TRUE);
         EnableWindow(gImages, TRUE);
         EnableWindow(gBuild, TRUE);
-        AppendLog(L"Pipeline reached the final step; inspect live details for skipped operations and boot fallback decisions.");
+        AppendLog(L"Recursive workflow reached the final step; inspect live details for skipped operations and build/link decisions.");
         return 0;
 
     case WM_DESTROY:
@@ -222,8 +226,6 @@ static LRESULT CALLBACK WndProc(HWND window, UINT message, WPARAM wParam, LPARAM
 }
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
-    // MSVC links Comctl32.lib from the project and GCC/MinGW links it from
-    // ISO-Tool.cbp. Both build systems therefore resolve InitCommonControlsEx.
     INITCOMMONCONTROLSEX controls{};
     controls.dwSize = sizeof(controls);
     controls.dwICC = ICC_PROGRESS_CLASS | ICC_STANDARD_CLASSES;
