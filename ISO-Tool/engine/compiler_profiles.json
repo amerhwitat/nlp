@@ -1,25 +1,14 @@
 {
   "profiles": [
-    {
-      "id": "gnu-cxx-ucrt64",
-      "family": "GNU C++",
-      "compiler": "g++",
-      "target": "x86_64-w64-mingw32",
-      "environment": "MSYS2 UCRT64",
-      "standard": "c++20",
-      "role": "compatibility-validation",
-      "separate_build_tree": true
-    },
-    {
-      "id": "msvc-x64",
-      "family": "Microsoft Visual C++",
-      "compiler": "cl.exe",
-      "target": "x64",
-      "environment": "Visual Studio 2022",
-      "standard": "c++20",
-      "role": "primary-windows",
-      "separate_build_tree": true
-    }
+    {"id":"gnu-cxx-ucrt64","family":"GNU C++","compiler":"g++","target":"x86_64-w64-mingw32","environment":"MSYS2 UCRT64","standard":"c++20","role":"compatibility-validation","separate_build_tree":true},
+    {"id":"msvc-x64","family":"Microsoft Visual C++","compiler":"cl.exe","target":"x64","environment":"Visual Studio 2022","standard":"c++20","role":"primary-windows","separate_build_tree":true},
+    {"id":"llvm-native","family":"LLVM/Clang","compiler":"clang++","target":"host","environment":"LLVM","standard":"c++20","role":"portable-native","separate_build_tree":true},
+    {"id":"gnu-cross-arm64","family":"GNU GCC","compiler":"aarch64-linux-gnu-g++","target":"aarch64-linux-gnu","environment":"GNU cross","standard":"c++20","role":"cross-compile","separate_build_tree":true},
+    {"id":"gnu-cross-riscv64","family":"GNU GCC","compiler":"riscv64-linux-gnu-g++","target":"riscv64-linux-gnu","environment":"GNU cross","standard":"c++20","role":"cross-compile","separate_build_tree":true},
+    {"id":"gnu-cross-power64","family":"GNU GCC","compiler":"powerpc64-linux-gnu-g++","target":"powerpc64-linux-gnu","environment":"GNU cross","standard":"c++20","role":"cross-compile","separate_build_tree":true},
+    {"id":"gnu-cross-s390x","family":"GNU GCC","compiler":"s390x-linux-gnu-g++","target":"s390x-linux-gnu","environment":"GNU cross","standard":"c++20","role":"cross-compile","separate_build_tree":true},
+    {"id":"llvm-cross","family":"LLVM/Clang","compiler":"clang++ --target=<triple>","target":"registered-LLVM-target","environment":"LLVM","standard":"c++20","role":"cross-compile","separate_build_tree":true}
   ],
-  "missing_gnu_policy": "msys2-ucrt64-explicit-install"
+  "missing_gnu_policy":"explicit-cross-toolchain-install",
+  "proprietary_vendor_policy":"external-installation-only"
 }
