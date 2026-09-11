@@ -4,7 +4,7 @@ import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
-from iso_tool import BuildPipeline
+from iso_tool import BuildPipeline, acquire_repository, build_repository
 from iso_tool.boot_import import import_boot_sector, inspect_image
 from iso_tool.resilient_network import ConnectivityMonitor
 
@@ -12,8 +12,8 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__(); self.title('ISO-Tool — source / boot image to ISO / IMG'); self.geometry('1100x780')
         self.repo=tk.StringVar(); self.out=tk.StringVar(value='output.iso'); self.progress=tk.DoubleVar(); self.status=tk.StringVar(value='Ready'); self.events=queue.Queue(); self.running=False
-        ttk.Label(self,text='GitHub repository, local source repository, ISO or image').pack(anchor='w',padx=12,pady=(12,2)); ttk.Entry(self,textvariable=self.repo).pack(fill='x',padx=12)
-        ttk.Label(self,text='Output image').pack(anchor='w',padx=12,pady=(8,2)); ttk.Entry(self,textvariable=self.out).pack(fill='x',padx=12)
+        ttk.Label(self,text='GitHub repository URL or local source repository').pack(anchor='w',padx=12,pady=(12,2)); ttk.Entry(self,textvariable=self.repo).pack(fill='x',padx=12)
+        ttk.Label(self,text='Output image / build directory').pack(anchor='w',padx=12,pady=(8,2)); ttk.Entry(self,textvariable=self.out).pack(fill='x',padx=12)
         bar=ttk.Frame(self); bar.pack(fill='x',padx=12,pady=10)
         self.analyze_button=ttk.Button(bar,text='Analyze / Inventory',command=self.inventory); self.analyze_button.pack(side='left')
         self.import_button=ttk.Button(bar,text='Import Boot Sector / ISO',command=self.import_image); self.import_button.pack(side='left',padx=8)
@@ -40,18 +40,25 @@ class App(tk.Tk):
         if self.running:return
         self.running=True; self._set_buttons(False); self.progress.set(0); threading.Thread(target=target,daemon=True).start()
     def inventory(self):
-        root=Path(self.repo.get()).expanduser()
-        if not root.is_dir(): messagebox.showerror('ISO-Tool','Select a local source repository for this operation.'); return
-        self._start(lambda:self._inventory_worker(root))
-    def _inventory_worker(self,root):
+        source=self.repo.get().strip()
+        if not source: messagebox.showerror('ISO-Tool','Enter a GitHub repository URL or local source repository.'); return
+        self._start(lambda:self._inventory_worker(source))
+    def _inventory_worker(self,source):
         try:
-            files=BuildPipeline(root).inventory(); total=max(len(files),1); self.events.put(('log',f'Entry point: analyze-source; local repository: {root}'))
-            for i,p in enumerate(files,1):
-                try:self.events.put(('log',f'[{i}/{len(files)}] {p.relative_to(root)}'))
-                except Exception as ex:self.events.put(('log',f'[error] inventory entry skipped: {type(ex).__name__}: {ex}'))
-                self.events.put(('progress',type('P',(),{'stage':'inventory','completed':i,'total':total,'message':f'Inspected {i}/{len(files)}'})()))
-            self.events.put(('done',f'Inventory complete: {len(files)} source files.'))
-        except Exception as ex:self.events.put(('log',f'[error] {type(ex).__name__}: {ex}')); self.events.put(('done','Operation ended with recoverable errors.'))
+            root,cleanup=acquire_repository(source)
+            try:
+                sources,manifests=__import__('iso_tool.recursive_build',fromlist=['inventory']).inventory(root)
+                total=max(len(sources)+len(manifests),1)
+                self.events.put(('log',f'Entry point: analyze-source; recursive root: {root}'))
+                self.events.put(('log',f'[inventory] source files={len(sources)}, build manifests={len(manifests)}'))
+                for i,item in enumerate(sources+manifests,1):
+                    rel=item.path; self.events.put(('log',f'[{i}/{total}] {rel}'))
+                    self.events.put(('progress',type('P',(),{'stage':'inventory','completed':i,'total':total,'message':f'Inspected {i}/{total}: {rel}'})()))
+                self.events.put(('done',f'Recursive inventory complete: {len(sources)} source files, {len(manifests)} build manifests.'))
+            finally:
+                if cleanup:
+                    import shutil; shutil.rmtree(str(cleanup),ignore_errors=True)
+        except Exception as ex:self.events.put(('log',f'[error] {type(ex).__name__}: {ex}')); self.events.put(('done','Recursive analysis ended with recoverable errors.'))
     def import_image(self):
         src=filedialog.askopenfilename(title='Import boot sector / ISO / image',filetypes=[('Images','*.iso *.img *.bin'),('All files','*.*')])
         if not src:return
@@ -65,14 +72,31 @@ class App(tk.Tk):
     def build_images(self): self._start(lambda:self._build_worker(False))
     def build_iso(self): self._start(lambda:self._build_worker(True))
     def _build_worker(self,make_iso):
-        steps=['validate source','inventory','discover toolchains','prepare build plan','compile/assemble jobs','prepare boot artifacts'] + (['stage ISO','build ISO / IMG','validate image'] if make_iso else []); monitor=ConnectivityMonitor()
-        for i,step in enumerate(steps,1):
+        source=self.repo.get().strip(); monitor=ConnectivityMonitor()
+        try:
+            if not source: raise ValueError('source repository/path is empty')
+            self.events.put(('log',f'Entry point: {"build-iso" if make_iso else "recursive-build"}; source={source}'))
+            self.events.put(('log',f'[network] {monitor.check().detail}'))
+            root,cleanup=acquire_repository(source)
             try:
-                self.events.put(('log',f'[step] {step} started'))
-                if step=='validate source' and not self.repo.get().strip(): raise ValueError('source repository/path is empty')
-                if step=='discover toolchains': self.events.put(('log',f'[network] {monitor.check().detail}'))
-                self.events.put(('log',f'[step] {step} completed'))
-            except Exception as ex:self.events.put(('log',f'[error] {step} skipped after {type(ex).__name__}: {ex}; continuing'))
-            self.events.put(('progress',type('P',(),{'stage':'build','completed':i,'total':len(steps),'message':f'Completed {i}/{len(steps)}: {step}'})()))
-        self.events.put(('done','Workflow reached the final entry point; review live details for skipped operations.'))
+                self.events.put(('log',f'[recursive] acquired root={root}'))
+                report=build_repository(root, Path(self.out.get()).expanduser().resolve().parent / 'ISO-Tool-build', execute=True)
+                total=max(len(report.sources)+len(report.manifests)+len(report.artifacts),1)
+                completed=0
+                for record in report.sources:
+                    completed+=1; self.events.put(('log',f'[compile-plan] {record.path} ({record.language})')); self.events.put(('progress',type('P',(),{'stage':'recursive-build','completed':completed,'total':total,'message':f'Processed source {record.path}'})()))
+                for record in report.manifests:
+                    completed+=1; self.events.put(('log',f'[build-system] {record.path} ({record.kind})')); self.events.put(('progress',type('P',(),{'stage':'recursive-build','completed':completed,'total':total,'message':f'Processed manifest {record.path}'})()))
+                for artifact in report.artifacts:
+                    completed+=1; self.events.put(('log',f'[artifact] {artifact.status}: {artifact.path}')); self.events.put(('progress',type('P',(),{'stage':'link/artifact','completed':completed,'total':total,'message':f'{artifact.status}: {artifact.path}'})()))
+                for skipped in report.skipped:self.events.put(('log',f'[skipped] {skipped}'))
+                for error in report.errors:self.events.put(('log',f'[error] {error}'))
+                if make_iso:
+                    self.events.put(('log','[iso] Recursive build artifacts are now the input set for the existing ISO/image staging pipeline.'))
+                result='Recursive build complete with no recorded failures.' if not report.errors else f'Recursive build completed with {len(report.errors)} recorded failures; inspect recursive-build.log/report.json.'
+                self.events.put(('done',result))
+            finally:
+                if cleanup:
+                    import shutil; shutil.rmtree(str(cleanup),ignore_errors=True)
+        except Exception as ex:self.events.put(('log',f'[error] {type(ex).__name__}: {ex}')); self.events.put(('done','Recursive build ended with recoverable errors.'))
 if __name__=='__main__': App().mainloop()
