@@ -1,48 +1,38 @@
 # Native Windows Portability: MSVC and GNU Code::Blocks
 
-## Goal
+## Shared native application
 
-ISO-Tool's native GUI has one shared Win32 C++ implementation and two supported Windows build descriptions:
+ISO-Tool uses one Win32 C++ implementation with separate compiler/project descriptions:
 
-| Environment | Project | Standard | Entry point | Common controls |
+| Environment | Project | Standard | Entry point | Required GUI libraries |
 |---|---|---|---|---|
-| Visual Studio / MSVC | `vcpp/ISO-Tool.sln` | C++20 | `wWinMain` | `Comctl32.lib` |
-| Code::Blocks / MinGW | `codeblocks/ISO-Tool.cbp` | C++17 | `wWinMain` | `-lcomctl32` |
+| Visual Studio / MSVC | `vcpp/ISO-Tool.sln` | C++20 | `wWinMain` | `Comctl32.lib`, `Comdlg32.lib` |
+| Code::Blocks / MinGW | `codeblocks/ISO-Tool.cbp` | C++17 | `wWinMain` | `-lcomctl32`, `-lcomdlg32` |
 
-The source is deliberately conservative so the application does not require compiler-specific application logic.
+## Linker directives
 
-## Common-controls pragma
-
-The primary native source contains the explicit directive:
+The main source contains:
 
 ```cpp
 #pragma comment(lib, "comctl32.lib")
 ```
 
-MSVC consumes the directive directly. Code::Blocks/MinGW keeps the explicit `-lcomctl32` project setting, so the same source remains portable across the two toolchains.
+MSVC consumes this directive, while project files also declare the dependency explicitly. The application uses `GetSaveFileNameW` for the user-selected ISO destination, so `Comdlg32.lib` is explicitly linked as well. MinGW does not consume MSVC linker pragmas and therefore receives both libraries through the Code::Blocks/MSYS2 linker settings.
 
-## Unicode
+## ISO output selection
 
-Visual Studio supplies `UNICODE` and `_UNICODE` through `<CharacterSet>Unicode</CharacterSet>`. Code::Blocks supplies the equivalent `-DUNICODE -D_UNICODE` compiler definitions. The C++ source does not redefine either macro.
+**Build ISO…** opens a native Windows Save dialog. The user chooses both directory and filename. `OFN_OVERWRITEPROMPT` protects an existing output. The selected path is handed to `python/build_iso.py --output <selected-path>` without substituting a fixed filename.
 
-## Linkage
+## Recursive compilation/linking
 
-`InitCommonControlsEx` belongs to the Windows common-controls library. MSVC receives `Comctl32.lib` from both the source pragma and the `.vcxproj`; MinGW receives `comctl32` from the Code::Blocks linker configuration.
+The native GUI is the frontend for the Python recursive build engine. The engine inventories the complete repository, creates an external-reference graph, resolves supported project-managed dependencies, builds each project independently, compiles direct native sources, and links only compatible targets. Independent applications are never flattened into one executable.
 
-## WinMain handling
+`external-reference-report.json` records local include relationships, `#pragma comment(lib, ...)` references, project dependency metadata and unresolved references. `recursive-build-report.json` records every resolution, compile, link, build, skip and error decision.
 
-The GUI remains a Unicode `wWinMain` application. Code::Blocks/MinGW uses `-mwindows` to select the Windows subsystem and `-municode` to select the Unicode startup wrapper.
+## Unicode and startup
 
-## Recursive repository build integration
-
-The Python reference engine now provides the cross-language recursive build graph used by the application workflow. It can acquire a GitHub repository, recursively inventory source and project manifests, invoke compatible native build systems, compile direct C/C++ sources, and link a native target only when the entry-point model is unambiguous. It records managed/interpreted artifacts separately rather than producing a misleading single executable from incompatible languages.
-
-See `RECURSIVE_REPOSITORY_BUILD.md` for the full build graph and execution model.
-
-## Icon/branding
-
-`../icons/ISO-Tool-logo.svg` is the vector master. It follows the existing Chimera II OS Library artwork's circular seal, infinity geometry and dark gold/cyan/violet visual language. The SVG can be converted into Windows icon sizes as part of a packaging job; no binary `.ico` is claimed until that conversion has actually been performed.
+Visual Studio supplies Unicode macros through project settings. Code::Blocks supplies `-DUNICODE -D_UNICODE`. The source uses `wWinMain` and wide Windows APIs. MinGW uses `-mwindows -municode`.
 
 ## Verification boundary
 
-Repository XML/project validation can be performed independently, but a genuine MSVC or MinGW executable build must run on Windows with the corresponding toolchain installed. CI should report those builds separately from source-level validation. Recursive repository execution is opt-in because repository build scripts are arbitrary executable code.
+CI is configured to perform actual MSVC and MinGW builds on Windows. Source edits and project XML checks alone do not prove an executable build. Repository build execution is explicit because project build scripts are arbitrary executable code.
