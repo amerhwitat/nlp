@@ -1,4 +1,8 @@
-"""Declarative ISO/image mastering profiles."""
+"""Declarative ISO/image mastering profiles.
+
+The profiles separate optical media intent from filesystem and firmware intent.
+They are consumed by front ends before the selected mastering backend runs.
+"""
 from __future__ import annotations
 from dataclasses import dataclass
 
@@ -6,13 +10,25 @@ from dataclasses import dataclass
 class ImageProfile:
     id: str
     label: str
-    filesystem: str = "iso9660+joliet"
+    media: str = "DVD"
+    capacity_bytes: int | None = None
+    filesystem: str = "iso9660+joliet+rockridge"
     bios_boot: str | None = None
     uefi_boot: str | None = None
     hybrid: bool = True
     udf_version: str | None = None
+    joliet: bool = True
+    rock_ridge: bool = True
+    el_torito: bool = True
+
+CD_BYTES = 700 * 1000 * 1000
+DVD_BYTES = 4_700 * 1000 * 1000
 
 PROFILES = {
+    "cd-data": ImageProfile("cd-data", "CD data", media="CD", capacity_bytes=CD_BYTES),
+    "dvd-data": ImageProfile("dvd-data", "DVD data", media="DVD", capacity_bytes=DVD_BYTES),
+    "cd-bios-uefi": ImageProfile("cd-bios-uefi", "CD BIOS + UEFI", media="CD", capacity_bytes=CD_BYTES, bios_boot="boot/bios/first_stage.bin", uefi_boot="EFI/BOOT/BOOTX64.EFI", hybrid=True),
+    "dvd-bios-uefi": ImageProfile("dvd-bios-uefi", "DVD BIOS + UEFI", media="DVD", capacity_bytes=DVD_BYTES, bios_boot="boot/bios/first_stage.bin", uefi_boot="EFI/BOOT/BOOTX64.EFI", hybrid=True, udf_version="1.02"),
     "bios-uefi": ImageProfile("bios-uefi", "BIOS + UEFI", bios_boot="boot/bios/first_stage.bin", uefi_boot="EFI/BOOT/BOOTX64.EFI", hybrid=True, udf_version="1.02"),
     "bios-only": ImageProfile("bios-only", "Legacy BIOS", bios_boot="boot/bios/first_stage.bin", hybrid=False),
     "uefi-only": ImageProfile("uefi-only", "UEFI", uefi_boot="EFI/BOOT/BOOTX64.EFI", hybrid=False, udf_version="1.02"),
