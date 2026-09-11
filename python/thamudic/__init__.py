@@ -1,12 +1,12 @@
-"""Language-neutral Python facade for the Thamudic scanner family.
+"""Python facade for Thamudic and Ancient North Arabian text processing."""
+from .old_north_arabian import BY_CHARACTER, BY_CODEPOINT, CHARACTERS, FIRST, LAST, VARIANT_FORMS, is_old_north_arabian, transliterate as transliterate_ona, utf8_bytes
 
-Legacy root scripts remain supported for backward compatibility; new language
-implementations mirror this API instead of depending on GUI-specific code.
-"""
-FIRST, LAST = 0x10A80, 0x10A9F
-def is_thamudic(codepoint: int) -> bool:
-    return FIRST <= codepoint <= LAST
+is_thamudic = is_old_north_arabian
+
 def extract(text: str) -> str:
-    return ''.join(ch for ch in text if is_thamudic(ord(ch)))
-def transliterate(text: str, mapping: dict[int,str]) -> str:
-    return ''.join(mapping.get(ord(ch), '?' if is_thamudic(ord(ch)) else (' ' if ch.isspace() else '')) for ch in text)
+    return ''.join(ch for ch in text if is_old_north_arabian(ch))
+
+def transliterate(text: str, mapping: dict[int, str] | None = None) -> str:
+    if mapping is not None:
+        return ''.join(mapping.get(ord(ch), '?' if is_old_north_arabian(ch) else ch) for ch in text)
+    return transliterate_ona(text)
