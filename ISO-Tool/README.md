@@ -28,19 +28,41 @@ The UEFI contract is `boot/uefi/entry.c`. UEFI does **not** use BIOS interrupts 
 
 ## Boot testing and fallback
 
-ISO-Tool statically validates configured boot entries and can invoke QEMU for isolated BIOS testing and QEMU+OVMF for UEFI testing when those tools are installed. Results are classified as `static`, `assembled`, `emulated`, or `unverified`.
+ISO-Tool statically validates configured boot entries and can invoke QEMU for isolated BIOS testing and QEMU+OVMF for UEFI testing when those tools are installed. QEMU tests can use snapshot/read-only semantics so the source image is not modified. Results are classified as `static`, `assembled`, `emulated`, `timeout`, or `unverified`.
 
 If the preferred boot entry is unavailable or fails validation, the deterministic boot planner follows its configured fallback chain and tries the next eligible entry. Each attempt and reason appears in the GUI details log. Required boot/integrity failures can still stop final image publication.
 
 See `docs/BIOS_UEFI_BOOT_VALIDATION.md`.
 
+## New image-mastering profiles
+
+`python/iso_tool/image_profiles.py` defines explicit `data`, `bios-only`, `uefi-only`, and `bios-uefi` profiles. The mastering layer now passes firmware/filesystem intent to xorriso/xorrisofs or Oscdimg instead of treating every ISO as an undifferentiated data image.
+
+Microsoft documents Oscdimg support for ISO 9660, Joliet and UDF, plus BIOS/UEFI El Torito multi-boot entries; ISO-Tool models those choices explicitly. citeturn0search0turn0search1
+
+xorriso exposes El Torito BIOS and EFI boot images, system-area/MBR handling and EFI partition image concepts; ISO-Tool keeps those operations backend-driven rather than executing image contents on the host. citeturn0search2
+
+## Offline ISO inspection
+
+`python/iso_tool/iso_inspect.py` performs read-only inspection of ISO 9660 descriptors and reports likely Joliet/UDF/El Torito structures, boot-catalog sector information, size and SHA-256. It does not execute or mount untrusted image contents.
+
+This makes ISO analysis useful even when the network is unavailable.
+
 ## Local repositories and offline operation
 
-A local repository directory can be supplied directly. Local source inventory and authorized builds do not require Internet access. Remote acquisition can periodically check connectivity, wait for restoration, and retry network operations. Network status and retry activity are displayed in the live operation log.
+A local repository directory can be supplied directly. Local source inventory and authorized builds do not require Internet access. Remote Git acquisition can periodically check connectivity, wait for restoration, and retry network operations. Network status and retry activity are displayed in the live operation log.
 
 ## Boot-sector / ISO import
 
 The GUI includes **Import Boot Sector / ISO**. It accepts local `.iso`, `.img`, and `.bin` files, inspects the first sector, detects `0x55AA`, computes a first-sector SHA-256, and can stage a bounded boot-sector region. Imported bytes are inert and are not executed during import. The source image is never modified.
+
+## Large-image and boot-order preparation
+
+The mastering architecture now reserves a boot-order/profile layer so large images can use explicit boot-file ordering when required by the selected backend. Microsoft documents boot-order files for images above 4.5 GB; ISO-Tool treats ordering as a reproducible build input rather than relying on filesystem enumeration order. citeturn0search0
+
+## Reproducibility and provenance
+
+The engine records the selected profile, source hash, boot-artifact hashes, backend selection, toolchain identity and validation results. Future image-report schemas can consume these records to make generated artifacts auditable and reproducible.
 
 ## Fail-forward runtime policy
 
@@ -63,6 +85,8 @@ Progress is cumulative across the whole operation rather than restarting for eve
 ## Toolchains and image formats
 
 The discovery model supports local MASM (`ml`/`ml64`), NASM, MSVC/CL, MSBuild, GCC/G++, MinGW, CMake, Make and `dotnet`. Image tooling includes xorriso/xorrisofs and Oscdimg where locally installed. The engine models ISO 9660, Joliet, Rock Ridge, UDF, El Torito, BIOS/MBR, GPT, UEFI/EFI System Partition and BIOS+UEFI hybrid images.
+
+QEMU is supported as the isolated validation layer; QEMU provides snapshot mode that writes temporary changes instead of modifying the source image, which is appropriate for disposable boot tests. citeturn0search6turn0search7
 
 ## Security
 
