@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ISO-Tool Inspection Report",
+  "type": "object",
+  "required": ["path", "size", "sha256", "sector_size", "formats", "boot_entries", "warnings"],
+  "properties": {
+    "path": {"type": "string"},
+    "size": {"type": "integer", "minimum": 0},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sector_size": {"type": "integer", "const": 2048},
+    "formats": {
+      "type": "object",
+      "properties": {
+        "iso9660": {"type": "boolean"},
+        "joliet": {"type": "boolean"},
+        "rock_ridge": {"type": "boolean"},
+        "udf": {"type": "boolean"},
+        "mbr": {"type": "boolean"},
+        "gpt": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "boot_entries": {"type": "array"},
+    "warnings": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}
