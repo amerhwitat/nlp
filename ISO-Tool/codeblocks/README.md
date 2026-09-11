@@ -7,42 +7,32 @@ This directory provides a GNU Code::Blocks project for the native Win32 ISO-Tool
 - Code::Blocks with MinGW-w64/GNU GCC
 - Windows SDK/MinGW Windows headers and libraries
 - C++17-capable GCC
-- Python 3.8+ when using the recursive repository analysis/build workflow from the application
+- Python 3.8+ for the recursive build/ISO helper
+- An ISO backend such as xorriso/xorrisofs or Oscdimg for final mastering
 
 ## Build
 
-Open `ISO-Tool.cbp` in Code::Blocks and select **Debug** or **Release**.
+Open `ISO-Tool.cbp` and select **Debug** or **Release**. The project uses the shared native source `../vcpp/ISO-Tool.cpp` and links both `comctl32` and `comdlg32`.
 
-The project uses the shared native implementation at `../vcpp/ISO-Tool.cpp` and links `comctl32` for the Windows common-controls API.
+`-mwindows` and `-municode` preserve the `wWinMain` Windows GUI entry point. The shared source explicitly contains `#pragma comment(lib, "comctl32.lib")`; GCC ignores this MSVC-specific directive, so Code::Blocks supplies the equivalent libraries through linker settings.
 
-The linker settings use `-mwindows` and `-municode` so the existing `wWinMain` entry point is handled by MinGW without changing the application architecture.
+## User-selected ISO destination
 
-The shared C++ source explicitly contains:
+Click **Build ISO…** in the native GUI. The Windows Save dialog lets the user choose the destination directory and filename. The exact selected path is passed to the recursive `build_iso.py` helper, so the tool does not impose a fixed ISO filename.
 
-```cpp
-#pragma comment(lib, "comctl32.lib")
-```
+## Recursive dependency/build workflow
 
-GCC/MinGW does not need that MSVC directive because `-lcomctl32` remains explicit in the Code::Blocks linker settings.
+The frontend delegates repository compilation to `../python/iso_tool/recursive_build.py`. It recursively inventories sources and manifests, creates an external-reference graph, resolves project-managed dependencies through native package/build systems, compiles compatible native sources, invokes each independent project build, and records artifacts and failures.
 
-## Recursive repository workflow
+The end-to-end helper is `../python/build_iso.py`. It stages source plus compiled artifacts and calls the ISO mastering backend with the user-selected output path.
 
-The native GUI presents the recursive analysis/build workflow. The cross-language build engine is implemented under `../python/iso_tool/recursive_build.py` and can acquire a GitHub repository, walk it recursively, discover project manifests, compile compatible native sources, invoke project-native build systems, and collect/link compatible artifacts.
+## Linking model
 
-The native executable remains a Win32 frontend; language-specific build execution is intentionally delegated to the corresponding toolchain rather than attempting to turn every language into one invalid native binary.
-
-## Compatibility model
-
-The implementation is intentionally kept portable between MSVC and MinGW:
-
-- Windows API calls use the wide-character `W` variants.
-- The explicit `#pragma comment(lib, "comctl32.lib")` is retained in the main source for MSVC.
-- Unicode macros are supplied by each build system instead of being redefined in source.
-- `Comctl32.lib` is supplied by the Visual C++ project and `-lcomctl32` by Code::Blocks/MinGW.
+Independent applications remain independent. ISO-Tool never concatenates all repository `main()` functions into one executable. Direct C/C++ sources are linked only when one compatible entry point exists. Project-defined libraries and external dependencies remain attached to their owning build target.
 
 ## Output
 
 - Debug: `bin/Debug/ISO-Tool.exe`
 - Release: `bin/Release/ISO-Tool.exe`
-
-The GUI is the same native Win32 application used by the Visual C++ solution; the build system is the only intentional difference.
+- Recursive reports: `external-reference-report.json`, `recursive-build-report.json`, `recursive-build.log`
+- ISO staging: `<selected-name>.iso-tool-build/iso-staging/`
