@@ -10,38 +10,49 @@ ISO-Tool has three independent front ends—native Win32 C++, WPF C#, and Python
 4. `build-iso`
 5. `validate-image`
 
-These entry points can be invoked separately so a compiled-image workflow can feed a later ISO build.
-
 ## Pipeline stages
 
 1. Acquire GitHub source at an immutable ref when supplied, with connectivity recovery for network failures.
 2. Accept a local repository directly when supplied.
 3. Inventory source, project files, submodules and build metadata.
-4. Detect local compiler/assembler/image-generator capabilities.
-5. Generate a reviewable build plan.
-6. Compile/assemble independent jobs in parallel subject to dependencies.
-7. Link/package boot artifacts.
-8. Optionally inspect/import bounded boot-sector data from local ISO/IMG/BIN media.
-9. Construct a staging filesystem tree.
-10. Generate ISO/IMG through a selected capable backend.
-11. Validate filesystem, boot metadata and output size.
-12. Calculate SHA-256 and emit a reproducibility/build report.
+4. Detect local compiler/linker/assembler/image-generator capabilities from PATH, environment and Windows registry sources.
+5. Present detected toolchains and versions for user selection.
+6. Generate a reviewable build plan containing the selected toolchain paths.
+7. Compile/assemble independent jobs subject to dependencies.
+8. Link/package compatible artifacts.
+9. Optionally inspect/import bounded boot-sector data from local ISO/IMG/BIN media.
+10. Construct a staging filesystem tree.
+11. Generate ISO/IMG through a selected capable backend.
+12. Validate filesystem, boot metadata and output size.
+13. Calculate SHA-256 and emit a reproducibility/build report.
+
+## Native progress dashboard
+
+The Windows front end exposes five visible stage bars and one overall bar:
+
+- 🔧 Assembling
+- 💾 Building boot sector
+- ⚙ Compilation
+- 🔗 Linking
+- 🏁 Finishing up
+
+The Python engine emits machine-readable progress events; the native frontend maps those events to the stage bars and streams child stdout/stderr into the live log. State symbols make ready/running/success/failure immediately visible.
+
+## Toolchain discovery boundary
+
+Environment variables and registry keys are read-only discovery sources. Detection never changes PATH, registry values, compiler installations or SDK configuration. A detected version is informational and the selected executable path is recorded in `toolchain-selection.json`.
 
 ## Fail-forward execution boundary
 
-Independent jobs are isolated. A runtime/process failure is caught at the smallest job boundary, converted into a failed/skipped result, logged, and allowed to yield the next independent job. The global progress counter still advances because the job has reached a terminal state.
-
-A failure remains visible in both the live GUI details area and the final machine-readable report. Fail-forward never means suppressing diagnostics.
-
-Pipeline-level fatal conditions can still stop the operation when continuing would create an unsafe or invalid result, including authorization failure, uncontrolled output paths, unusable staging, invalid required boot metadata, or failed final image integrity checks.
+Independent jobs are isolated. A runtime/process failure is caught at the smallest job boundary, converted into a failed/skipped result, logged, and allowed to yield the next independent job. Progress still reaches a terminal state for that job. Fatal conditions can stop the operation when continuing would create an unsafe or invalid result.
 
 ## Offline and connectivity recovery
 
-Local repositories require no Internet. Remote acquisition uses a connectivity monitor and retry policy. The monitor periodically checks connectivity and can wait for restoration before retrying a network operation. Retry count can be bounded or indefinite; cancellation is always supported.
+Local repositories require no Internet. Remote acquisition uses a connectivity monitor and retry policy. Cancellation remains supported.
 
-## GUI progress and details
+## GUI details
 
-The progress model is event-based. Each front end maintains a live operation-details log containing stage/job messages, errors, network transitions, imported-image metadata and recovery actions. Progress is cumulative and monotonic across the complete operation rather than resetting for each stage.
+The native resource file embeds core icon bytes and progress-stage labels. The editable Chimera II OS-inspired SVG remains in `icons/`. This keeps the executable's basic branding self-contained while preserving an editable vector source.
 
 ## Trust modes
 
@@ -50,8 +61,6 @@ The progress model is event-based. Each front end maintains a live operation-det
 `trusted`: user explicitly authorizes recognized build operations.
 
 `custom`: user reviews and edits the generated plan before execution.
-
-All process launches use argument vectors rather than shell interpolation where supported.
 
 ## Boot import boundary
 
