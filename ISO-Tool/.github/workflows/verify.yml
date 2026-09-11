@@ -22,7 +22,7 @@ jobs:
         run: python -m compileall -q .
       - name: Import recursive build APIs
         working-directory: ISO-Tool/python
-        run: python -c "import iso_tool; from iso_tool.external_refs import discover_external_references; from iso_tool.recursive_build import inventory"
+        run: python -c "import iso_tool; from iso_tool.external_refs import discover_external_references; from iso_tool.recursive_build import inventory; from iso_tool.windows_toolchains import discover"
       - name: Test Python implementation
         working-directory: ISO-Tool/python
         run: python -m unittest discover -s tests -v
@@ -63,12 +63,14 @@ jobs:
           msystem: MINGW64
           update: true
           install: mingw-w64-x86_64-gcc
-      - name: Build shared Win32 source with GNU C++
+      - name: Build shared Win32 source and embedded resources with GNU C++
         shell: msys2 {0}
         run: |
           mkdir -p ISO-Tool/codeblocks/bin/CI ISO-Tool/codeblocks/obj/CI
+          windres ISO-Tool/vcpp/ISO-Tool.rc -O coff -o ISO-Tool/codeblocks/obj/CI/ISO-Tool-res.o
           g++ -std=c++17 -Wall -Wextra -DUNICODE -D_UNICODE \
             -mwindows -municode ISO-Tool/vcpp/ISO-Tool.cpp \
+            ISO-Tool/codeblocks/obj/CI/ISO-Tool-res.o \
             -lcomctl32 -lcomdlg32 -o ISO-Tool/codeblocks/bin/CI/ISO-Tool.exe
       - name: Validate Code::Blocks project XML
         shell: pwsh
