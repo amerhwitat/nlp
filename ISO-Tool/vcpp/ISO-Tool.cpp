@@ -6,11 +6,12 @@
 #include <exception>
 #include <stdexcept>
 
-// CharacterSet=Unicode is defined by the Visual Studio project. Do not redefine
-// UNICODE/_UNICODE here; doing so causes C4005 when the project already supplies
-// those macros through the compiler command line.
+// Unicode is selected by the project files. Do not redefine UNICODE/_UNICODE
+// here because MSVC projects already supply those macros through CharacterSet.
+#if defined(_MSC_VER)
 #pragma comment(lib, "Comctl32.lib")
 #pragma comment(linker, "\"/manifestdependency:type='Win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif
 
 static HWND gRepo = nullptr;
 static HWND gLog = nullptr;
@@ -221,9 +222,8 @@ static LRESULT CALLBACK WndProc(HWND window, UINT message, WPARAM wParam, LPARAM
 }
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
-    // The project is configured for Unicode, and commctrl is linked explicitly
-    // in both the source and .vcxproj. This resolves InitCommonControlsEx without
-    // relying on inherited Visual Studio library settings.
+    // MSVC links Comctl32.lib from the project and GCC/MinGW links it from
+    // ISO-Tool.cbp. Both build systems therefore resolve InitCommonControlsEx.
     INITCOMMONCONTROLSEX controls{};
     controls.dwSize = sizeof(controls);
     controls.dwICC = ICC_PROGRESS_CLASS | ICC_STANDARD_CLASSES;
