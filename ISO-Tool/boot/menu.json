@@ -1,0 +1,13 @@
+{
+  "title":"ISO-Tool Boot Manager",
+  "default":"chimera2-live",
+  "timeoutSeconds":8,
+  "entries":[
+    {"id":"chimera2-live","label":"Chimera II OS — Live","loader":"chimera2","mode":"live","kernel":"/boot/chimera/kernel","initrd":"/boot/chimera/initrd"},
+    {"id":"chimera2-install","label":"Chimera II OS — Install","loader":"chimera2","mode":"install","kernel":"/boot/chimera/kernel","initrd":"/boot/chimera/installer.img"},
+    {"id":"grub2","label":"GRUB 2 / Other Linux","loader":"grub2-uefi","mode":"chainload","config":"/boot/grub/grub.cfg"},
+    {"id":"windows","label":"Windows Boot Environment","loader":"windows-bootmgr","mode":"chainload","efi":"/EFI/Microsoft/Boot/bootmgfw.efi"},
+    {"id":"lilo","label":"Legacy Linux / LILO","loader":"lilo","mode":"chainload","image":"/boot/lilo/boot.b"},
+    {"id":"syslinux","label":"Syslinux / Legacy","loader":"syslinux","mode":"chainload","image":"/isolinux/isolinux.bin"}
+  ]
+}
