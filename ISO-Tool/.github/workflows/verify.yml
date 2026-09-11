@@ -20,6 +20,9 @@ jobs:
       - name: Compile Python sources
         working-directory: ISO-Tool/python
         run: python -m compileall -q .
+      - name: Import recursive build APIs
+        working-directory: ISO-Tool/python
+        run: python -c "import iso_tool; from iso_tool.external_refs import discover_external_references; from iso_tool.recursive_build import inventory"
       - name: Test Python implementation
         working-directory: ISO-Tool/python
         run: python -m unittest discover -s tests -v
@@ -59,22 +62,19 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          install: >-
-            mingw-w64-x86_64-gcc
+          install: mingw-w64-x86_64-gcc
       - name: Build shared Win32 source with GNU C++
         shell: msys2 {0}
         run: |
           mkdir -p ISO-Tool/codeblocks/bin/CI ISO-Tool/codeblocks/obj/CI
           g++ -std=c++17 -Wall -Wextra -DUNICODE -D_UNICODE \
             -mwindows -municode ISO-Tool/vcpp/ISO-Tool.cpp \
-            -lcomctl32 -o ISO-Tool/codeblocks/bin/CI/ISO-Tool.exe
+            -lcomctl32 -lcomdlg32 -o ISO-Tool/codeblocks/bin/CI/ISO-Tool.exe
       - name: Validate Code::Blocks project XML
         shell: pwsh
         run: |
           [xml]$project = Get-Content ISO-Tool/codeblocks/ISO-Tool.cbp
-          if ($project.CodeBlocks_project_file.Project.Option.title -ne 'ISO-Tool') {
-            throw 'Unexpected Code::Blocks project title'
-          }
+          if ($project.CodeBlocks_project_file.Project.Option.title -ne 'ISO-Tool') { throw 'Unexpected Code::Blocks project title' }
 
   metadata:
     runs-on: ubuntu-latest
