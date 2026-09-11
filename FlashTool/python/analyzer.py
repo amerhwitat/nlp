@@ -87,13 +87,13 @@ def analyze_bytes(data: bytes, path: str = "") -> Analysis:
         result.sparse = True
         header = _crash_safe_unpack("<IHHHHIIII", data, 0)
         if header:
-            _, major, minor, file_hdr, chunk_hdr, block_size, total_blocks, total_chunks = header
+            _, major, minor, file_hdr, chunk_hdr, block_size, total_blocks, total_chunks, checksum = header
             result.sparse_block_size = block_size
             result.sparse_total_blocks = total_blocks
             result.notes.append(
                 f"sparse v{major}.{minor}, block_size={block_size}, "
                 f"blocks={total_blocks}, chunks={total_chunks}, "
-                f"file_header={file_hdr}, chunk_header={chunk_hdr}"
+                f"file_header={file_hdr}, chunk_header={chunk_hdr}, checksum=0x{checksum:08x}"
             )
 
     if data.startswith(CRAU_MAGIC) and len(data) >= 24:
