@@ -1,0 +1,19 @@
+{
+  "schema": "iso-tool.dependencies.v1",
+  "policy": {
+    "startup_scan": true,
+    "auto_install": "explicit-user-choice",
+    "remote_script_execution": false,
+    "prefer_trusted_package_managers": true
+  },
+  "tools": [
+    {"id":"msbuild","command":"msbuild","required_for":["vcpp"],"installer":"Visual Studio Build Tools"},
+    {"id":"cmake","command":"cmake","required_for":["cmake-projects"],"installer":"CMake"},
+    {"id":"nasm","command":"nasm","required_for":["bios","assembly"],"installer":"NASM"},
+    {"id":"xorriso","command":"xorriso","required_for":["iso-mastering"],"installer":"manual/trusted-distribution"},
+    {"id":"oscdimg","command":"oscdimg","required_for":["iso-mastering"],"installer":"Windows ADK"},
+    {"id":"qemu-system-x86_64","command":"qemu-system-x86_64","required_for":["bios-validation"],"installer":"QEMU"},
+    {"id":"qemu-system-aarch64","command":"qemu-system-aarch64","required_for":["aarch64-validation"],"installer":"QEMU"},
+    {"id":"mformat","command":"mformat","required_for":["optional-disk-tools"],"installer":"trusted GNU distribution"}
+  ]
+}
