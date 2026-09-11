@@ -7,6 +7,18 @@ ISO-Tool supports a two-compiler validation build on Windows:
 
 The UCRT64 choice is intentional: MSYS2 documents UCRT64 as its recommended environment when uncertain and notes that UCRT provides better compatibility with MSVC than the legacy MSVCRT target. The two CRT families must not be mixed within the same object/static-library boundary.
 
+## Toolchain detection before dependency checks
+
+`python/iso_tool/toolchain_detector.py` is the converted implementation of the legacy Windows compiler/assembler batch detector. It runs before dependency/build planning and records `manifests/windows-toolchains.json`.
+
+Detection order is:
+
+1. Current process `PATH` (`shutil.which`).
+2. Bounded common installation hints.
+3. Visual Studio registry installation roots for MSVC/MASM.
+
+The detector covers GCC/MinGW, G++, MSVC, MASM, NASM, LLVM/Clang, LLD, Go, Rust, Java, Python, CMake, Ninja, MSBuild, Git and ISO mastering backends. Environment persistence is opt-in; normal ISO-Tool builds do not mutate the user's permanent PATH.
+
 ## Missing GCC
 
 If `g++` is absent, ISO-Tool records an acquisition plan for the official MSYS2 UCRT64 package `mingw-w64-ucrt-x86_64-gcc`. Installation is an explicit, auditable dependency operation; ISO-Tool does not execute arbitrary scripts downloaded from search results.
@@ -26,6 +38,7 @@ Each build records:
 - C++ standard
 - compiler flags
 - linker identity
+- detected toolchain manifest
 - output executable/library paths
 - success/failure status
 - source repository identifier in the combined workspace manifest
