@@ -3,7 +3,9 @@
 ## Static repository verification
 
 - [x] Three separate implementations exist: C++, C#, Python.
-- [x] Independent runtime failures are converted into structured failed/skipped job results.
+- [x] Python has a single-repository build entry point and a multi-repository workspace entry point.
+- [x] Standard related-repository profile includes ChimeraIIOS, BizX and BizXtreme.
+- [x] Independent runtime/repository failures are converted into structured failed/skipped job results.
 - [x] Failed jobs advance cumulative progress and do not abort unrelated parallel jobs.
 - [x] Python GUI exposes a live details log and cumulative progress bar.
 - [x] WPF GUI exposes live boot status, details and cumulative progress.
@@ -15,6 +17,8 @@
 - [x] Boot validator records unavailable/invalid entries and selects the next eligible entry.
 - [x] QEMU command generation is available for BIOS validation; UEFI validation requires QEMU plus OVMF configuration.
 - [x] Boot validation evidence levels are documented: static, assembled, emulated, unverified.
+- [x] Multi-repository staging preserves native source trees and separates executables, libraries and boot/image artifacts.
+- [x] Existing APK/WebGL outputs remain artifacts rather than being represented as foreign-language source.
 
 ## Tests
 
@@ -25,6 +29,14 @@ python -m unittest discover ISO-Tool\\python\\tests -v
 ```
 
 The test suite covers fail-forward execution, boot-image import, firmware-specific menu contracts, BIOS first-stage declarations, UEFI entry declarations, and fallback selection.
+
+For the combined workspace entry point:
+
+```text
+python ISO-Tool\\python\\build_workspace.py --output <selected-output> --compiler auto
+```
+
+Use a disposable output directory and ensure the required network/build/ISO tools are installed before performing a live build.
 
 ## BIOS assembly verification
 
@@ -44,4 +56,4 @@ If QEMU/OVMF is missing, report `unverified`; do not convert static validation i
 
 ## Environment-dependent verification
 
-A full Windows build still requires Visual Studio/MSVC, MASM, NASM, Python, and an ISO backend such as xorriso/xorrisofs or Oscdimg. These environment-dependent binaries are not claimed as executed merely from repository edits.
+A full Windows build still requires Visual Studio/MSVC, MASM, NASM, Python, and an ISO backend such as xorriso/xorrisofs or Oscdimg. A full multi-repository build additionally depends on the toolchains required by the projects discovered in ChimeraIIOS, BizX and BizXtreme. These environment-dependent binaries are not claimed as executed merely from repository edits.
