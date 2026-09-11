@@ -1,6 +1,6 @@
 # Architecture
 
-ISO-Tool has three independent front ends—native Win32 C++, WPF C#, and Python—over a common machine-readable project model.
+ISO-Tool has three independent front ends—native Win32 C++, WPF C#, and Python—over a common machine-readable project model. The Python layer also provides the canonical multi-repository workspace entry point.
 
 ## Workflow entry points
 
@@ -9,8 +9,19 @@ ISO-Tool has three independent front ends—native Win32 C++, WPF C#, and Python
 3. `import-boot-image`
 4. `build-iso`
 5. `validate-image`
+6. `build-workspace` — acquire and build the related Chimera II OS, BizX and BizXtreme repositories into one staged image.
 
 These entry points can be invoked separately so a compiled-image workflow can feed a later ISO build.
+
+## Related repository workspace
+
+The standard workspace profile is `engine/repository-profiles.json`. It identifies:
+
+- `amerhwitat/ChimeraIIOS` — OS/kernel/boot/system source;
+- `amerhwitat/BizX` — application/commerce/wallet source; and
+- `amerhwitat/BizXtreme` — game/crypto/WebGL/Three.js/application source.
+
+`python/build_workspace.py` is the single command-line orchestration point. Each repository is acquired through the safe source layer, recursively analyzed, built using the registered adapters, and staged without executing imported artifacts. Source trees are preserved per repository, while compatible executables, libraries and boot/image artifacts are collected into common output areas.
 
 ## Pipeline stages
 
@@ -26,6 +37,8 @@ These entry points can be invoked separately so a compiled-image workflow can fe
 10. Generate ISO/IMG through a selected capable backend.
 11. Validate filesystem, boot metadata and output size.
 12. Calculate SHA-256 and emit a reproducibility/build report.
+
+The multi-repository workflow applies the same stages independently to each repository before combining their source and compatible artifacts.
 
 ## Fail-forward execution boundary
 
@@ -52,6 +65,10 @@ The progress model is event-based. Each front end maintains a live operation-det
 `custom`: user reviews and edits the generated plan before execution.
 
 All process launches use argument vectors rather than shell interpolation where supported.
+
+## Artifact and language boundaries
+
+Compiled executables are staged under `/bin`, libraries under `/lib`, and binary/boot/EFI images under `/boot-images`. Existing packaged APK/WebGL outputs remain artifacts. ISO-Tool never converts a binary artifact into source code in another language. Each repository retains its native C/C++, C#, Java, Python, Node.js, JavaScript, TypeScript, Unity and other source boundaries.
 
 ## Boot import boundary
 
