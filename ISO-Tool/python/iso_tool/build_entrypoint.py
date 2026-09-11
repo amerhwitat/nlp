@@ -9,6 +9,7 @@ from .build_adapters import detect_build_systems,command_for
 from .application_discovery import discover_applications
 from .tree_scanner import scan_tree
 from .toolchain_detector import detect_tools, write_report
+from .dependency_detector import write_report as write_dependency_report
 
 BUILD_MARKERS={'CMakeLists.txt','Makefile','makefile','meson.build','Cargo.toml','package.json','pom.xml','build.gradle','build.gradle.kts','go.mod','configure','configure.ac'}
 SKIP_DIRS={'.git','.hg','.svn','node_modules','.venv','venv','__pycache__','.tox','dist','build','out','target'}
@@ -50,7 +51,6 @@ def _compile_project(root:Path,output:Path,compiler:str,log):
             if system=='cmake':_run(['cmake','--build',str(bd),'--config','Release','--parallel'],root,log)
             elif system=='meson':_run(['meson','compile','-C',str(bd)],root,log)
             elif system=='npm':_run(['npm','run','build','--if-present'],root,log)
-            elif system=='make':pass
             elif system=='autotools':_run(['make','-j'],root,log) if shutil.which('make') else None
             reports.append({'project':str(root),'system':system,'status':'built','command':command})
         except Exception as exc:
@@ -59,9 +59,8 @@ def _compile_project(root:Path,output:Path,compiler:str,log):
 
 def build(source:Path,output:Path,compiler:str='auto',log=print)->dict:
     source=source.resolve();output=output.resolve();layout=prepare_output_layout(output);knowledge=output/'knowledge';knowledge.mkdir(parents=True,exist_ok=True)
-    # Converted from the legacy Windows batch detector. Run this before any
-    # dependency/package checks so build planning sees the host toolchain state.
     toolchains=detect_tools();toolchain_manifest=write_report(toolchains,output/'manifests'/'windows-toolchains.json');log(f'[toolchains] detected {sum(t["status"]=="found" for t in toolchains["tools"])} of {len(toolchains["tools"])} configured tools')
+    dependency_manifest=write_dependency_report(output/'manifests'/'dependencies.json');log(f'[dependencies] inventory written to {dependency_manifest}')
     tree=scan_tree(source,knowledge/'repository-tree.json');plan=make_plan(source,knowledge);log(f'[scan] recursively indexed {tree["summary"]["files"]} files; languages={tree["summary"]["languages"]}');log(f'[intelligence] ordered {len(plan["steps"])} build stages')
     ai=propose_refinement(plan,prompt_context='Keep deterministic dependency/build precedence authoritative.');(knowledge/'ai-plan.json').write_text(json.dumps(ai,indent=2),encoding='utf-8')
     applications=discover_applications(source);(knowledge/'applications.json').write_text(json.dumps(applications,indent=2),encoding='utf-8')
@@ -70,7 +69,7 @@ def build(source:Path,output:Path,compiler:str='auto',log=print)->dict:
         log(f'[project] {project.relative_to(source) if project!=source else "."}')
         build_root,reports=_compile_project(project,output,compiler,log);all_reports.extend(reports);all_artifacts.extend(_stage_tree(project,layout,log));all_artifacts.extend(_stage_tree(build_root,layout,log))
     if not all_reports:raise RuntimeError('No registered build system found anywhere in the recursive source tree.')
-    manifest=layout['manifests']/f'build-result-{compiler}.json';manifest.write_text(json.dumps({'source':str(source),'output':str(output),'compiler':compiler,'toolchain_manifest':str(toolchain_manifest),'projects':_project_roots(source),'build_systems':all_reports,'artifacts':sorted(set(all_artifacts)),'repository_tree':str(knowledge/'repository-tree.json'),'plan':str(knowledge/'build-plan.json'),'ai_plan':str(knowledge/'ai-plan.json'),'applications':str(knowledge/'applications.json')},indent=2,default=str),encoding='utf-8');return {'layout':layout,'manifests':manifest,'toolchains':toolchain_manifest,'artifacts':sorted(set(all_artifacts)),'build_systems':all_reports}
+    manifest=layout['manifests']/f'build-result-{compiler}.json';manifest.write_text(json.dumps({'source':str(source),'output':str(output),'compiler':compiler,'toolchain_manifest':str(toolchain_manifest),'dependency_manifest':str(dependency_manifest),'projects':_project_roots(source),'build_systems':all_reports,'artifacts':sorted(set(all_artifacts)),'repository_tree':str(knowledge/'repository-tree.json'),'plan':str(knowledge/'build-plan.json'),'ai_plan':str(knowledge/'ai-plan.json'),'applications':str(knowledge/'applications.json')},indent=2,default=str),encoding='utf-8');return {'layout':layout,'manifests':manifest,'toolchains':toolchain_manifest,'dependencies':dependency_manifest,'artifacts':sorted(set(all_artifacts)),'build_systems':all_reports}
 
 def main(argv=None):
     ap=argparse.ArgumentParser(description='ISO-Tool recursive document-aware compile/link entry point');ap.add_argument('source');ap.add_argument('--output',required=True);ap.add_argument('--compiler',choices=['auto','gnu','msvc'],default='auto');a=ap.parse_args(argv);r=build(Path(a.source),Path(a.output),a.compiler);print(json.dumps({k:str(v) for k,v in r.items() if k!='layout'},indent=2,default=str));return 0
