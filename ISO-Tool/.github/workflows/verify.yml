@@ -1,31 +1,65 @@
 name: ISO-Tool verification
+
 on:
   push:
     paths: ['ISO-Tool/**']
   pull_request:
     paths: ['ISO-Tool/**']
+
 jobs:
   python:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
+      - name: Compile Python sources
+        working-directory: ISO-Tool/python
+        run: python -m compileall -q .
       - name: Test Python implementation
         working-directory: ISO-Tool/python
         run: python -m unittest discover -s tests -v
-  windows:
+
+  windows-dotnet:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '6.0.x'
-      - name: Build .NET 6 desktop
-        run: dotnet build ISO-Tool/dotnet/ISO-Tool/ISO-Tool.csproj -c Release -f net6.0-windows
-      - name: Verify MSVC project metadata
+          dotnet-version: '8.0.x'
+      - name: Restore .NET desktop project
+        run: dotnet restore ISO-Tool/dotnet/ISO-Tool/ISO-Tool.csproj
+      - name: Build .NET 8 desktop
+        run: dotnet build ISO-Tool/dotnet/ISO-Tool/ISO-Tool.csproj -c Release -f net8.0-windows --no-restore
+      - name: Build .NET Framework 4.8 desktop
+        run: dotnet build ISO-Tool/dotnet/ISO-Tool/ISO-Tool.csproj -c Release -f net48 --no-restore
+
+  windows-msvc:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build VC++ Release x64
         shell: pwsh
         run: |
-          if (-not (Test-Path 'ISO-Tool/vcpp/ISO-Tool.sln')) { throw 'VC++ solution missing' }
-          if (-not (Test-Path 'ISO-Tool/vcpp/ISO-Tool.vcxproj')) { throw 'VC++ project missing' }
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $msbuild = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
+          if (-not $msbuild) { throw 'MSBuild with VC++ tools was not found' }
+          & $msbuild ISO-Tool/vcpp/ISO-Tool.sln /m /p:Configuration=Release /p:Platform=x64 /v:minimal
+
+  metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate schemas and manifests
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for path in Path('ISO-Tool').rglob('*.schema.json'):
+              json.loads(path.read_text(encoding='utf-8'))
+              print('validated', path)
+          PY
