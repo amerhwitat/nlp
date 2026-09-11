@@ -4,110 +4,87 @@ Cross-language desktop ISO/image build orchestrator for GitHub and local reposit
 
 ## Implementations
 
-- `vcpp/` — native Win32 C++20 / MSVC GUI and Visual Studio solution.
-- `codeblocks/` — GNU Code::Blocks / MinGW project using the same native Win32 C++ implementation.
-- `dotnet/` — WPF C# targeting .NET 8 Windows and .NET Framework 4.8.
-- `python/` — Python reference GUI/engine, kept Python 3.8 compatible.
+- `vcpp/` — native Win32 C++20 / MSVC GUI.
+- `codeblocks/` — GNU Code::Blocks / MinGW project sharing the native source.
+- `dotnet/` — WPF C# implementation.
+- `python/` — Python reference engine and CLI.
 - `engine/` — shared JSON schemas and build profiles.
 - `boot/` — BIOS/MBR, GPT, UEFI and El Torito integration definitions.
-- `icons/` — Chimera II OS-inspired deterministic vector application branding.
-- `docs/` — architecture, ISO formats, toolchains, security, portability and resilience documentation.
-- `python/tests/` — Python conformance and regression tests.
+- `icons/` — Chimera II OS-inspired deterministic vector branding.
+- `docs/` — architecture, build, ISO, toolchain, security and portability documentation.
 
-## Recursive whole-repository analysis and build
+## End-to-end repository build
 
-ISO-Tool can now acquire a GitHub/Git repository or accept an existing checkout, walk it recursively, inventory source files and build manifests, discover available toolchains, compile supported projects, and collect/link compatible native artifacts.
+ISO-Tool recursively analyzes a complete local checkout or Git repository. It inventories source files and build manifests, discovers the dependency/build graph, resolves external dependencies through the project's native package/build system, compiles supported projects, and links compatible native targets.
 
-The implementation is `python/iso_tool/recursive_build.py`. It recognizes C/C++/assembly, Rust, Go, Java, C#, F#, Python, JavaScript/TypeScript and common build manifests including CMake, Make, Meson, Cargo, Go modules, Maven, Gradle, MSBuild, .NET, npm and Python projects.
+The authoritative orchestration is `python/iso_tool/recursive_build.py`. External references are recorded by `python/iso_tool/external_refs.py` in `external-reference-report.json`. The end-to-end `python/build_iso.py` entry point then stages source plus compiled artifacts and invokes the selected ISO backend with the exact output path supplied by the user.
 
-Build execution is deliberately project-aware. Every discovered supported manifest is built in its own directory rather than concatenating unrelated projects. Direct C/C++ sources are compiled recursively; when a compatible native source set has exactly one `main()`/`wWinMain()` entry point, successful objects are linked into `recursive-native` or `recursive-native.exe`. Multiple entry points are reported instead of producing an invalid executable. Python is byte-compiled, while managed and other language projects are built by their native build systems when the corresponding toolchain is installed.
+Supported project/build families include C/C++ and assembly, Rust, Go, Java, C#, F#, Python, JavaScript/TypeScript, CMake, Make, Meson, Cargo, Go modules, Maven, Gradle, MSBuild/.NET and npm. Dependency resolution uses project-native mechanisms such as `npm ci/install`, `cargo fetch`, `go mod download`, `dotnet restore`, MSBuild Restore, Maven dependency resolution and Gradle dependency resolution. Python environments are not mutated implicitly.
 
-### Planner mode
+### Important linking rule
+
+The repository is **not** flattened into one invalid executable. Independent applications remain independent build targets. Direct C/C++ sources are compiled recursively; if exactly one compatible native entry point exists, successful objects can be linked into a native executable. Multiple entry points are reported rather than incorrectly combined. Project manifests are built using their own dependency and linker model.
+
+C/C++ `#pragma comment(lib, ...)` references are discovered as link-library references. MSVC consumes the pragma directly; GNU/MinGW receives corresponding library names through the linker command when the environment can resolve them.
+
+## Choosing the ISO destination and filename
+
+The native Windows **Build ISO…** command opens a Save dialog. The user chooses both the destination directory and the final filename (for example `D:\Images\ChimeraII.iso`). Existing files are protected by the overwrite prompt. The selected path is passed unchanged to the end-to-end ISO mastering entry point.
+
+CLI users have the same control:
+
+```text
+python build_iso.py C:\src\repository --output D:\Images\MyRepository.iso
+```
+
+The output filename is never silently replaced by a fixed repository name.
+
+## Native Windows linkage
+
+The main Win32 source explicitly contains:
+
+```cpp
+#pragma comment(lib, "comctl32.lib")
+```
+
+and also links `Comctl32.lib` at the MSVC project level. The output Save dialog uses the Windows common-dialog API and therefore also links `Comdlg32.lib`. Code::Blocks/MinGW links `comctl32` and `comdlg32` explicitly because GCC does not consume MSVC linker pragmas.
+
+## Recursive reports and artifacts
+
+Each executed recursive build writes:
+
+- `external-reference-report.json` — source includes, link-library pragmas, project dependency metadata and unresolved references.
+- `recursive-build-report.json` — sources, manifests, dependency-resolution jobs, build jobs, artifacts, skips and errors.
+- `recursive-build.log` — complete command/output transcript.
+- `objects/` — directly compiled native object files.
+- `iso-staging/` — source and compiled-artifact tree supplied to the ISO backend.
+
+## Pipeline
+
+`GitHub/local repository → recursive inventory → external-reference graph → toolchain discovery → dependency resolution → per-project compile/assemble → compatible native linking → artifact collection → ISO staging → user-selected ISO path/name → xorriso/xorrisofs/Oscdimg → validation → checksum/provenance report`
+
+## Planner versus execute
+
+Planner mode is the default and does not execute repository build scripts. Use `--execute` for recursive compilation. End-to-end ISO mastering is an explicit execution operation.
 
 ```text
 python -m iso_tool.recursive_build C:\src\repository
-```
-
-Planner mode inventories the whole checkout and produces no compiler/build side effects.
-
-### Execute a local checkout
-
-```text
 python -m iso_tool.recursive_build C:\src\repository --execute
+python build_iso.py C:\src\repository --output D:\Images\repository.iso
 ```
 
-### Acquire and execute a GitHub repository
-
-```text
-python -m iso_tool.recursive_build https://github.com/owner/repository.git --execute
-```
-
-Executed builds write `recursive-build.log` and `recursive-build-report.json` under the build output directory. The detailed design is documented in `docs/RECURSIVE_REPOSITORY_BUILD.md`.
-
-## Native Windows build parity
-
-The native Win32 GUI is intentionally shared by MSVC and GNU Code::Blocks/MinGW.
-
-### Visual C++
-
-Open `vcpp/ISO-Tool.sln` in Visual Studio 2022 and build **Release | x64**. The main native source explicitly contains `#pragma comment(lib, "comctl32.lib")`, and the project also declares `Comctl32.lib` for deterministic MSVC linkage of `InitCommonControlsEx`.
-
-### GNU Code::Blocks
-
-Open `codeblocks/ISO-Tool.cbp` in Code::Blocks with MinGW-w64/GNU GCC. The project builds the same `../vcpp/ISO-Tool.cpp` source with C++17, `-mwindows`, `-municode` and `-lcomctl32`.
-
-This keeps the application architecture identical while accommodating the different compiler/linker conventions. GCC/MinGW ignores the MSVC `#pragma comment` directive and receives the library through the project linker settings.
-
-## Build/error fixes in the current enhancement branch
-
-- Removed Python 3.10+ union-type syntax from boot validation/test modules so the declared Python 3.8 compatibility is real.
-- Added the explicit `comctl32.lib` pragma to the main Win32 source and retained the project-level linker dependency.
-- Added a Code::Blocks/MinGW project for the native GUI, including Unicode and Windows-subsystem entry-point handling.
-- Added recursive repository acquisition, inventory, build-manifest discovery, native compilation and compatible native linking.
-- Added regression tests for recursive traversal, manifest detection and planner mode.
-- Modernized the WPF target from .NET 6 to .NET 8 while retaining net48 compatibility.
-- Expanded CI to compile Python, run Python tests, build .NET 8/net48 and build the real MSVC Release x64 solution.
-- Corrected xorriso EFI mastering to use the EFI El Torito `-e` path instead of treating the EFI image as a BIOS `-b` entry.
-- Added El Torito validation checksums and section-platform handling.
-
-## Chimera II OS application branding
-
-`icons/ISO-Tool-logo.svg` is the vector master for the ISO-Tool application identity. Its geometry follows the existing Chimera II OS visual language: circular Chimera/griffin seal, infinity/boot-disc geometry, dark technical foundation, and gold/cyan/violet accents. The design direction is based on the existing Chimera II Library artwork rather than a newly generated raster image.
-
-The SVG is suitable for documentation and web UI. Native Windows `.ico` packaging remains an explicit rasterization step so the repository does not falsely claim a binary icon has been produced when only the vector master is present.
-
-## Advanced offline ISO inspection
-
-`python/iso_tool/advanced_inspect.py` provides bounded, read-only analysis without mounting or executing image contents. It detects ISO 9660 descriptors, Joliet/Rock Ridge hints, UDF markers, MBR/GPT system-area markers, and El Torito BIOS/EFI entries. Malformed/truncated structures and image-alignment problems are reported as warnings.
-
-## Reproducible mastering
-
-`python/iso_tool/image.py` now builds explicit xorriso/xorrisofs or Oscdimg commands. Reproducible profiles use `SOURCE_DATE_EPOCH` where supported and can require deterministic boot ordering.
-
-## Pipeline and entry points
-
-The application exposes explicit workflow entry points: `analyze-source`, `recursive-build`, `build-compiled-images`, `import-boot-image`, `inspect-iso`, `build-iso`, and `validate-image`.
-
-Normal pipeline:
-
-`GitHub/local repository → recursive inventory → build-manifest/dependency discovery → toolchain discovery → build-plan preview → recursive C/C++/ASM/project compilation → compatible native linking → compiled/runtime artifacts → boot artifact preparation/import → BIOS/UEFI validation → ISO staging → ISO/image backend → advanced inspection → validation → checksum/provenance report`
+Build scripts from untrusted repositories execute code. Use a disposable VM or isolated build environment for untrusted source.
 
 ## BIOS and UEFI
 
-`boot/bios/first_stage.asm` is a 512-byte NASM real-mode boot sector with `ORG 0x7C00`, the conventional BIOS load/handoff address, and BIOS interrupt services for its initial menu.
+`boot/bios/first_stage.asm` uses the conventional BIOS `0x7C00` first-stage load/handoff address. `boot/uefi/entry.c` describes a PE/COFF EFI application; UEFI does not use BIOS interrupts and has no universal `0x8000` entry address. A custom `0x8000` address is only used when explicitly configured.
 
-`boot/uefi/entry.c` is a PE/COFF EFI application entry contract. UEFI does not use BIOS interrupts and has no universal `0x8000` entry address. `0x8000` remains reserved for an explicitly configured custom loader/test profile.
+## ISO inspection and reproducibility
 
-## Boot testing and fallback
+`python/iso_tool/advanced_inspect.py` performs bounded, read-only ISO 9660/UDF/MBR/GPT/El Torito inspection. `python/iso_tool/image.py` constructs xorriso/xorrisofs/Oscdimg commands and supports reproducible profiles using `SOURCE_DATE_EPOCH` where supported.
 
-ISO-Tool statically validates configured boot entries and can construct QEMU/OVMF commands for isolated testing when those tools are installed. Results are never promoted from `unverified` to boot success without evidence. The fallback planner follows configured alternatives when an entry is unavailable or invalid.
+## Security and verification boundary
 
-## Security and resilience
+Imported boot sectors are treated as inert data. ISO-Tool does not automatically execute imported code, bypass firmware security, mount untrusted images, or perform destructive physical-disk operations. Static validation and optional isolated VM/emulator testing are kept separate from claims of successful boot.
 
-Imported boot sectors are treated as inert data. No automatic host execution, mounting, firmware-security bypass, or destructive physical-disk operation is performed. Dynamic testing belongs inside a disposable VM/emulator environment.
-
-Repository build scripts are executable code. For that reason planner mode is the default and `--execute` is explicit; users should build untrusted repositories only in disposable environments.
-
-## Verification status
-
-The repository now contains expanded CI intended to catch the Python, .NET, MSVC and MinGW build failures described above. Repository edits themselves do not constitute a successful Windows/MSVC/MinGW/QEMU run; those results depend on the external CI/toolchain environment.
+Repository edits and CI configuration do not by themselves prove that a Windows/MSVC/MinGW executable or ISO was successfully produced; those claims require an actual toolchain/CI run with recorded evidence.
