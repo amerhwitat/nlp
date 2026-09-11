@@ -12,9 +12,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install Python test runner
+        run: python -m pip install pytest
       - name: Test Python implementation
         working-directory: ISO-Tool/python
-        run: python -m unittest discover -s tests -v
+        run: python -m pytest -q
   windows:
     runs-on: windows-latest
     steps:
@@ -26,8 +28,7 @@ jobs:
         run: dotnet build ISO-Tool/dotnet/ISO-Tool/ISO-Tool.csproj -c Release -f net6.0-windows
       - name: Build native Visual Studio 2022 x64 Release
         shell: pwsh
-        run: |
-          msbuild 'ISO-Tool/vcpp/ISO-Tool.vcxproj' /m /p:Configuration=Release /p:Platform=x64
+        run: msbuild 'ISO-Tool/vcpp/ISO-Tool.vcxproj' /m /p:Configuration=Release /p:Platform=x64
       - name: Verify VC++ resources and outputs
         shell: pwsh
         run: |
