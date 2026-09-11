@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "purpose": "advisory registry for gluing repository hierarchies and boot images into ISO artifacts",
+  "research_date": "2026-09-11",
+  "preferred_backends": [
+    {"name":"xorriso","role":"ISO9660/UDF mastering and BIOS/UEFI image integration","source":"https://www.gnu.org/software/xorriso/"},
+    {"name":"CMake","role":"portable configure/build dependency graph","source":"https://cmake.org/cmake/help/latest/manual/cmake.1.html"},
+    {"name":"llama.cpp","role":"local LLM inference for constrained planning","source":"https://github.com/ggml-org/llama.cpp"}
+  ],
+  "rules": ["preserve repository hierarchy", "hash staged artifacts", "prefer deterministic build metadata", "never execute arbitrary web scripts", "require explicit authorization for downloads/installers"]
+}
