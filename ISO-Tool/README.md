@@ -1,97 +1,136 @@
 # ISO-Tool
 
-Cross-language desktop ISO/image build orchestrator for GitHub and local repositories.
+Cross-language desktop ISO/image build orchestrator for GitHub and local repositories, with a native Visual Studio 2022/MSVC front end.
 
 ## Implementations
 
-- `vcpp/` — native Win32 C++20 / MSVC GUI.
-- `dotnet/` — WPF C# targeting `net6.0-windows` and .NET Framework 4.8.
+- `vcpp/` — native Win32 C++20 / MSVC GUI, embedded application icon and Windows resource script.
+- `dotnet/` — WPF C# implementation.
 - `python/` — Python reference GUI/engine.
 - `engine/` — shared JSON schemas and build profiles.
 - `boot/` — BIOS/MBR, GPT, UEFI and El Torito integration definitions.
-- `docs/` — architecture, ISO formats, toolchains, security and resilience documentation.
-- `python/tests/` — Python resilience and conformance tests.
+- `icons/` — ISO/CD/DVD application icon resources.
+- `docs/` — architecture, ISO formats, toolchains, security, resilience and configuration documentation.
 
-## Pipeline and entry points
+## Build pipeline
 
-The application exposes explicit workflow entry points: `analyze-source`, `build-compiled-images`, `import-boot-image`, `build-iso`, and `validate-image`.
+The native GUI now treats compilation/linking and ISO staging as one visible workflow:
 
-The normal pipeline is:
+`repository → dependency scan → build/compile/link → artifact collection → source staging → application staging → boot-image export → ISO mastering → validation`
 
-`GitHub/local repository → inventory → toolchain discovery → build-plan preview → C/C++/ASM/C# compilation → compiled images → boot artifact preparation/import → BIOS/UEFI validation → ISO staging → ISO/image backend → validation → checksum/report`
+During artifact collection the live log explicitly reports messages such as:
 
-## BIOS and UEFI first-stage boot
+- `Adding executable: ...`
+- `Adding library: ...`
+- `Adding binary image: ...`
+- `Added N executable/library/binary artifacts to ISO`
+- `Added source tree to ISO /src`
 
-The BIOS first-stage artifact is `boot/bios/first_stage.asm`. It is a 512-byte NASM real-mode boot sector with `ORG 0x7C00`, the conventional BIOS load/handoff address, and BIOS `INT 10h`/`INT 16h` services for its initial menu.
+CMake is preferred when a repository has a `CMakeLists.txt`; the native ISO-Tool Visual Studio project falls back to MSBuild when appropriate. Existing artifacts are still staged when no supported build entry point is available.
 
-The UEFI contract is `boot/uefi/entry.c`. UEFI does **not** use BIOS interrupts and has no universal `0x8000` entry address. UEFI firmware loads a PE/COFF EFI application and enters its EFI image entry point. `0x8000` is reserved for an explicitly configured custom loader/test profile only.
+## CD and DVD profiles
 
-## Boot testing and fallback
+The user chooses **CD** or **DVD** before mastering. The output is named `chimera-cd.iso` or `chimera-dvd.iso` by default.
 
-ISO-Tool statically validates configured boot entries and can invoke QEMU for isolated BIOS testing and QEMU+OVMF for UEFI testing when those tools are installed. QEMU tests can use snapshot/read-only semantics so the source image is not modified. Results are classified as `static`, `assembled`, `emulated`, `timeout`, or `unverified`.
+The GUI exposes:
 
-If the preferred boot entry is unavailable or fails validation, the deterministic boot planner follows its configured fallback chain and tries the next eligible entry. Each attempt and reason appears in the GUI details log. Required boot/integrity failures can still stop final image publication.
+- ISO 9660
+- ISO 9660 + Joliet + Rock Ridge
+- UDF
+- BIOS
+- UEFI
+- BIOS + UEFI
+- dependency scan / installation policy
+- output directory
+- boot-image export
 
-See `docs/BIOS_UEFI_BOOT_VALIDATION.md`.
+Microsoft documents Oscdimg support for ISO 9660, Joliet and UDF and El Torito CD/DVD boot options. The implementation therefore keeps filesystem and boot intent as explicit settings instead of assuming that every ISO is the same. See Microsoft Oscdimg documentation: https://learn.microsoft.com/windows-hardware/manufacture/desktop/oscdimg-command-line-options.
 
-## New image-mastering profiles
+## ISO staging hierarchy
 
-`python/iso_tool/image_profiles.py` defines explicit `data`, `bios-only`, `uefi-only`, and `bios-uefi` profiles. The mastering layer now passes firmware/filesystem intent to xorriso/xorrisofs or Oscdimg instead of treating every ISO as an undifferentiated data image.
+Generated staging follows an optical-image-oriented hierarchy:
 
-Microsoft documents Oscdimg support for ISO 9660, Joliet and UDF, plus BIOS/UEFI El Torito multi-boot entries; ISO-Tool models those choices explicitly. citeturn0search0turn0search1
+```text
+ISO root/
+├── boot/
+│   ├── bios/
+│   ├── uefi/
+│   └── spitfire/
+├── efi/
+│   └── boot/
+├── bin/
+├── lib/
+├── src/
+├── include/
+├── applications/
+│   ├── linux/
+│   └── windows/
+├── tools/
+├── docs/
+└── metadata/
+```
 
-xorriso exposes El Torito BIOS and EFI boot images, system-area/MBR handling and EFI partition image concepts; ISO-Tool keeps those operations backend-driven rather than executing image contents on the host. citeturn0search2
+The complete selected repository source is staged under `/src`. Build products are collected into `/bin` and `/lib` according to file type. Locally authorized free applications can be staged under `/applications/linux` and `/applications/windows` without automatically redistributing proprietary binaries.
 
-## Offline ISO inspection
+## Chimera II Spit Fire export
 
-`python/iso_tool/iso_inspect.py` performs read-only inspection of ISO 9660 descriptors and reports likely Joliet/UDF/El Torito structures, boot-catalog sector information, size and SHA-256. It does not execute or mount untrusted image contents.
+**Build Boot Image** exports `spitfire-boot.img` to the user-selected output directory. **Boot Image + ISO** performs both operations. If an already assembled Chimera boot artifact exists, it is preferred over a generated placeholder/export container.
 
-This makes ISO analysis useful even when the network is unavailable.
+The ISO Tool's boot model remains compatible with BIOS/MBR and UEFI profiles and the Chimera II Spit Fire/Jasper boot architecture.
 
-## Local repositories and offline operation
+## Dependencies
 
-A local repository directory can be supplied directly. Local source inventory and authorized builds do not require Internet access. Remote Git acquisition can periodically check connectivity, wait for restoration, and retry network operations. Network status and retry activity are displayed in the live operation log.
+Startup performs a dependency scan. The GUI provides two policies:
 
-## Boot-sector / ISO import
+1. `Scan only`
+2. `Install missing dependencies`
 
-The GUI includes **Import Boot Sector / ISO**. It accepts local `.iso`, `.img`, and `.bin` files, inspects the first sector, detects `0x55AA`, computes a first-sector SHA-256, and can stage a bounded boot-sector region. Imported bytes are inert and are not executed during import. The source image is never modified.
+Automatic installation is restricted to trusted package-manager mechanisms such as Windows Package Manager/WinGet. Missing tools remain visible in the live log when they cannot be safely installed automatically.
 
-## Large-image and boot-order preparation
+Typical dependencies include NASM, MSBuild/CMake, xorriso or Oscdimg, and QEMU for optional boot validation.
 
-The mastering architecture now reserves a boot-order/profile layer so large images can use explicit boot-file ordering when required by the selected backend. Microsoft documents boot-order files for images above 4.5 GB; ISO-Tool treats ordering as a reproducible build input rather than relying on filesystem enumeration order. citeturn0search0
+## Embedded application icon
+
+`icons/ISO-Tool.ico` is compiled into the Windows executable through `ISO-Tool.rc`. The icon is a CD/DVD-inspired optical-media symbol and does not require an external icon file at runtime.
+
+`vcpp/resource.h` contains the resource identifier and `vcpp/ISO-Tool.rc` binds the icon into the PE application resource section.
+
+## Boot validation
+
+The BIOS first-stage artifact is `boot/bios/first_stage.asm`. It is a 512-byte NASM real-mode boot sector with `ORG 0x7C00`.
+
+The UEFI contract is `boot/uefi/entry.c`. UEFI loads a PE/COFF EFI application rather than using BIOS interrupts. `0x8000` is reserved for explicitly configured custom loader/test profiles.
+
+QEMU and QEMU+OVMF can be used for isolated BIOS/UEFI validation when installed. Results are classified as `static`, `assembled`, `emulated`, `timeout`, or `unverified`.
+
+## Image formats and backend options
+
+The engine models:
+
+- ISO 9660
+- Joliet
+- Rock Ridge
+- UDF
+- El Torito
+- BIOS/MBR
+- GPT
+- UEFI/EFI System Partition
+- BIOS + UEFI hybrid images
+
+Backends include xorriso/xorrisofs and Microsoft Oscdimg when available.
+
+## Offline inspection and import
+
+`python/iso_tool/iso_inspect.py` performs read-only ISO inspection. The GUI can import local `.iso`, `.img`, and `.bin` files and stage bounded boot-sector data as inert input.
 
 ## Reproducibility and provenance
 
-The engine records the selected profile, source hash, boot-artifact hashes, backend selection, toolchain identity and validation results. Future image-report schemas can consume these records to make generated artifacts auditable and reproducible.
-
-## Fail-forward runtime policy
-
-Recoverable runtime failures in individual compiler, assembler, scanner, boot-artifact, or other independent jobs are isolated rather than terminating the entire pipeline. The job-level exception is logged, the failure is recorded, monotonic progress advances, and the next independent job/step continues.
-
-Fail-forward is **not** fail-open: fatal image-integrity, staging, authorization, or safety conditions can still stop publication.
-
-See `docs/RESILIENT_WORKFLOWS.md`.
-
-## Live GUI details
-
-All three front ends expose a live details section while work is running:
-
-- **Python/Tkinter:** live operation log, status line, progress bar, and background worker.
-- **C# WPF:** timestamped live log, boot-validation status, and progress bar.
-- **VC++ Win32:** native multiline log, boot status, and progress controls updated through the Windows message queue.
-
-Progress is cumulative across the whole operation rather than restarting for every stage.
-
-## Toolchains and image formats
-
-The discovery model supports local MASM (`ml`/`ml64`), NASM, MSVC/CL, MSBuild, GCC/G++, MinGW, CMake, Make and `dotnet`. Image tooling includes xorriso/xorrisofs and Oscdimg where locally installed. The engine models ISO 9660, Joliet, Rock Ridge, UDF, El Torito, BIOS/MBR, GPT, UEFI/EFI System Partition and BIOS+UEFI hybrid images.
-
-QEMU is supported as the isolated validation layer; QEMU provides snapshot mode that writes temporary changes instead of modifying the source image, which is appropriate for disposable boot tests. citeturn0search6turn0search7
+The generated staging directory contains `metadata/iso-tool-manifest.txt` with media type, filesystem, boot mode and hierarchy information. The build pipeline records toolchain/backend decisions in the live operation log.
 
 ## Security
 
-Builds use temporary workspaces, explicit authorization, structured process arguments, timeouts, cancellation, output limits and path validation. Imported boot sectors are bounded and never executed automatically. Physical-disk installation is a separate destructive operation requiring explicit target selection and confirmation.
+ISO-Tool does not execute imported boot sectors. Third-party package/application sources remain explicit and are not silently treated as trusted. Physical-disk operations are outside this image-mastering workflow.
 
 ## Status
 
-Environment-dependent Windows compilation, QEMU/OVMF boot tests, and end-to-end ISO generation are not claimed as verified merely by repository edits; the application reports `unverified` when required external tooling is absent.
+Windows compilation and end-to-end ISO generation remain environment-dependent. The application reports missing tools and failed backend operations in its live log rather than claiming an ISO was produced when it was not.
