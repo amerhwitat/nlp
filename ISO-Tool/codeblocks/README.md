@@ -12,13 +12,27 @@ This directory provides a GNU Code::Blocks project for the native Win32 ISO-Tool
 
 ## Build
 
-Open `ISO-Tool.cbp` and select **Debug** or **Release**. The project uses the shared native source `../vcpp/ISO-Tool.cpp` and links both `comctl32` and `comdlg32`.
+Open `ISO-Tool.cbp` and select **Debug** or **Release**. The project uses the shared native source `../vcpp/ISO-Tool.cpp`, the embedded `../vcpp/ISO-Tool.rc` resource, and links both `comctl32` and `comdlg32`.
 
 `-mwindows` and `-municode` preserve the `wWinMain` Windows GUI entry point. The shared source explicitly contains `#pragma comment(lib, "comctl32.lib")`; GCC ignores this MSVC-specific directive, so Code::Blocks supplies the equivalent libraries through linker settings.
 
+## Professional dashboard
+
+The GUI displays live progress for 🔧 Assembling, 💾 Building boot sector, ⚙ Compilation, 🔗 Linking and 🏁 Finishing up, plus a live build log. Progress events emitted by the Python engine are streamed to the native window.
+
+## Toolchain selection
+
+The native frontend detects C/C++ compilers, linkers and assemblers from PATH, Windows environment variables and Visual Studio registry locations. Detected versions and paths are shown in independent selectors. Refresh performs a read-only re-scan; the selected paths are passed to the recursive build engine.
+
+See `../docs/WINDOWS_TOOLCHAIN_DETECTION.md`.
+
 ## User-selected ISO destination
 
-Click **Build ISO…** in the native GUI. The Windows Save dialog lets the user choose the destination directory and filename. The exact selected path is passed to the recursive `build_iso.py` helper, so the tool does not impose a fixed ISO filename.
+Click **Build ISO…** in the native GUI. The Windows Save dialog lets the user choose the destination directory and filename. The exact selected path is passed to the recursive `build_iso.py` helper.
+
+## Resources
+
+`../vcpp/ISO-Tool.rc` embeds the application icon bytes and progress-stage strings directly into the Windows executable resource section. The Chimera II OS-inspired SVG remains in `../icons/ISO-Tool-logo.svg` as the editable vector source.
 
 ## Recursive dependency/build workflow
 
@@ -34,5 +48,5 @@ Independent applications remain independent. ISO-Tool never concatenates all rep
 
 - Debug: `bin/Debug/ISO-Tool.exe`
 - Release: `bin/Release/ISO-Tool.exe`
-- Recursive reports: `external-reference-report.json`, `recursive-build-report.json`, `recursive-build.log`
+- Recursive reports: `external-reference-report.json`, `recursive-build-report.json`, `recursive-build.log`, `toolchain-selection.json`
 - ISO staging: `<selected-name>.iso-tool-build/iso-staging/`
