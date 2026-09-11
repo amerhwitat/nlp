@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -32,8 +33,6 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            // Fail-forward: an individual tool/runtime failure is recorded and
-            // must not prevent unrelated later steps from running.
             log($"[error] {name} skipped after {ex.GetType().Name}: {ex.Message}");
         }
     }
