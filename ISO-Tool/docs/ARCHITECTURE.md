@@ -9,9 +9,16 @@ ISO-Tool has three independent front ends—native Win32 C++, WPF C#, and Python
 3. `import-boot-image`
 4. `build-iso`
 5. `validate-image`
-6. `build-workspace` — acquire and build the related Chimera II OS, BizX and BizXtreme repositories into one staged image.
+6. `detect-toolchains` — converted Windows compiler/assembler detector.
+7. `build-workspace` — acquire and build the related Chimera II OS, BizX and BizXtreme repositories into one staged image.
 
 These entry points can be invoked separately so a compiled-image workflow can feed a later ISO build.
+
+## Toolchain detection stage
+
+`python/iso_tool/toolchain_detector.py` replaces the legacy Windows batch detector with a reusable Python API. It checks PATH first, then bounded installation hints and Visual Studio registry roots. The report covers GCC/MinGW, MSVC, NASM, MASM, Go, Rust, Java, Python, LLVM/Clang, LLD, CMake, Ninja, MSBuild, Git and ISO mastering tools.
+
+The detector runs immediately after output-layout initialization and before repository dependency/build planning. It emits `manifests/windows-toolchains.json`. Environment variables and PATH changes are process-local by default; persistent HKCU changes require explicit `--apply-user-env`.
 
 ## Related repository workspace
 
@@ -27,16 +34,18 @@ The standard workspace profile is `engine/repository-profiles.json`. It identifi
 
 1. Acquire GitHub source at an immutable ref when supplied, with connectivity recovery for network failures.
 2. Accept a local repository directly when supplied.
-3. Inventory source, project files, submodules and build metadata.
-4. Detect local compiler/assembler/image-generator capabilities.
-5. Generate a reviewable build plan.
-6. Compile/assemble independent jobs in parallel subject to dependencies.
-7. Link/package boot artifacts.
-8. Optionally inspect/import bounded boot-sector data from local ISO/IMG/BIN media.
-9. Construct a staging filesystem tree.
-10. Generate ISO/IMG through a selected capable backend.
-11. Validate filesystem, boot metadata and output size.
-12. Calculate SHA-256 and emit a reproducibility/build report.
+3. Initialize the selected output layout.
+4. Detect local compiler/assembler/image-generator capabilities using the converted toolchain detector.
+5. Inventory source, project files, submodules and build metadata.
+6. Resolve/check dependencies using the detected capabilities.
+7. Generate a reviewable build plan.
+8. Compile/assemble independent jobs in parallel subject to dependencies.
+9. Link/package boot artifacts.
+10. Optionally inspect/import bounded boot-sector data from local ISO/IMG/BIN media.
+11. Construct a staging filesystem tree.
+12. Generate ISO/IMG through a selected capable backend.
+13. Validate filesystem, boot metadata and output size.
+14. Calculate SHA-256 and emit a reproducibility/build report.
 
 The multi-repository workflow applies the same stages independently to each repository before combining their source and compatible artifacts.
 
