@@ -1,0 +1,4 @@
+#pragma once
+#define IDR_ISOTOOL_LOGO 101
+#define IDR_ISOTOOL_MANIFEST 102
+#define IDI_ISOTOOL 103
