@@ -7,9 +7,9 @@
 		<Option compiler="gnu_gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/ISO-Tool" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/ISO-Tool.exe" prefix_auto="1" extension_auto="0" />
 				<Option object_output="obj/Debug/" />
-				<Option type="1" />
+				<Option type="0" />
 				<Option compiler="gnu_gcc" />
 				<Compiler>
 					<Add option="-std=c++17" />
@@ -18,11 +18,16 @@
 					<Add option="-DUNICODE" />
 					<Add option="-D_UNICODE" />
 				</Compiler>
+				<Linker>
+					<Add option="-mwindows" />
+					<Add option="-municode" />
+					<Add library="comctl32" />
+				</Linker>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/ISO-Tool" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/ISO-Tool.exe" prefix_auto="1" extension_auto="0" />
 				<Option object_output="obj/Release/" />
-				<Option type="1" />
+				<Option type="0" />
 				<Option compiler="gnu_gcc" />
 				<Compiler>
 					<Add option="-std=c++17" />
@@ -32,15 +37,17 @@
 					<Add option="-DUNICODE" />
 					<Add option="-D_UNICODE" />
 				</Compiler>
+				<Linker>
+					<Add option="-mwindows" />
+					<Add option="-municode" />
+					<Add library="comctl32" />
+				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-std=c++17" />
 		</Compiler>
-		<Linker>
-			<Add library="comctl32" />
-		</Linker>
-		<Unit filename="ISO-Tool.cpp" />
+		<Unit filename="../vcpp/ISO-Tool.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />
