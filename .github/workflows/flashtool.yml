@@ -1,0 +1,29 @@
+name: FlashTool CI
+
+on:
+  push:
+    paths:
+      - 'FlashTool/**'
+      - '.github/workflows/flashtool.yml'
+  pull_request:
+    paths:
+      - 'FlashTool/**'
+      - '.github/workflows/flashtool.yml'
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+      - run: PYTHONPATH=FlashTool python -m unittest discover -s FlashTool/tests -p 'test_*.py'
+
+  cpp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S FlashTool/build -B FlashTool/build/out -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build FlashTool/build/out --config Release
+      - run: FlashTool/build/out/flashtool_core_smoke
