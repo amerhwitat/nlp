@@ -1,4 +1,4 @@
-"""Explicit workflow entry points for compiled artifacts and ISO creation."""
+"""Explicit workflow entry points for recursive source/build and ISO creation."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,8 +11,9 @@ class WorkflowEntryPoint:
     handler: str
 
 ENTRY_POINTS = (
-    WorkflowEntryPoint("analyze-source", "Analyze source", "Inventory a local checkout or acquired repository.", "analyze_source"),
-    WorkflowEntryPoint("build-compiled-images", "Build compiled images", "Compile/assemble/link authorized source jobs and collect artifacts.", "build_compiled_images"),
+    WorkflowEntryPoint("analyze-source", "Analyze source", "Recursively inventory a complete local checkout or acquire a Git repository and inventory its source/build manifests.", "analyze_source"),
+    WorkflowEntryPoint("recursive-build", "Recursive build", "Recursively compile discovered projects, assemble native sources, link compatible native targets, and collect build/runtime artifacts.", "build_repository"),
+    WorkflowEntryPoint("build-compiled-images", "Build compiled images", "Compile/assemble/link authorized source jobs and collect artifacts for image staging.", "build_compiled_images"),
     WorkflowEntryPoint("import-boot-image", "Import boot sectors / ISO", "Inspect and stage bounded boot artifacts from a local image.", "import_boot_image"),
     WorkflowEntryPoint("inspect-iso", "Advanced ISO inspection", "Read-only ISO 9660, UDF, MBR/GPT and El Torito analysis.", "inspect_iso"),
     WorkflowEntryPoint("build-iso", "Build ISO / IMG", "Stage artifacts and invoke the selected ISO/image backend.", "build_iso"),
