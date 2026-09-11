@@ -30,6 +30,15 @@ class Analysis:
     payload_version: Optional[int] = None
     manifest_size: Optional[int] = None
     manifest_signature_size: Optional[int] = None
+    manifest_offset: Optional[int] = None
+    sparse_block_size: Optional[int] = None
+    sparse_total_blocks: Optional[int] = None
+    avb_required_major: Optional[int] = None
+    avb_required_minor: Optional[int] = None
+    avb_algorithm: Optional[int] = None
+    avb_rollback_index: Optional[int] = None
+    avb_rollback_location: Optional[int] = None
+    avb_descriptors_size: Optional[int] = None
     notes: Optional[List[str]] = None
 
     def __post_init__(self):
@@ -47,6 +56,24 @@ def _crash_safe_unpack(fmt: str, data: bytes, offset: int):
     return struct.unpack_from(fmt, data, offset)
 
 
+def _parse_avb_header(data: bytes, result: Analysis) -> None:
+    # AvbVBMetaImageHeader is big-endian and 256 bytes long.
+    if len(data) < 256 or not data.startswith(AVB_MAGIC):
+        return
+    required = _crash_safe_unpack(">II", data, 4)
+    algorithm = _crash_safe_unpack(">I", data, 16)
+    descriptors_size = _crash_safe_unpack(">Q", data, 112)
+    rollback = _crash_safe_unpack(">Q", data, 128)
+    rollback_location = _crash_safe_unpack(">I", data, 140)
+    if required:
+        result.avb_required_major, result.avb_required_minor = required
+    result.avb_algorithm = algorithm[0] if algorithm else None
+    result.avb_descriptors_size = descriptors_size[0] if descriptors_size else None
+    result.avb_rollback_index = rollback[0] if rollback else None
+    result.avb_rollback_location = rollback_location[0] if rollback_location else None
+    result.notes.append("bounded AVB header fields parsed; signature was not modified")
+
+
 def analyze_bytes(data: bytes, path: str = "") -> Analysis:
     result = Analysis(path=path, size=len(data), sha256=hashlib.sha256(data).hexdigest())
 
@@ -61,6 +88,8 @@ def analyze_bytes(data: bytes, path: str = "") -> Analysis:
         header = _crash_safe_unpack("<IHHHHIIII", data, 0)
         if header:
             _, major, minor, file_hdr, chunk_hdr, block_size, total_blocks, total_chunks = header
+            result.sparse_block_size = block_size
+            result.sparse_total_blocks = total_blocks
             result.notes.append(
                 f"sparse v{major}.{minor}, block_size={block_size}, "
                 f"blocks={total_blocks}, chunks={total_chunks}, "
@@ -76,12 +105,13 @@ def analyze_bytes(data: bytes, path: str = "") -> Analysis:
         result.payload_version = major[0] if major else None
         result.manifest_size = manifest_size[0] if manifest_size else None
         result.manifest_signature_size = sig_size[0] if sig_size else None
+        result.manifest_offset = 24 + (sig_size[0] if sig_size else 0)
         result.notes.append("CrAU update payload header detected; payload was not applied")
 
     if data.startswith(AVB_MAGIC):
         result.avb = True
         result.kind = "vbmeta"
-        result.notes.append("VBMeta header detected")
+        _parse_avb_header(data, result)
     elif AVB_FOOTER_MAGIC in data[-4096:]:
         result.avb = True
         result.notes.append("AVB footer marker detected near image tail")
