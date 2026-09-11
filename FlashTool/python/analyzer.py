@@ -61,10 +61,10 @@ def _parse_avb_header(data: bytes, result: Analysis) -> None:
     if len(data) < 256 or not data.startswith(AVB_MAGIC):
         return
     required = _crash_safe_unpack(">II", data, 4)
-    algorithm = _crash_safe_unpack(">I", data, 16)
-    descriptors_size = _crash_safe_unpack(">Q", data, 112)
-    rollback = _crash_safe_unpack(">Q", data, 128)
-    rollback_location = _crash_safe_unpack(">I", data, 140)
+    algorithm = _crash_safe_unpack(">I", data, 28)
+    descriptors_size = _crash_safe_unpack(">Q", data, 104)
+    rollback = _crash_safe_unpack(">Q", data, 112)
+    rollback_location = _crash_safe_unpack(">I", data, 124)
     if required:
         result.avb_required_major, result.avb_required_minor = required
     result.avb_algorithm = algorithm[0] if algorithm else None
