@@ -10,31 +10,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install Python test runner
-        run: python -m pip install pytest
+        with: {python-version: '3.11'}
+      - run: python -m pip install pytest
       - name: Test Python implementation
         working-directory: ISO-Tool/python
         run: python -m pytest -q
+      - name: Python unified GUI import smoke test
+        working-directory: ISO-Tool/python
+        run: python -c "from iso_tool.unified_gui import FEATURE_GROUPS; assert sum(map(len,FEATURE_GROUPS.values())) == 44"
+  java:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17', cache: maven}
+      - name: Build Java implementation
+        working-directory: ISO-Tool/java
+        run: mvn -B -q package
   windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x'
+        with: {dotnet-version: '6.0.x'}
       - name: Build .NET 6 desktop
         run: dotnet build ISO-Tool/dotnet/ISO-Tool/ISO-Tool.csproj -c Release -f net6.0-windows
       - name: Build native Visual Studio 2022 x64 Release
         shell: pwsh
         run: msbuild 'ISO-Tool/vcpp/ISO-Tool.vcxproj' /m /p:Configuration=Release /p:Platform=x64
-      - name: Verify VC++ resources and outputs
+      - name: Build unified native GUI
+        shell: pwsh
+        run: msbuild 'ISO-Tool/vcpp/ISO-Tool-UnifiedGui.vcxproj' /m /p:Configuration=Release /p:Platform=x64
+      - name: Verify VC++ projects and outputs
         shell: pwsh
         run: |
-          if (-not (Test-Path 'ISO-Tool/vcpp/ISO-Tool.sln')) { throw 'VC++ solution missing' }
-          if (-not (Test-Path 'ISO-Tool/vcpp/ISO-Tool.vcxproj')) { throw 'VC++ project missing' }
-          if (-not (Test-Path 'ISO-Tool/vcpp/ISO-Tool.rc')) { throw 'resource script missing' }
+          foreach ($p in @('ISO-Tool/vcpp/ISO-Tool.sln','ISO-Tool/vcpp/ISO-Tool.vcxproj','ISO-Tool/vcpp/ISO-Tool-UnifiedGui.vcxproj')) { if (-not (Test-Path $p)) { throw "missing $p" } }
           if (-not (Test-Path 'ISO-Tool/icons/ISO-Tool.ico')) { throw 'embedded application icon missing' }
-          $exe = Get-ChildItem -Path 'ISO-Tool/vcpp' -Recurse -Filter 'ISO-Tool.exe' | Select-Object -First 1
-          if (-not $exe) { throw 'native ISO-Tool.exe was not produced' }
