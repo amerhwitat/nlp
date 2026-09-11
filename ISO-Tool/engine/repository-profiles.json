@@ -1,13 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": 1,
+  "version": 2,
   "repositories": [
     {
       "id": "chimera-ii-os",
       "name": "Chimera II OS",
       "url": "https://github.com/amerhwitat/ChimeraIIOS",
       "role": "operating-system",
-      "required": true
+      "required": true,
+      "isa_registry": "isa/registry.py",
+      "canonical_isa_header": "include/chimera/universal_isa.hpp",
+      "microop_contract": "include/chimera/universal_microop.hpp"
     },
     {
       "id": "bizx",
@@ -32,6 +35,11 @@
     "stage_libraries": true,
     "stage_boot_images": true,
     "preserve_source_tree": true,
-    "preserve_provenance": true
+    "preserve_provenance": true,
+    "validate_isa_registry": true,
+    "stage_isa_metadata": true,
+    "stage_microop_contract": true,
+    "deterministic_manifests": true,
+    "sha256_artifact_manifest": true
   }
 }
