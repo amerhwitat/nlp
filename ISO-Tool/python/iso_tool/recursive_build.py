@@ -2,9 +2,9 @@
 
 The builder walks a complete checkout, detects language/build manifests, compiles
 supported projects through their native build systems, and records artifacts.
-It deliberately does not pretend that unrelated languages can be linked into one
-native executable: native C/C++/ASM targets are linkable when a target has one
-entry point; managed/interpreted projects are built or byte-compiled separately.
+Unrelated languages are never incorrectly forced into one native executable:
+native targets are linked per compatible target, while managed/interpreted code
+is built or byte-compiled separately.
 """
 from __future__ import annotations
 
@@ -14,9 +14,11 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Iterable, List, Optional, Sequence, Tuple
+from urllib.parse import urlparse
 
 SKIP_DIRS = {
     ".git", ".hg", ".svn", "node_modules", "__pycache__", ".venv", "venv",
@@ -130,8 +132,31 @@ def _run(cmd: Sequence[str], cwd: Path, log: Optional[Path] = None) -> int:
     return proc.returncode
 
 
-def _first_manifest(manifests: List[ManifestRecord], kinds: Sequence[str]) -> Optional[ManifestRecord]:
-    return next((m for m in manifests if m.kind in kinds), None)
+def acquire_repository(source: str, destination: Optional[Path] = None) -> Tuple[Path, Optional[Path]]:
+    """Accept a local checkout or clone a GitHub/HTTPS repository into a temporary workspace."""
+    candidate = Path(source).expanduser()
+    if candidate.exists():
+        return candidate.resolve(), None
+    parsed = urlparse(source)
+    if parsed.scheme not in {"https", "http", "git"} or not parsed.netloc:
+        raise ValueError("repository must be an existing path or a Git URL")
+    git = _tool("git")
+    if not git:
+        raise RuntimeError("git is required to acquire a remote repository")
+    if destination:
+        destination.mkdir(parents=True, exist_ok=True)
+        checkout = destination / "repository"
+        cleanup = None
+    else:
+        temp = Path(tempfile.mkdtemp(prefix="iso-tool-repo-"))
+        checkout = temp / "repository"
+        cleanup = temp
+    rc = _run([git, "clone", "--recursive", "--depth", "1", source, str(checkout)], checkout.parent)
+    if rc != 0:
+        if cleanup:
+            shutil.rmtree(str(cleanup), ignore_errors=True)
+        raise RuntimeError("git clone failed")
+    return checkout.resolve(), cleanup
 
 
 def _native_direct_build(root: Path, sources: List[SourceRecord], out: Path,
@@ -158,8 +183,8 @@ def _native_direct_build(root: Path, sources: List[SourceRecord], out: Path,
         if not cc:
             errors.append("No compiler for " + record.path)
             continue
-        cmd = [cc, "-c", "-O2", "-std=c++17" if record.language == "cpp" else "-std=c11",
-               str(src), "-o", str(obj)]
+        standard = "-std=c++17" if record.language == "cpp" else "-std=c11"
+        cmd = [cc, "-c", "-O2", standard, str(src), "-o", str(obj)]
         rc = _run(cmd, root, log)
         artifacts.append(BuildArtifact(str(obj.relative_to(out)), "object", cmd, rc,
                                        "built" if rc == 0 else "failed"))
@@ -170,9 +195,7 @@ def _native_direct_build(root: Path, sources: List[SourceRecord], out: Path,
 
     entries = [s for s in native if s.entry_point]
     if len(entries) == 1 and objects:
-        exe = out / "recursive-native" + (".exe" if os.name == "nt" else "")
-        # The executable name is created from Path pieces to avoid shell interpolation.
-        exe = Path(str(exe))
+        exe = out / ("recursive-native.exe" if os.name == "nt" else "recursive-native")
         cmd = [compiler or ccompiler] + [str(p) for p in objects] + ["-o", str(exe)]
         rc = _run(cmd, root, log)
         artifacts.append(BuildArtifact(str(exe.relative_to(out)), "executable", cmd, rc,
@@ -199,28 +222,27 @@ def build_repository(root: Path, output: Optional[Path] = None, execute: bool = 
         return RecursiveReport(str(root), sources, manifests, artifacts, skipped, errors)
 
     log = out / "recursive-build.log"
-    # Prefer project-native build systems. This avoids incorrectly linking unrelated projects.
-    handlers = [
-        ("cmake", ["cmake", "--build", "build", "--config", "Release"]),
-        ("make", ["make"]),
-        ("meson", ["meson", "compile", "-C", "build"]),
-        ("cargo", ["cargo", "build", "--release"]),
-        ("go", ["go", "build", "./..."]),
-        ("maven", ["mvn", "-B", "package"]),
-        ("gradle", ["gradle", "build"]),
-        ("msbuild", ["msbuild", "/m", "/p:Configuration=Release"]),
-        ("dotnet", ["dotnet", "build", "-c", "Release"]),
-        ("node", ["npm", "run", "build"]),
-    ]
-    for kind, command in handlers:
-        manifest = _first_manifest(manifests, [kind])
-        if not manifest:
+    handlers = {
+        "cmake": ["cmake", "--build", "build", "--config", "Release"],
+        "make": ["make"], "meson": ["meson", "compile", "-C", "build"],
+        "cargo": ["cargo", "build", "--release"], "go": ["go", "build", "./..."],
+        "maven": ["mvn", "-B", "package"], "gradle": ["gradle", "build"],
+        "msbuild": ["msbuild", "/m", "/p:Configuration=Release"],
+        "dotnet": ["dotnet", "build", "-c", "Release"],
+        "node": ["npm", "run", "build"],
+    }
+    # Build every discovered manifest, not only the first one. Each project is built in its own directory.
+    for manifest in manifests:
+        kind = manifest.kind
+        command = handlers.get(kind)
+        if not command:
+            if kind in {"python", "autotools"}:
+                skipped.append(manifest.path + ": no universal native build command")
             continue
         if not _tool(command[0]):
-            skipped.append(kind + ": tool not installed")
+            skipped.append(manifest.path + ": " + command[0] + " not installed")
             continue
         work = root / Path(manifest.path).parent
-        # CMake/meson commonly use a generated build directory; create it only for explicit execution.
         if kind == "cmake" and not (work / "build").exists():
             rc = _run(["cmake", "-S", str(work), "-B", str(work / "build"), "-DCMAKE_BUILD_TYPE=Release"], root, log)
             if rc != 0:
@@ -232,16 +254,15 @@ def build_repository(root: Path, output: Optional[Path] = None, execute: bool = 
         if rc != 0:
             errors.append("Build failed: " + manifest.path)
 
-    # Compile direct C/C++ sources not owned by an obvious project manifest.
     direct, direct_errors = _native_direct_build(root, sources, out, log)
     artifacts.extend(direct)
     errors.extend(direct_errors)
 
-    # Python bytecode is useful for recursive packaging, but is not mislabeled as native code.
     py = [s for s in sources if s.language == "python"]
-    if py and _tool("python"):
-        rc = _run([_tool("python") or "python", "-m", "compileall", "-q", str(root)], root, log)
-        artifacts.append(BuildArtifact("__pycache__", "python-bytecode", ["python", "-m", "compileall", "-q", str(root)], rc,
+    python = _tool("python") or _tool("python3")
+    if py and python:
+        rc = _run([python, "-m", "compileall", "-q", str(root)], root, log)
+        artifacts.append(BuildArtifact("__pycache__", "python-bytecode", [python, "-m", "compileall", "-q", str(root)], rc,
                                        "built" if rc == 0 else "failed"))
 
     report = RecursiveReport(str(root), sources, manifests, artifacts, skipped, errors)
@@ -256,15 +277,20 @@ def build_repository(root: Path, output: Optional[Path] = None, execute: bool = 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Recursively inventory/build a GitHub or local repository")
-    parser.add_argument("root", help="local checkout root")
-    parser.add_argument("--output", default=None, help="artifact/report directory")
+    parser.add_argument("source", help="local checkout or Git/HTTPS repository URL")
+    parser.add_argument("--output", default=None, help="artifact/report directory or clone parent")
     parser.add_argument("--execute", action="store_true", help="actually invoke discovered build tools")
     args = parser.parse_args(argv)
-    report = build_repository(Path(args.root), Path(args.output) if args.output else None, args.execute)
-    print(json.dumps({"root": report.root, "source_count": len(report.sources),
-                      "manifest_count": len(report.manifests), "artifact_count": len(report.artifacts),
-                      "errors": report.errors, "skipped": report.skipped}, indent=2))
-    return 1 if report.errors else 0
+    root, cleanup = acquire_repository(args.source, Path(args.output) if args.output else None)
+    try:
+        report = build_repository(root, Path(args.output) / "artifacts" if args.output and cleanup is None else None, args.execute)
+        print(json.dumps({"root": report.root, "source_count": len(report.sources),
+                          "manifest_count": len(report.manifests), "artifact_count": len(report.artifacts),
+                          "errors": report.errors, "skipped": report.skipped}, indent=2))
+        return 1 if report.errors else 0
+    finally:
+        if cleanup:
+            shutil.rmtree(str(cleanup), ignore_errors=True)
 
 if __name__ == "__main__":
     raise SystemExit(main())
