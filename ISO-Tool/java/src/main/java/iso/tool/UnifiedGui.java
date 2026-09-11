@@ -1,105 +1,16 @@
 package iso.tool;
-
-import javax.swing.*;
-import java.awt.*;
-import java.nio.file.*;
-import java.util.List;
-import java.util.ArrayList;
-
+import javax.swing.*; import java.awt.*; import java.nio.file.*;
 /** Native Swing GUI implementing the ISO-Tool cross-language feature contract. */
 public final class UnifiedGui extends JFrame {
-    private final JTextField source = new JTextField(".");
-    private final JTextArea log = new JTextArea();
-    private final JLabel status = new JLabel("Ready");
-
-    private static final String[][] GROUPS = {
-        {"Source & Repository", "Open GitHub", "Clone Repository", "Open Local Source", "Open Archive", "Deep Recursive Scan", "Repository Tree", "Dependency Analysis", "Application Discovery"},
-        {"Toolchains", "Detect Windows Toolchains", "Detect MSVC", "Detect Clang", "Detect GCC/G++", "Detect NASM", "Bootstrap NASM", "Bootstrap GCC/G++", "Built-in Spit Fire Assembler"},
-        {"Build", "Generate Build Plan", "Compile", "Link", "Debug Build", "Release Build", "GNU Build", "MSVC Build", "Build All Projects", "Run Tests", "Build Journal"},
-        {"ISO / Boot", "Build Spit Fire Boot Sector", "Build BIOS ISO", "Build UEFI ISO", "Build BIOS + UEFI ISO", "Build ISO Image", "Build IMG", "Merge Binaries", "Merge Libraries", "Generate Manifest", "Verify Boot Image", "Verify ISO"},
-        {"Packages / Applications", "Detect Package Managers", "Install Dependencies", "Application Inventory", "Artifact Inventory"},
-        {"Diagnostics", "Validate Configuration", "Dependency Errors", "Runtime Errors", "Build Errors", "View Logs", "Export Diagnostics", "Verify Output"}
-    };
-
-    public UnifiedGui() {
-        super("ISO-Tool — Source → Build → Spit Fire → Bootable ISO");
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(1240, 820));
-        setLayout(new BorderLayout(10, 10));
-        JPanel top = new JPanel(new BorderLayout(8, 8));
-        top.setBorder(BorderFactory.createEmptyBorder(12,12,0,12));
-        top.add(new JLabel("Source / GitHub / local checkout:"), BorderLayout.WEST);
-        top.add(source, BorderLayout.CENTER);
-        JButton browse = new JButton("Browse…");
-        browse.addActionListener(e -> chooseSource());
-        top.add(browse, BorderLayout.EAST);
-        add(top, BorderLayout.NORTH);
-
-        JPanel buttons = new JPanel();
-        buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
-        for (String[] group : GROUPS) {
-            JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 3));
-            JLabel label = new JLabel(group[0] + ":");
-            label.setPreferredSize(new Dimension(170, 28));
-            row.add(label);
-            for (int i=1; i<group.length; i++) {
-                JButton b = new JButton(group[i]);
-                b.setToolTipText(group[i]);
-                b.addActionListener(e -> runFeature(((JButton)e.getSource()).getText()));
-                row.add(b);
-            }
-            buttons.add(row);
-        }
-        JScrollPane featureScroll = new JScrollPane(buttons);
-        featureScroll.setBorder(BorderFactory.createEmptyBorder(0,12,0,12));
-        add(featureScroll, BorderLayout.CENTER);
-
-        log.setEditable(false);
-        log.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-        JScrollPane logs = new JScrollPane(log);
-        logs.setPreferredSize(new Dimension(1240, 250));
-        add(logs, BorderLayout.SOUTH);
-        JPanel statusBar = new JPanel(new BorderLayout());
-        statusBar.setBorder(BorderFactory.createEmptyBorder(0,12,8,12));
-        statusBar.add(status, BorderLayout.WEST);
-        add(statusBar, BorderLayout.AFTER_LAST_LINE);
-        append("ISO-Tool GUI ready; feature contract loaded.");
-    }
-
-    private void chooseSource() {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) source.setText(chooser.getSelectedFile().toPath().toString());
-    }
-
-    private void runFeature(String feature) {
-        status.setText(feature + " — running");
-        append("[feature] " + feature);
-        try {
-            if (feature.equals("Deep Recursive Scan") || feature.equals("Repository Tree")) {
-                Path root = Paths.get(source.getText()).toAbsolutePath();
-                if (!Files.isDirectory(root)) throw new IllegalArgumentException("Source is not a directory: " + root);
-                long count;
-                try (var stream = Files.walk(root)) { count = stream.filter(Files::isRegularFile).count(); }
-                append("[scan] recursive files=" + count);
-            } else if (feature.equals("View Logs")) {
-                append("[diagnostics] GUI log is already visible below the feature panel.");
-            } else if (feature.equals("Verify Boot Image")) {
-                append("[boot] verification requires a generated first_stage.bin; use Build Spit Fire Boot Sector first.");
-            } else {
-                append("[dispatch] command=" + commandId(feature) + " source=" + source.getText());
-            }
-            status.setText(feature + " — complete");
-        } catch (Exception ex) {
-            append("[error] " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
-            status.setText(feature + " — failed");
-        }
-    }
-
-    private static String commandId(String feature) {
-        return feature.toLowerCase().replace(" ", ".").replace("/", ".").replace("+", "plus");
-    }
-    private void append(String s) { log.append(s + System.lineSeparator()); }
-
-    public static void launch() { SwingUtilities.invokeLater(() -> new UnifiedGui().setVisible(true)); }
+ private final JTextField source=new JTextField("."); private final JTextArea log=new JTextArea(); private final JLabel status=new JLabel("Ready");
+ private static final String[][] GROUPS={{"Source & Repository","Open GitHub","Clone Repository","Open Local Source","Open Archive","Deep Recursive Scan","Repository Tree","Dependency Analysis","Application Discovery"},{"Toolchains","Detect Windows Toolchains","Detect MSVC","Detect Clang","Detect GCC/G++","Detect NASM","Bootstrap NASM","Bootstrap GCC/G++","Built-in Spit Fire Assembler"},{"Build","Generate Build Plan","Compile","Link","Debug Build","Release Build","GNU Build","MSVC Build","Build All Projects","Run Tests","Build Journal"},{"ISO / Boot","Build Spit Fire Boot Sector","Build BIOS ISO","Build UEFI ISO","Build BIOS + UEFI ISO","Build ISO Image","Build IMG","Merge Binaries","Merge Libraries","Generate Manifest","Verify Boot Image","Verify ISO"},{"Packages / Applications","Detect Package Managers","Install Dependencies","Application Inventory","Artifact Inventory"},{"Diagnostics","Validate Configuration","Dependency Errors","Runtime Errors","Build Errors","View Logs","Export Diagnostics","Verify Output"}};
+ public UnifiedGui(){super("ISO-Tool — Source → Build → Spit Fire → Bootable ISO");setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);setMinimumSize(new Dimension(1240,820));setLayout(new BorderLayout(10,10));
+  JPanel top=new JPanel(new BorderLayout(8,8));top.setBorder(BorderFactory.createEmptyBorder(12,12,0,12));top.add(new JLabel("Source / GitHub / local checkout:"),BorderLayout.WEST);top.add(source,BorderLayout.CENTER);JButton browse=new JButton("Browse…");browse.addActionListener(e->chooseSource());top.add(browse,BorderLayout.EAST);add(top,BorderLayout.NORTH);
+  JPanel buttons=new JPanel();buttons.setLayout(new BoxLayout(buttons,BoxLayout.Y_AXIS));for(String[] group:GROUPS){JPanel row=new JPanel(new FlowLayout(FlowLayout.LEFT,6,3));JLabel label=new JLabel(group[0]+":");label.setPreferredSize(new Dimension(170,28));row.add(label);for(int i=1;i<group.length;i++){JButton b=new JButton(group[i]);b.setToolTipText(group[i]);b.addActionListener(e->runFeature(((JButton)e.getSource()).getText()));row.add(b);}buttons.add(row);}JScrollPane featureScroll=new JScrollPane(buttons);featureScroll.setBorder(BorderFactory.createEmptyBorder(0,12,0,12));add(featureScroll,BorderLayout.CENTER);
+  log.setEditable(false);log.setFont(new Font(Font.MONOSPACED,Font.PLAIN,12));JScrollPane logs=new JScrollPane(log);logs.setPreferredSize(new Dimension(1240,220));JPanel bottom=new JPanel(new BorderLayout());bottom.add(logs,BorderLayout.CENTER);JPanel statusBar=new JPanel(new BorderLayout());statusBar.setBorder(BorderFactory.createEmptyBorder(4,12,8,12));statusBar.add(status,BorderLayout.WEST);bottom.add(statusBar,BorderLayout.SOUTH);add(bottom,BorderLayout.SOUTH);append("ISO-Tool GUI ready; feature contract loaded."); }
+ private void chooseSource(){JFileChooser chooser=new JFileChooser();chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);if(chooser.showOpenDialog(this)==JFileChooser.APPROVE_OPTION)source.setText(chooser.getSelectedFile().toPath().toString());}
+ private void runFeature(String feature){status.setText(feature+" — running");append("[feature] "+feature);try{if(feature.equals("Deep Recursive Scan")||feature.equals("Repository Tree")){Path root=Paths.get(source.getText()).toAbsolutePath();if(!Files.isDirectory(root))throw new IllegalArgumentException("Source is not a directory: "+root);try(var stream=Files.walk(root)){append("[scan] recursive files="+stream.filter(Files::isRegularFile).count());}}else if(feature.equals("View Logs")){append("[diagnostics] GUI log is visible below the feature panel.");}else if(feature.equals("Verify Boot Image")){append("[boot] verification requires generated first_stage.bin.");}else append("[dispatch] command="+commandId(feature)+" source="+source.getText());status.setText(feature+" — complete");}catch(Exception ex){append("[error] "+ex.getClass().getSimpleName()+": "+ex.getMessage());status.setText(feature+" — failed");}}
+ private static String commandId(String feature){return feature.toLowerCase().replace(" ",".").replace("/",".").replace("+","plus");}
+ private void append(String s){log.append(s+System.lineSeparator());}
+ public static void launch(){SwingUtilities.invokeLater(()->new UnifiedGui().setVisible(true));}
 }
