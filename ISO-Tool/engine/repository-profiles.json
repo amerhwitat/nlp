@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": 2,
+  "version": 3,
   "repositories": [
     {
       "id": "chimera-ii-os",
@@ -10,7 +10,11 @@
       "required": true,
       "isa_registry": "isa/registry.py",
       "canonical_isa_header": "include/chimera/universal_isa.hpp",
-      "microop_contract": "include/chimera/universal_microop.hpp"
+      "microop_contract": "include/chimera/universal_microop.hpp",
+      "toolchain_registry": "toolchains/registry.json",
+      "memory_bus_profiles": "memory/bus-profiles.json",
+      "memory_bus_api": "include/chimera/memory_bus.hpp",
+      "memory_bus_probe": "include/chimera/memory_bus_probe.hpp"
     },
     {
       "id": "bizx",
@@ -39,6 +43,11 @@
     "validate_isa_registry": true,
     "stage_isa_metadata": true,
     "stage_microop_contract": true,
+    "validate_toolchain_registry": true,
+    "stage_toolchain_metadata": true,
+    "validate_memory_bus_profiles": true,
+    "stage_memory_bus_metadata": true,
+    "stage_memory_bus_probe_contract": true,
     "deterministic_manifests": true,
     "sha256_artifact_manifest": true
   }
