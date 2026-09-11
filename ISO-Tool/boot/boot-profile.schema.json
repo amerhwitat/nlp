@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ISO-Tool Boot Profile",
+  "type": "object",
+  "required": ["id", "firmware", "entry", "fallback"],
+  "properties": {
+    "id": {"type": "string"},
+    "firmware": {"enum": ["bios", "uefi", "custom"]},
+    "entry": {
+      "type": "object",
+      "required": ["artifact"],
+      "properties": {
+        "artifact": {"type": "string"},
+        "load_address": {"type": ["string", "null"]},
+        "entry_model": {"type": "string"},
+        "bios_interrupts": {"type": "boolean"}
+      }
+    },
+    "fallback": {"type": "array", "items": {"type": "string"}},
+    "validation": {"type": "object", "properties": {"required": {"type": "boolean"}, "emulator": {"type": ["string", "null"]}}}
+  }
+}
