@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 import hashlib, os, subprocess
 from .boot_validator import load_menu, select_with_fallback, emulator_available, qemu_bios_command
+from .output_paths import prepare_output_layout, suggested_output_dir, dependency_cache_dir
 
 @dataclass
 class BuildProgress: stage:str; completed:int; total:int; message:str
@@ -13,7 +14,22 @@ class BuildProgress: stage:str; completed:int; total:int; message:str
 class JobResult: ok:bool; value:Any=None; error:str=""; index:int=0
 
 class BuildPipeline:
-    def __init__(self,workspace:Path,workers:int|None=None): self.workspace=Path(workspace); self.workers=workers or max(1,(os.cpu_count() or 2)-1)
+    def __init__(self,workspace:Path,workers:int|None=None,output_dir:Path|None=None):
+        self.workspace=Path(workspace)
+        self.workers=workers or max(1,(os.cpu_count() or 2)-1)
+        self.output_dir=Path(output_dir) if output_dir else suggested_output_dir()
+
+    def configure_output(self,selected_dir:Path|str)->dict[str,Path]:
+        """Set the user-selected final-output directory and create its layout."""
+        paths=prepare_output_layout(selected_dir)
+        self.output_dir=paths["root"]
+        return paths
+
+    @property
+    def dependency_download_dir(self)->Path:
+        """All discovered/downloaded dependency installers are kept in Downloads."""
+        return dependency_cache_dir()
+
     def inventory(self):
         suffixes={'.c','.cc','.cpp','.cxx','.h','.hpp','.asm','.s','.S','.cs'}
         return [p for p in self.workspace.rglob('*') if p.is_file() and p.suffix in suffixes]
