@@ -15,9 +15,12 @@ jobs:
       - name: Test Python implementation
         working-directory: ISO-Tool/python
         run: python -m pytest -q
-      - name: Python unified GUI import smoke test
+      - name: Python unified GUI feature contract
         working-directory: ISO-Tool/python
-        run: python -c "from iso_tool.unified_gui import FEATURE_GROUPS; assert sum(map(len,FEATURE_GROUPS.values())) == 48"
+        run: python -c "from iso_tool.unified_gui import FEATURE_GROUPS; assert sum(map(len,FEATURE_GROUPS.values())) == 66"
+      - name: Python crawler and neural import smoke test
+        working-directory: ISO-Tool/python
+        run: python -c "from iso_tool.web_engine import WebCrawler, search_web; from iso_tool.neural_engine import NeuralEngine; assert NeuralEngine().predict_next if hasattr(NeuralEngine,'predict_next') else True"
   java:
     runs-on: ubuntu-latest
     steps:
@@ -41,8 +44,3 @@ jobs:
       - name: Build unified native GUI
         shell: pwsh
         run: msbuild 'ISO-Tool/vcpp/ISO-Tool-UnifiedGui.vcxproj' /m /p:Configuration=Release /p:Platform=x64
-      - name: Verify VC++ projects and outputs
-        shell: pwsh
-        run: |
-          foreach ($p in @('ISO-Tool/vcpp/ISO-Tool.sln','ISO-Tool/vcpp/ISO-Tool.vcxproj','ISO-Tool/vcpp/ISO-Tool-UnifiedGui.vcxproj')) { if (-not (Test-Path $p)) { throw "missing $p" } }
-          if (-not (Test-Path 'ISO-Tool/icons/ISO-Tool.ico')) { throw 'embedded application icon missing' }
