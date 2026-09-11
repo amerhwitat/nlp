@@ -4,13 +4,27 @@ Cross-language desktop ISO/image build orchestrator for GitHub and local reposit
 
 ## Chimera II workspace integration
 
-ISO-Tool now has a first-class multi-repository build path for the related Chimera II workspace:
+ISO-Tool has a first-class multi-repository build path for the related Chimera II workspace:
 
 - `amerhwitat/ChimeraIIOS` — operating system, kernel, boot and system components.
 - `amerhwitat/BizX` — application, commerce and wallet platform.
 - `amerhwitat/BizXtreme` — game, crypto, WebGL/Three.js and application integration.
 
 The standard profile is `engine/repository-profiles.json`. `python/build_workspace.py` acquires, recursively analyzes, builds, links, stages and masters these repositories into one workspace while preserving each source tree and build result.
+
+## Converted Windows compiler/assembler detector
+
+The legacy Windows batch detector is now implemented in the Python ISO-Tool engine as `python/iso_tool/toolchain_detector.py`, with `python/detect_toolchains.py` as its standalone entry point. It detects GCC/MinGW, MSVC, NASM, MASM, Go, Rust, Java, Python, LLVM/Clang, LLD, CMake, Ninja, MSBuild, Git and ISO mastering tools.
+
+Detection checks the current `PATH`, bounded common installation locations and Visual Studio registry installation roots. It writes `manifests/windows-toolchains.json`. The detector runs **before dependency resolution/package checks**, so dependency and build planning can consume the host toolchain state. It never persists environment changes unless `--apply-user-env` is explicitly supplied. The default is process-local and side-effect free.
+
+```text
+cd ISO-Tool/python
+python detect_toolchains.py --output <selected-output>\manifests\windows-toolchains.json
+python detect_toolchains.py --apply-user-env
+```
+
+The converted implementation also fixes brittle batch-script behavior: PATH entries are deduplicated, `%USERPROFILE%` is expanded safely, Visual Studio installations can be discovered through the registry, and the process does not use `setx` by default (avoiding truncation and unintended persistent changes).
 
 ## Deep recursive repository scan
 
@@ -29,7 +43,7 @@ The recursive scanner walks the complete source hierarchy and writes `knowledge/
 
 ## Build pipeline
 
-`source URL/archive → acquire → deep recursive tree scan → discover applications → dependency graph → deterministic build plan → registered build adapters → compile/link → artifact collection → boot-image construction → filesystem staging → bootable ISO/IMG mastering → verification`
+`source URL/archive → acquire → toolchain detection → deep recursive tree scan → discover applications → dependency graph → deterministic build plan → registered build adapters → compile/link → artifact collection → boot-image construction → filesystem staging → bootable ISO/IMG mastering → verification`
 
 Registered build adapters cover CMake, Make, Meson, Cargo, npm, Maven, Gradle, .NET and Autotools when their required toolchain is available. Unsupported or unavailable systems are recorded rather than treated as successful. CMake and actual build-system dependency information remain authoritative; AI/RNN/LLM planning is advisory.
 
@@ -44,14 +58,6 @@ python build_workspace.py --output <selected-output> --compiler auto
 ```
 
 Use `--compiler gnu` or `--compiler msvc` to force a toolchain policy, or override/add sources with `--repos ID=URL`. The resulting workspace contains repository-specific source trees and collected artifacts, followed by a combined bootable ISO/IMG build when the required backend is available.
-
-## Windows compiler and assembler detection
-
-The Python engine scans Windows PATH, environment variables and Visual Studio registry locations for MSVC/Link/MASM, LLVM/LLD, GNU/MinGW GCC/G++, GAS/LD, NASM/YASM, CMake/MSBuild/Make and ISO mastering backends. The result is written to `manifests/windows-toolchains.json` with a deterministic `toolchain-bootstrap-plan.json`.
-
-If NASM is installed it is preferred for the Spit Fire BIOS first stage. If no external assembler is available, ISO-Tool uses its dependency-free constrained bootstrap assembler for the known one-sector Spit Fire stage. The tool also contains a source-build path for NASM using its documented Windows/MSVC or MinGW build entry points.
-
-GNU C++ is integrated as the GNU build profile when G++ is detected. When G++ is absent, the bootstrap planner records GCC source-build requirements rather than silently downloading and executing an arbitrary installer. GCC source builds remain dependent on the host prerequisites required by GCC.
 
 ## Spit Fire bootable ISO
 
@@ -114,14 +120,14 @@ ISO mastering remains based on xorriso/xorrisofs and Oscdimg where available. Th
 
 ## Dependencies and reproducibility
 
-Dependency discovery is separate from final output. Cached tools remain under `%USERPROFILE%\\Downloads\\Chimera-II-ISO-Tool\\dependencies`. Generated manifests record source type, URLs, hashes, build systems, compilers, artifacts, boot images and output paths.
+Toolchain detection is a separate first-stage operation and its manifest is available to later dependency/build stages. Cached tools remain under `%USERPROFILE%\\Downloads\\Chimera-II-ISO-Tool\\dependencies`. Generated manifests record source type, URLs, hashes, build systems, compilers, detected tools, artifacts, boot images and output paths.
 
 ## Security
 
-ISO-Tool does not execute imported boot sectors or arbitrary downloaded scripts. Package installation and network acquisition are visible operations governed by registered adapters and explicit authorization. Archive path traversal and symbolic/hard-link extraction attacks are rejected.
+ISO-Tool does not execute imported boot sectors or arbitrary downloaded scripts. Package installation and network acquisition are visible operations governed by registered adapters and explicit authorization. Archive path traversal and symbolic/hard-link extraction attacks are rejected. Environment persistence from the converted detector is also opt-in.
 
 ## Verification
 
-CI runs the Python deep-scan/Spit Fire fallback tests plus the existing Windows native Visual Studio 2022 build verification. Native compiler and ISO backend availability remains environment-dependent; the tool reports missing tools and failed adapters instead of claiming an artifact exists when it does not.
+The detector has focused unit coverage for PATH discovery and process-local environment application. CI runs the Python deep-scan/Spit Fire fallback tests plus native Windows Visual Studio 2022 build verification. Native compiler and ISO backend availability remains environment-dependent; the tool reports missing tools and failed adapters instead of claiming an artifact exists when it does not.
 
 See `docs/RELATED_REPOSITORY_INTEGRATION.md` for the complete Chimera II OS/BizX/BizXtreme integration contract and `docs/VERIFICATION.md` for the verification matrix.
