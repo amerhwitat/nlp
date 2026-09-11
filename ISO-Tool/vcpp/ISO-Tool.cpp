@@ -4,7 +4,6 @@
 #include <thread>
 #include <vector>
 #include <exception>
-#include <stdexcept>
 
 #pragma comment(lib, "Comctl32.lib")
 
@@ -34,7 +33,7 @@ static void PostProgress(HWND window, int value, const std::wstring& text) {
 
 static bool ValidateRepository(HWND window) {
     wchar_t path[MAX_PATH]{};
-    GetWindowTextW(gRepo, path, static_cast<int>(std::size(path)));
+    GetWindowTextW(gRepo, path, MAX_PATH);
     if (path[0] == L'\0') {
         PostText(window, WM_ISOTOOL_LOG, L"[error] Repository/source path is empty. Select or enter a path before building.");
         return false;
