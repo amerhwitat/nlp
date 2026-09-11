@@ -1,0 +1,5 @@
+#include "resource.h"
+
+IDI_ISOTOOL ICON DISCARDABLE "..\\icons\\ISO-Tool.ico"
+IDR_ISOTOOL_LOGO RCDATA "..\\icons\\ISO-Tool-logo.svg"
+1 RT_MANIFEST "ISO-Tool.manifest"
