@@ -1,0 +1,11 @@
+{
+  "loaders": [
+    {"id":"chimera2","family":"Chimera II OS","kind":"native","bios":true,"uefi":true,"artifactPatterns":["*chimera*","koronos*","spit-fire*","spit_fire*"]},
+    {"id":"grub2-bios","family":"GRUB 2","kind":"bios","bios":true,"uefi":false,"artifactPatterns":["core.img","grub*.img"]},
+    {"id":"grub2-uefi","family":"GRUB 2","kind":"uefi","bios":false,"uefi":true,"artifactPatterns":["grub*.efi"]},
+    {"id":"lilo","family":"LILO","kind":"bios","bios":true,"uefi":false,"artifactPatterns":["boot.b","lilo*"],"optional":true},
+    {"id":"windows-bootmgr","family":"Windows Boot Manager","kind":"uefi","bios":false,"uefi":true,"artifactPatterns":["bootmgfw.efi","bootmgr.efi","BCD"],"optional":true},
+    {"id":"linux-efi-stub","family":"Linux EFI stub","kind":"uefi","bios":false,"uefi":true,"artifactPatterns":["vmlinuz*","bzImage*"],"optional":true},
+    {"id":"syslinux","family":"Syslinux","kind":"bios","bios":true,"uefi":false,"artifactPatterns":["isolinux.bin","ldlinux.c32"],"optional":true}
+  ]
+}
