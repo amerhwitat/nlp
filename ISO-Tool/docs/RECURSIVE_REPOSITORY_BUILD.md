@@ -1,71 +1,70 @@
-# Recursive Repository Analysis and Build
+# Recursive Repository Analysis, Dependency Resolution and Build
 
-ISO-Tool now treats a repository as a recursive build graph rather than a flat list of files.
+ISO-Tool treats a repository as a recursive build graph rather than a flat list of files.
 
 ## Input
 
-The recursive builder accepts either:
-
-- a local Git checkout; or
-- an HTTPS/Git repository URL such as a GitHub repository.
-
-Remote repositories are acquired with `git clone --recursive --depth 1`, so nested Git submodules are included when the source repository exposes them.
+The builder accepts a local Git checkout or an HTTPS/Git repository URL. Remote repositories are acquired with `git clone --recursive --depth 1`, so available Git submodules are included.
 
 ## Recursive inventory
 
-The inventory walks the complete checkout while excluding generated/dependency trees such as `.git`, `node_modules`, `build`, `dist`, `target`, `bin`, `obj`, and Python cache/virtual-environment directories.
+The inventory walks the checkout while excluding generated/vendor output such as `.git`, `node_modules`, `build`, `dist`, `target`, `bin`, `obj` and Python cache/virtual-environment directories. It records source language, entry points, file sizes, project manifests and build systems.
 
-It records:
+## External-reference graph
 
-- C/C++/headers and assembly;
-- Rust, Go, Java, C#, F#/VB-style managed sources where detectable;
-- Python, JavaScript/TypeScript;
-- CMake, Make, Meson, Cargo, Go, Maven, Gradle, MSBuild, .NET, npm and Python manifests;
-- native entry points such as `main()` and `wWinMain()`;
-- file sizes and relative paths.
+`python/iso_tool/external_refs.py` discovers C/C++ include relationships and `#pragma comment(lib, ...)` references, and records package/build manifests. Local includes are resolved against the including file and repository root. System headers remain toolchain dependencies rather than being copied into the source tree.
 
-## Build and link model
+The report is written as `external-reference-report.json`. Unresolved references are explicitly reported.
 
-`python/iso_tool/recursive_build.py --execute` invokes every discovered supported project manifest in its own directory. It does **not** concatenate unrelated projects or languages into one invalid executable.
+## Dependency resolution
 
-Native C/C++ sources are also compiled recursively when a direct build is appropriate. If a compatible native source set contains exactly one entry point, its successful object files are linked into `recursive-native` (or `recursive-native.exe` on Windows). Multiple independent entry points are reported rather than incorrectly linked together.
+When execution is enabled, project-native dependency mechanisms are used before each supported build:
 
-Python is byte-compiled with `compileall`; it is recorded as Python bytecode rather than mislabeled as a native executable. Managed, Rust, Go, Java, and JavaScript projects are built through their native project systems when those tools are installed.
+- npm: `npm ci` when a lockfile exists, otherwise `npm install`;
+- Cargo: `cargo fetch`;
+- Go: `go mod download`;
+- .NET/MSBuild: restore;
+- Maven: dependency resolution;
+- Gradle: dependency resolution.
 
-Every executed build is logged to `ISO-Tool-build/recursive-build.log` and summarized in `recursive-build-report.json`.
+CMake external projects/FetchContent remain controlled by the CMake configuration. Python environments are not implicitly modified.
 
-## Examples
+## Compile and link model
 
-Inventory only:
+Every discovered project manifest is built in its own directory. Direct C/C++ sources are compiled recursively into isolated object paths. If exactly one compatible native entry point exists, successful objects may be linked into `recursive-native`/`recursive-native.exe`. Multiple entry points are reported instead of incorrectly producing one executable.
+
+This is intentional: a repository may contain many independent applications and libraries. ISO-Tool compiles and links each according to its build system rather than flattening unrelated targets.
+
+For C/C++, `#pragma comment(lib, "comctl32.lib")` is an explicit native dependency. MSVC consumes it, while MinGW receives the equivalent `-lcomctl32` project/link setting. The same mechanism is used to carry the Windows common-dialog dependency needed by the ISO Save dialog.
+
+## End-to-end ISO build
+
+`python/build_iso.py` is the end-to-end entry point. It:
+
+1. recursively acquires/inventories the repository;
+2. resolves external dependencies;
+3. compiles/assembles supported targets;
+4. links compatible native artifacts;
+5. writes build/dependency reports and logs;
+6. stages source plus generated artifacts;
+7. invokes xorriso/xorrisofs/Oscdimg with an explicit output path.
+
+The native Windows **Build ISO…** command opens a Save dialog. The user chooses both the destination directory and the ISO filename, and that exact path is passed to `build_iso.py --output`. There is no fixed output filename.
+
+Example:
 
 ```text
-python -m iso_tool.recursive_build C:\src\repository
+python build_iso.py C:\src\repository --output D:\Images\ChimeraII.iso
 ```
 
-Build a local checkout:
+## Reports
 
-```text
-python -m iso_tool.recursive_build C:\src\repository --execute
-```
+Executed builds produce `recursive-build.log`, `recursive-build-report.json`, `external-reference-report.json`, isolated native objects and an `iso-staging` tree.
 
-Acquire and build a GitHub repository:
+## Safety
 
-```text
-python -m iso_tool.recursive_build https://github.com/owner/repository.git --execute
-```
+Planner mode does not execute repository build commands. Execution is explicit because build scripts and package hooks are executable code. Untrusted repositories should be processed in disposable environments. ISO-Tool does not automatically execute imported boot sectors or bypass host security controls.
 
-## Safety and reproducibility
+## Verification
 
-The planner mode is the default and never executes a compiler. `--execute` is explicit because repository build scripts are arbitrary programs and may run package managers, generators, custom scripts, or other commands.
-
-ISO-Tool records failures and unavailable toolchains instead of claiming that an artifact exists. A final ISO/IMG should therefore be created only from artifacts whose build status is `built` and whose validation stage succeeds.
-
-## Windows native source linkage
-
-The primary Win32 source explicitly contains:
-
-```cpp
-#pragma comment(lib, "comctl32.lib")
-```
-
-MSVC consumes this directive directly. Code::Blocks/MinGW continues to specify `comctl32` in its project linker settings, keeping the source portable.
+Source/project changes are validated through repository/CI checks. A real MSVC, MinGW, package-manager, ISO-backend or boot-emulator success claim requires that corresponding external toolchain run to produce evidence.
