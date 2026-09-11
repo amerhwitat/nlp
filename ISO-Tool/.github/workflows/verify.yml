@@ -24,8 +24,16 @@ jobs:
           dotnet-version: '6.0.x'
       - name: Build .NET 6 desktop
         run: dotnet build ISO-Tool/dotnet/ISO-Tool/ISO-Tool.csproj -c Release -f net6.0-windows
-      - name: Verify MSVC project metadata
+      - name: Build native Visual Studio 2022 x64 Release
+        shell: pwsh
+        run: |
+          msbuild 'ISO-Tool/vcpp/ISO-Tool.vcxproj' /m /p:Configuration=Release /p:Platform=x64
+      - name: Verify VC++ resources and outputs
         shell: pwsh
         run: |
           if (-not (Test-Path 'ISO-Tool/vcpp/ISO-Tool.sln')) { throw 'VC++ solution missing' }
           if (-not (Test-Path 'ISO-Tool/vcpp/ISO-Tool.vcxproj')) { throw 'VC++ project missing' }
+          if (-not (Test-Path 'ISO-Tool/vcpp/ISO-Tool.rc')) { throw 'resource script missing' }
+          if (-not (Test-Path 'ISO-Tool/icons/ISO-Tool.ico')) { throw 'embedded application icon missing' }
+          $exe = Get-ChildItem -Path 'ISO-Tool/vcpp' -Recurse -Filter 'ISO-Tool.exe' | Select-Object -First 1
+          if (-not $exe) { throw 'native ISO-Tool.exe was not produced' }
