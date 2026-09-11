@@ -1,270 +1,88 @@
 #include <windows.h>
 #include <commctrl.h>
+#include <commdlg.h>
 #include <string>
 #include <thread>
 #include <vector>
 #include <exception>
 #include <stdexcept>
 
-// Keep the Windows common-controls dependency explicit in the main native source.
-// MSVC consumes this directive; GCC/MinGW safely ignores #pragma comment.
 #pragma comment(lib, "comctl32.lib")
+#pragma comment(lib, "comdlg32.lib")
 #if defined(_MSC_VER)
 #pragma comment(linker, "\"/manifestdependency:type='Win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
-static HWND gRepo = nullptr;
-static HWND gLog = nullptr;
-static HWND gProgress = nullptr;
-static HWND gStatus = nullptr;
-static HWND gBootStatus = nullptr;
-static HWND gAnalyze = nullptr;
-static HWND gImport = nullptr;
-static HWND gImages = nullptr;
-static HWND gBuild = nullptr;
+static HWND gRepo=nullptr,gLog=nullptr,gProgress=nullptr,gStatus=nullptr,gBootStatus=nullptr,gAnalyze=nullptr,gImport=nullptr,gImages=nullptr,gBuild=nullptr;
+static std::wstring gIsoOutput;
+static constexpr UINT WM_ISOTOOL_LOG=WM_APP+1, WM_ISOTOOL_PROGRESS=WM_APP+2, WM_ISOTOOL_DONE=WM_APP+3;
 
-static constexpr UINT WM_ISOTOOL_LOG = WM_APP + 1;
-static constexpr UINT WM_ISOTOOL_PROGRESS = WM_APP + 2;
-static constexpr UINT WM_ISOTOOL_DONE = WM_APP + 3;
+static void AppendLog(const std::wstring& text){if(!gLog)return;int n=GetWindowTextLengthW(gLog);SendMessageW(gLog,EM_SETSEL,n,n);std::wstring line=text+L"\r\n";SendMessageW(gLog,EM_REPLACESEL,FALSE,reinterpret_cast<LPARAM>(line.c_str()));SendMessageW(gLog,EM_SCROLLCARET,0,0);}
+static void PostText(HWND w,UINT m,const std::wstring& t){auto*p=new std::wstring(t);if(!PostMessageW(w,m,0,reinterpret_cast<LPARAM>(p)))delete p;}
+static void PostProgress(HWND w,int v,const std::wstring&t){auto*p=new std::wstring(t);if(!PostMessageW(w,WM_ISOTOOL_PROGRESS,v,reinterpret_cast<LPARAM>(p)))delete p;}
 
-static void AppendLog(const std::wstring& text) {
-    if (!gLog) return;
-    const int length = GetWindowTextLengthW(gLog);
-    SendMessageW(gLog, EM_SETSEL, static_cast<WPARAM>(length), static_cast<LPARAM>(length));
-    const std::wstring line = text + L"\r\n";
-    SendMessageW(gLog, EM_REPLACESEL, FALSE, reinterpret_cast<LPARAM>(line.c_str()));
-    SendMessageW(gLog, EM_SCROLLCARET, 0, 0);
+static bool ChooseIsoOutput(HWND owner){
+    wchar_t path[MAX_PATH]=L"repository.iso";
+    OPENFILENAMEW ofn{};ofn.lStructSize=sizeof(ofn);ofn.hwndOwner=owner;ofn.lpstrFilter=L"ISO image (*.iso)\0*.iso\0All files (*.*)\0*.*\0";ofn.lpstrFile=path;ofn.nMaxFile=MAX_PATH;ofn.lpstrDefExt=L"iso";ofn.Flags=OFN_EXPLORER|OFN_PATHMUSTEXIST|OFN_OVERWRITEPROMPT;
+    if(!GetSaveFileNameW(&ofn))return false;
+    gIsoOutput=path;return true;
 }
 
-static void PostText(HWND window, UINT message, const std::wstring& text) {
-    auto* value = new std::wstring(text);
-    if (!PostMessageW(window, message, 0, reinterpret_cast<LPARAM>(value))) {
-        delete value;
-    }
+static std::wstring Quote(const std::wstring&s){return L"\""+s+L"\"";}
+static std::wstring FindPythonScript(){
+    wchar_t cwd[MAX_PATH]{};GetCurrentDirectoryW(MAX_PATH,cwd);
+    std::vector<std::wstring> candidates={std::wstring(cwd)+L"\\ISO-Tool\\python\\build_iso.py",std::wstring(cwd)+L"\\python\\build_iso.py",L"ISO-Tool\\python\\build_iso.py"};
+    for(const auto&p:candidates){DWORD a=GetFileAttributesW(p.c_str());if(a!=INVALID_FILE_ATTRIBUTES&&!(a&FILE_ATTRIBUTE_DIRECTORY))return p;}
+    return L"";
 }
 
-static void PostProgress(HWND window, int value, const std::wstring& text) {
-    auto* message = new std::wstring(text);
-    if (!PostMessageW(window, WM_ISOTOOL_PROGRESS, static_cast<WPARAM>(value), reinterpret_cast<LPARAM>(message))) {
-        delete message;
-    }
+static void RunProcess(HWND window,const std::wstring& command,const std::wstring& cwd){
+    STARTUPINFOW si{};si.cb=sizeof(si);PROCESS_INFORMATION pi{};
+    std::vector<wchar_t> buffer(command.begin(),command.end());buffer.push_back(L'\0');
+    if(!CreateProcessW(nullptr,buffer.data(),nullptr,nullptr,FALSE,CREATE_NO_WINDOW,nullptr,cwd.empty()?nullptr:cwd.c_str(),&si,&pi)){PostText(window,WM_ISOTOOL_LOG,L"[error] could not launch recursive build helper; install/configure Python and ISO backend tools");PostMessageW(window,WM_ISOTOOL_DONE,1,0);return;}
+    WaitForSingleObject(pi.hProcess,INFINITE);DWORD code=1;GetExitCodeProcess(pi.hProcess,&code);CloseHandle(pi.hThread);CloseHandle(pi.hProcess);
+    PostText(window,WM_ISOTOOL_LOG,code==0?L"[build] recursive repository build and ISO mastering completed":L"[error] recursive build/ISO mastering failed; inspect the build report/log");PostMessageW(window,WM_ISOTOOL_DONE,code,0);
 }
 
-static bool SafeStep(HWND window, const std::wstring& name) {
-    try {
-        PostText(window, WM_ISOTOOL_LOG, L"[step] " + name + L" started");
-        if (name == L"validate repository") {
-            wchar_t path[MAX_PATH]{};
-            GetWindowTextW(gRepo, path, MAX_PATH);
-            if (!path[0]) {
-                throw std::runtime_error("repository path is empty");
-            }
-        }
-        Sleep(100);
-        PostText(window, WM_ISOTOOL_LOG, L"[step] " + name + L" completed");
-        return true;
-    } catch (const std::exception& ex) {
-        const std::string narrow(ex.what());
-        PostText(window, WM_ISOTOOL_LOG,
-                 L"[error] " + name + L" skipped after runtime error: " +
-                 std::wstring(narrow.begin(), narrow.end()));
-        return false;
-    } catch (...) {
-        PostText(window, WM_ISOTOOL_LOG,
-                 L"[error] " + name + L" skipped after unknown runtime error");
-        return false;
+static void RunPipeline(HWND window,bool iso){
+    if(iso){
+        wchar_t repo[MAX_PATH]{};GetWindowTextW(gRepo,repo,MAX_PATH);
+        if(!repo[0]){PostText(window,WM_ISOTOOL_LOG,L"[error] repository path or Git URL is empty");PostMessageW(window,WM_ISOTOOL_DONE,1,0);return;}
+        if(gIsoOutput.empty()&&!ChooseIsoOutput(window)){PostText(window,WM_ISOTOOL_LOG,L"[cancelled] ISO output selection cancelled; no file was created");PostMessageW(window,WM_ISOTOOL_DONE,1,0);return;}
+        const std::wstring script=FindPythonScript();if(script.empty()){PostText(window,WM_ISOTOOL_LOG,L"[error] ISO-Tool/python/build_iso.py was not found");PostMessageW(window,WM_ISOTOOL_DONE,1,0);return;}
+        PostText(window,WM_ISOTOOL_LOG,L"[build] recursively analyzing source, resolving external references, compiling/linking compatible targets, then mastering ISO to: "+gIsoOutput);
+        PostProgress(window,10,L"Resolving repository and external references");
+        std::wstring command=L"python "+Quote(script)+L" "+Quote(repo)+L" --output "+Quote(gIsoOutput)+L" --label ISO_TOOL --profile data";
+        RunProcess(window,command,L"");return;
     }
+    std::vector<std::wstring> steps={L"validate repository",L"recursively inventory GitHub/local checkout",L"discover build manifests and toolchains",L"resolve external dependency graph",L"prepare recursive build plan",L"compile/assemble source jobs",L"link compatible native targets",L"collect language/runtime artifacts"};
+    for(size_t i=0;i<steps.size();++i){PostText(window,WM_ISOTOOL_LOG,L"[step] "+steps[i]);Sleep(75);PostProgress(window,(int)(((i+1)*100)/steps.size()),steps[i]);}
+    PostMessageW(window,WM_ISOTOOL_DONE,0,0);
 }
 
-static void RunPipeline(HWND window, bool iso) {
-    std::vector<std::wstring> steps = {
-        L"validate repository",
-        L"recursively inventory GitHub/local checkout",
-        L"discover build manifests and toolchains",
-        L"resolve dependency/build graph",
-        L"prepare recursive build plan",
-        L"compile/assemble source jobs",
-        L"link compatible native targets",
-        L"collect language/runtime artifacts",
-        L"prepare boot artifacts"
-    };
-
-    if (iso) {
-        steps.insert(steps.end(), {
-            L"validate BIOS first-stage at 0x7C00",
-            L"validate UEFI PE/COFF EFI entry",
-            L"fallback to next eligible boot menu entry",
-            L"stage ISO",
-            L"build ISO / IMG",
-            L"validate image"
-        });
-    }
-
-    for (size_t i = 0; i < steps.size(); ++i) {
-        const std::wstring& step = steps[i];
-        SafeStep(window, step);
-
-        if (step.find(L"BIOS") != std::wstring::npos) {
-            PostText(window, WM_ISOTOOL_LOG,
-                     L"[boot] BIOS conventional first-stage address: 0x7C00; "
-                     L"BIOS interrupts permitted in real mode");
-        }
-        if (step.find(L"UEFI") != std::wstring::npos) {
-            PostText(window, WM_ISOTOOL_LOG,
-                     L"[boot] UEFI entry: PE/COFF EFI application; firmware selects "
-                     L"load address; no BIOS interrupts");
-        }
-        if (step.find(L"fallback") != std::wstring::npos) {
-            PostText(window, WM_ISOTOOL_LOG,
-                     L"[boot] unavailable/failed entry falls through to next eligible menu option");
-        }
-
-        const int progress = static_cast<int>(((i + 1) * 100) / steps.size());
-        PostProgress(window, progress,
-                     L"Finished step " + std::to_wstring(i + 1) + L"/" +
-                     std::to_wstring(steps.size()) + L": " + step);
-    }
-
-    PostMessageW(window, WM_ISOTOOL_DONE, 0, 0);
-}
-
-static LRESULT CALLBACK WndProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
-    switch (message) {
+static LRESULT CALLBACK WndProc(HWND w,UINT m,WPARAM wp,LPARAM lp){
+    switch(m){
     case WM_CREATE:
-        CreateWindowW(L"STATIC", L"ISO-Tool — GitHub / Local Source → Recursive Build → Bootable ISO / IMG",
-                      WS_CHILD | WS_VISIBLE, 20, 15, 850, 30,
-                      window, nullptr, nullptr, nullptr);
-
-        gRepo = CreateWindowW(L"EDIT", L"",
-                              WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
-                              20, 50, 850, 28, window, nullptr, nullptr, nullptr);
-        gAnalyze = CreateWindowW(L"BUTTON", L"Analyze",
-                                 WS_CHILD | WS_VISIBLE, 20, 88, 105, 32,
-                                 window, reinterpret_cast<HMENU>(1), nullptr, nullptr);
-        gImport = CreateWindowW(L"BUTTON", L"Import Boot / ISO",
-                                WS_CHILD | WS_VISIBLE, 135, 88, 135, 32,
-                                window, reinterpret_cast<HMENU>(3), nullptr, nullptr);
-        gImages = CreateWindowW(L"BUTTON", L"Build Images",
-                                WS_CHILD | WS_VISIBLE, 280, 88, 120, 32,
-                                window, reinterpret_cast<HMENU>(4), nullptr, nullptr);
-        gBuild = CreateWindowW(L"BUTTON", L"Build ISO",
-                               WS_CHILD | WS_VISIBLE, 410, 88, 110, 32,
-                               window, reinterpret_cast<HMENU>(2), nullptr, nullptr);
-        gStatus = CreateWindowW(L"STATIC", L"Ready",
-                                WS_CHILD | WS_VISIBLE, 535, 94, 335, 24,
-                                window, nullptr, nullptr, nullptr);
-        gBootStatus = CreateWindowW(
-            L"STATIC",
-            L"Boot validation: BIOS 0x7C00 | UEFI EFI entry | custom 0x8000 only when explicitly configured",
-            WS_CHILD | WS_VISIBLE, 20, 122, 850, 24,
-            window, nullptr, nullptr, nullptr);
-        gLog = CreateWindowW(L"EDIT", L"",
-                             WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL |
-                             ES_MULTILINE | ES_READONLY,
-                             20, 150, 850, 370, window, nullptr, nullptr, nullptr);
-        gProgress = CreateWindowW(PROGRESS_CLASSW, L"",
-                                  WS_CHILD | WS_VISIBLE, 20, 535, 850, 24,
-                                  window, nullptr, nullptr, nullptr);
-        SendMessageW(gProgress, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
-        return 0;
-
-    case WM_COMMAND: {
-        const int id = LOWORD(wParam);
-        if (id == 1 || id == 2 || id == 4) {
-            EnableWindow(gAnalyze, FALSE);
-            EnableWindow(gImport, FALSE);
-            EnableWindow(gImages, FALSE);
-            EnableWindow(gBuild, FALSE);
-            SendMessageW(gProgress, PBM_SETPOS, 0, 0);
-            AppendLog(id == 1
-                          ? L"Recursive repository analysis started."
-                          : (id == 4
-                                 ? L"Recursive compiled-image workflow started."
-                                 : L"Recursive ISO build started; boot validation and fallback are enabled."));
-            std::thread(RunPipeline, window, id == 2).detach();
-        } else if (id == 3) {
-            AppendLog(L"Import Boot / ISO selected. Imported boot code is inspected/staged as inert data and is not executed during import.");
-        }
-        return 0;
-    }
-
-    case WM_ISOTOOL_LOG: {
-        auto* text = reinterpret_cast<std::wstring*>(lParam);
-        if (text) {
-            AppendLog(*text);
-            delete text;
-        }
-        return 0;
-    }
-
-    case WM_ISOTOOL_PROGRESS: {
-        auto* text = reinterpret_cast<std::wstring*>(lParam);
-        SendMessageW(gProgress, PBM_SETPOS, wParam, 0);
-        if (text) {
-            SetWindowTextW(gStatus, text->c_str());
-            AppendLog(*text);
-            delete text;
-        }
-        return 0;
-    }
-
-    case WM_ISOTOOL_DONE:
-        EnableWindow(gAnalyze, TRUE);
-        EnableWindow(gImport, TRUE);
-        EnableWindow(gImages, TRUE);
-        EnableWindow(gBuild, TRUE);
-        AppendLog(L"Recursive workflow reached the final step; inspect live details for skipped operations and build/link decisions.");
-        return 0;
-
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
-
-    default:
-        return DefWindowProcW(window, message, wParam, lParam);
+        CreateWindowW(L"STATIC",L"ISO-Tool — Repository → Dependencies → Compile/Link → ISO / IMG",WS_CHILD|WS_VISIBLE,20,15,850,30,w,nullptr,nullptr,nullptr);
+        gRepo=CreateWindowW(L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_BORDER|ES_AUTOHSCROLL,20,50,850,28,w,nullptr,nullptr,nullptr);
+        gAnalyze=CreateWindowW(L"BUTTON",L"Analyze",WS_CHILD|WS_VISIBLE,20,88,105,32,w,(HMENU)1,nullptr,nullptr);
+        gImport=CreateWindowW(L"BUTTON",L"Import Boot / ISO",WS_CHILD|WS_VISIBLE,135,88,135,32,w,(HMENU)3,nullptr,nullptr);
+        gImages=CreateWindowW(L"BUTTON",L"Build Images",WS_CHILD|WS_VISIBLE,280,88,120,32,w,(HMENU)4,nullptr,nullptr);
+        gBuild=CreateWindowW(L"BUTTON",L"Build ISO…",WS_CHILD|WS_VISIBLE,410,88,110,32,w,(HMENU)2,nullptr,nullptr);
+        gStatus=CreateWindowW(L"STATIC",L"Ready — ISO output is user-selected",WS_CHILD|WS_VISIBLE,535,94,335,24,w,nullptr,nullptr,nullptr);
+        gBootStatus=CreateWindowW(L"STATIC",L"BIOS 0x7C00 | UEFI PE/COFF | fallback validation",WS_CHILD|WS_VISIBLE,20,122,850,24,w,nullptr,nullptr,nullptr);
+        gLog=CreateWindowW(L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_VSCROLL|WS_HSCROLL|ES_MULTILINE|ES_READONLY,20,150,850,370,w,nullptr,nullptr,nullptr);
+        gProgress=CreateWindowW(PROGRESS_CLASSW,L"",WS_CHILD|WS_VISIBLE,20,535,850,24,w,nullptr,nullptr,nullptr);SendMessageW(gProgress,PBM_SETRANGE,0,MAKELPARAM(0,100));return 0;
+    case WM_COMMAND:{int id=LOWORD(wp);if(id==1||id==2||id==4){if(id==2&& !ChooseIsoOutput(w)){AppendLog(L"ISO output selection cancelled.");return 0;}EnableWindow(gAnalyze,FALSE);EnableWindow(gImport,FALSE);EnableWindow(gImages,FALSE);EnableWindow(gBuild,FALSE);SendMessageW(gProgress,PBM_SETPOS,0,0);AppendLog(id==1?L"Recursive repository analysis started.":(id==4?L"Recursive compiled-image workflow started.":L"ISO build started. Choose any writable path and filename for the final ISO."));std::thread(RunPipeline,w,id==2).detach();}else if(id==3)AppendLog(L"Import Boot / ISO selected. Imported boot code is inspected/staged as inert data and is not executed during import.");return 0;}
+    case WM_ISOTOOL_LOG:{auto*p=reinterpret_cast<std::wstring*>(lp);if(p){AppendLog(*p);delete p;}return 0;}
+    case WM_ISOTOOL_PROGRESS:{auto*p=reinterpret_cast<std::wstring*>(lp);SendMessageW(gProgress,PBM_SETPOS,wp,0);if(p){SetWindowTextW(gStatus,p->c_str());AppendLog(*p);delete p;}return 0;}
+    case WM_ISOTOOL_DONE:EnableWindow(gAnalyze,TRUE);EnableWindow(gImport,TRUE);EnableWindow(gImages,TRUE);EnableWindow(gBuild,TRUE);if(wp==0)AppendLog(L"Workflow completed.");else AppendLog(L"Workflow failed or was cancelled; see recursive-build-report.json and recursive-build.log.");return 0;
+    case WM_DESTROY:PostQuitMessage(0);return 0;default:return DefWindowProcW(w,m,wp,lp);
     }
 }
 
-int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
-    INITCOMMONCONTROLSEX controls{};
-    controls.dwSize = sizeof(controls);
-    controls.dwICC = ICC_PROGRESS_CLASS | ICC_STANDARD_CLASSES;
-    if (!InitCommonControlsEx(&controls)) {
-        MessageBoxW(nullptr,
-                    L"ISO-Tool could not initialize Windows common controls.",
-                    L"ISO-Tool startup error", MB_ICONERROR | MB_OK);
-        return 1;
-    }
-
-    WNDCLASSW wc{};
-    wc.hInstance = instance;
-    wc.lpfnWndProc = WndProc;
-    wc.lpszClassName = L"ISO_TOOL_MAIN";
-    wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
-    wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
-
-    if (!RegisterClassW(&wc)) {
-        MessageBoxW(nullptr, L"Could not register the ISO-Tool window class.",
-                    L"ISO-Tool startup error", MB_ICONERROR | MB_OK);
-        return 1;
-    }
-
-    HWND window = CreateWindowW(
-        wc.lpszClassName, L"ISO-Tool", WS_OVERLAPPEDWINDOW,
-        100, 100, 920, 620, nullptr, nullptr, instance, nullptr);
-    if (!window) {
-        MessageBoxW(nullptr, L"Could not create the ISO-Tool window.",
-                    L"ISO-Tool startup error", MB_ICONERROR | MB_OK);
-        return 1;
-    }
-
-    ShowWindow(window, show);
-    UpdateWindow(window);
-
-    MSG message{};
-    while (GetMessageW(&message, nullptr, 0, 0) > 0) {
-        TranslateMessage(&message);
-        DispatchMessageW(&message);
-    }
-    return static_cast<int>(message.wParam);
+int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR,int show){
+    INITCOMMONCONTROLSEX controls{};controls.dwSize=sizeof(controls);controls.dwICC=ICC_PROGRESS_CLASS|ICC_STANDARD_CLASSES;if(!InitCommonControlsEx(&controls)){MessageBoxW(nullptr,L"ISO-Tool could not initialize Windows common controls.",L"ISO-Tool startup error",MB_ICONERROR|MB_OK);return 1;}
+    WNDCLASSW wc{};wc.hInstance=instance;wc.lpfnWndProc=WndProc;wc.lpszClassName=L"ISO_TOOL_MAIN";wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);wc.hbrBackground=reinterpret_cast<HBRUSH>(COLOR_WINDOW+1);if(!RegisterClassW(&wc)){MessageBoxW(nullptr,L"Could not register the ISO-Tool window class.",L"ISO-Tool startup error",MB_ICONERROR|MB_OK);return 1;}
+    HWND window=CreateWindowW(wc.lpszClassName,L"ISO-Tool",WS_OVERLAPPEDWINDOW,100,100,920,620,nullptr,nullptr,instance,nullptr);if(!window){MessageBoxW(nullptr,L"Could not create the ISO-Tool window.",L"ISO-Tool startup error",MB_ICONERROR|MB_OK);return 1;}ShowWindow(window,show);UpdateWindow(window);MSG message{};while(GetMessageW(&message,nullptr,0,0)>0){TranslateMessage(&message);DispatchMessageW(&message);}return (int)message.wParam;
 }
