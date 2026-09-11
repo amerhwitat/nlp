@@ -18,7 +18,7 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(result.kind, "android-boot-family")
 
     def test_sparse_header(self):
-        header = struct.pack("<IHHHHIIIII", 0xED26FF3A, 1, 0, 28, 12, 4096, 2, 1, 0)
+        header = struct.pack("<IHHHHIIII", 0xED26FF3A, 1, 0, 28, 12, 4096, 2, 1, 0)
         result = analyze_bytes(header)
         self.assertTrue(result.sparse)
         self.assertEqual(result.sparse_block_size, 4096)
