@@ -1,10 +1,11 @@
 from pathlib import Path
-import queue, threading, tkinter as tk
+import queue, threading, shutil, tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 from iso_tool import BuildPipeline, dependency_cache_dir, suggested_output_dir, prepare_output_layout
 from iso_tool.boot_import import import_boot_sector, inspect_image
 from iso_tool.github_source import is_github_reference, normalize_github_repository, prepare_source
 from iso_tool.build_entrypoint import build
+from iso_tool.image import create_iso
 
 class App(tk.Tk):
     def __init__(self):
@@ -45,13 +46,11 @@ class App(tk.Tk):
         value=self.repo.get().strip()
         if not value: raise ValueError('Select a GitHub repository or local source repository first.')
         if is_github_reference(value):
-            checkout=Path(self.out.get()).expanduser()/'sources'/normalize_github_repository(value).replace('/','__')
-            self.events.put(('log',f'[github] cloning selected source to {checkout}'))
-            return prepare_source(value,checkout)
+            checkout=Path(self.out.get()).expanduser()/'sources'/normalize_github_repository(value).replace('/','__'); self.events.put(('log',f'[github] cloning selected source to {checkout}')); return prepare_source(value,checkout)
         p=Path(value).expanduser()
         if not p.is_dir(): raise FileNotFoundError(f'Source repository does not exist: {p}')
         return p.resolve()
-    def inventory(self): self._start(lambda:self._inventory_worker())
+    def inventory(self): self._start(self._inventory_worker)
     def _inventory_worker(self):
         try:
             root=self._source(); files=BuildPipeline(root).inventory(); self.events.put(('log',f'Entry point: analyze-source; {root}'))
@@ -59,9 +58,9 @@ class App(tk.Tk):
             self.events.put(('done',f'Inventory complete: {len(files)} source files.'))
         except Exception as ex:self.events.put(('log',f'[error] {type(ex).__name__}: {ex}')); self.events.put(('done','Inventory ended with recoverable errors.'))
     def import_image(self):
-        src=filedialog.askopenfilename(title='Import boot sector / ISO / image',filetypes=[('Images','*.iso *.img *.bin'),('All files','*.*')])
+        src=filedialog.askopenfilename(title='Import boot sector / ISO / image',filetypes=[('Images','*.iso *.img *.bin'),('All files','*.*')]);
         if not src:return
-        dst=filedialog.asksaveasfilename(title='Save imported boot sector',initialdir=str(Path(self.out.get())/'boot-images'),defaultextension='.bin',filetypes=[('Binary','*.bin'),('All files','*.*')])
+        dst=filedialog.asksaveasfilename(title='Save imported boot sector',initialdir=str(Path(self.out.get())/'boot-images'),defaultextension='.bin',filetypes=[('Binary','*.bin'),('All files','*.*')]);
         if dst:self._start(lambda:self._import_worker(Path(src),Path(dst)))
     def _import_worker(self,src,dst):
         try: info=inspect_image(src); self.events.put(('log',f'[image] {info.kind}, {info.size} bytes, bootable={info.bootable}')); import_boot_sector(src,dst); self.events.put(('done',f'Boot image imported: {dst}'))
@@ -70,16 +69,19 @@ class App(tk.Tk):
     def build_iso(self): self._start(lambda:self._build_worker(True))
     def _build_worker(self,make_iso):
         try:
-            layout=prepare_output_layout(Path(self.out.get()).expanduser()); self.events.put(('log',f'[output] {layout["root"]}')); source=self._source(); self.events.put(('log',f'[source] {source}'))
-            compilers=[('gnu','GNU C++'),('msvc','Microsoft Visual C++')]; results=[]
-            for idx,(key,label) in enumerate(compilers,1):
+            layout=prepare_output_layout(Path(self.out.get()).expanduser()); self.events.put(('log',f'[output] {layout["root"]}')); source=self._source(); self.events.put(('log',f'[source] {source}')); results=[]
+            for idx,(key,label) in enumerate([('gnu','GNU C++'),('msvc','Microsoft Visual C++')],1):
                 try:
-                    self.events.put(('log',f'[{label}] configure / compile / link started'))
-                    result=build(source,layout['root'],key,log=lambda m:self.events.put(('log',f'[{label}] {m}'))); results.append(result); self.events.put(('progress',(idx*35,f'{label} build completed')))
-                except Exception as ex: self.events.put(('log',f'[{label}] unavailable or failed: {type(ex).__name__}: {ex}'))
+                    self.events.put(('log',f'[{label}] configure / compile / link started')); results.append(build(source,layout['root'],key,log=lambda m,l=label:self.events.put(('log',f'[{l}] {m}')))); self.events.put(('progress',(idx*35,f'{label} build completed')))
+                except Exception as ex:self.events.put(('log',f'[{label}] unavailable or failed: {type(ex).__name__}: {ex}'))
             if not results: raise RuntimeError('Neither GNU C++ nor MSVC produced a build.')
             self.events.put(('log',f'[artifacts] compiled and linked files staged under {layout["executables"]} and {layout["libraries"]}'))
-            if make_iso: self.events.put(('log',f'[iso] ISO mastering stage requested; compiled artifacts are ready at {layout["root"]}.'))
-            self.events.put(('done','Compile/link entry point completed; review artifact paths above.'))
+            if make_iso:
+                staging=Path(layout['root'])/'iso-staging'; shutil.rmtree(staging,ignore_errors=True); staging.mkdir(parents=True,exist_ok=True)
+                for name in ('executables','libraries','boot-images','manifests'):
+                    srcdir=Path(layout[name]);
+                    if srcdir.exists(): shutil.copytree(srcdir,staging/name,dirs_exist_ok=True)
+                iso_path=Path(layout['iso'])/'Chimera-II-'+source.name+'.iso'; create_iso(staging,iso_path,label='CHIMERA_II',profile='data'); self.events.put(('log',f'[iso] generated: {iso_path}'))
+            self.events.put(('done','Compile/link/ISO entry point completed; review artifact paths above.'))
         except Exception as ex:self.events.put(('log',f'[fatal] {type(ex).__name__}: {ex}')); self.events.put(('done','Build stopped with a recoverable error.'))
 if __name__=='__main__': App().mainloop()
