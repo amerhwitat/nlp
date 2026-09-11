@@ -10,13 +10,38 @@ Cross-language desktop ISO/image build orchestrator for GitHub repositories.
 - `engine/` — shared JSON schemas and build profiles.
 - `boot/` — MBR, GPT, UEFI and El Torito integration definitions.
 - `docs/` — architecture, ISO formats, toolchains and security documentation.
-- `tests/` — cross-language conformance fixtures.
+- `python/tests/` — Python resilience and conformance tests.
 
 ## Pipeline
 
 GitHub repository → inventory → toolchain discovery → build-plan preview → C/C++/ASM/C# compilation → boot artifact preparation → ISO staging → ISO/image backend → validation → checksum/report.
 
 Repository build commands are **not executed silently**. The application has Analyze Only, Trusted Build and Custom Build modes.
+
+## Fail-forward runtime policy
+
+A runtime failure in an individual compiler, assembler, scanner, boot-artifact, or other independent job is isolated rather than terminating the entire pipeline. The application:
+
+1. catches the job-level runtime/process exception;
+2. writes the exception type and message to the live details log;
+3. marks the job failed/skipped;
+4. advances the single monotonic overall progress bar;
+5. continues to the next independent job/step; and
+6. preserves the failure in the final report.
+
+Fail-forward is **not** fail-open: fatal image-integrity, staging, authorization, or safety conditions can still stop the pipeline.
+
+See `docs/FAIL_FORWARD_PROGRESS_AND_LIVE_LOGGING.md`.
+
+## Live GUI details
+
+All three front ends expose a details section while work is running:
+
+- **Python/Tkinter:** live operation log, status line, and progress bar updated from a worker thread.
+- **C# WPF:** timestamped live log, status text, and progress bar.
+- **VC++ Win32:** native multiline log and status/progress controls updated through the Windows message queue so the UI remains responsive.
+
+Progress is cumulative across the whole operation rather than restarting for every stage. This is consistent with Microsoft guidance for lengthy operations.
 
 ## Toolchains
 
