@@ -54,9 +54,8 @@ static bool SafeStep(HWND window, const std::wstring& name) {
         Sleep(100);
         PostText(window, WM_ISOTOOL_LOG, L"[step] " + name + L" completed");
         return true;
-    } catch (const std::exception& ex) {
-        PostText(window, WM_ISOTOOL_LOG,
-                 L"[error] " + name + L" failed: " + std::wstring(ex.what(), ex.what() + strlen(ex.what())));
+    } catch (const std::exception&) {
+        PostText(window, WM_ISOTOOL_LOG, L"[error] " + name + L" failed with a standard C++ exception");
         return false;
     } catch (...) {
         PostText(window, WM_ISOTOOL_LOG, L"[error] " + name + L" failed with an unknown exception");
