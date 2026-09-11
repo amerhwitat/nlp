@@ -9,6 +9,7 @@
   </Build>
   <Compiler><Add option="-std=c++17" /></Compiler>
   <Unit filename="../vcpp/ISO-Tool.cpp" />
+  <Unit filename="../vcpp/ISO-Tool.rc" />
   <Extensions><code_completion /><debugger /></Extensions>
  </Project>
 </CodeBlocks_project_file>
