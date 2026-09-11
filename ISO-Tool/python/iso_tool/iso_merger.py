@@ -10,7 +10,8 @@ def _copy_tree(source:Path,staging:Path,prefix:Path,copied:list):
         if not p.is_file():continue
         rel=prefix/p.relative_to(source);dst=staging/rel;dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(p,dst);copied.append({'path':str(rel),'sha256':hashlib.sha256(dst.read_bytes()).hexdigest(),'bytes':dst.stat().st_size})
 def merge_staging(source:Path,staging:Path,manifest_path:Path,artifact_roots:dict|None=None)->dict:
-    source=source.resolve();staging=staging.resolve();shutil.rmtree(staging,ignore_errors=True);staging.mkdir(parents=True);copied=[];_copy_tree(source,staging,Path('.'),copied);artifact_roots=artifact_roots or {}
+    source=source.resolve();staging=staging.resolve();shutil.rmtree(staging,ignore_errors=True);staging.mkdir(parents=True);copied=[];_copy_tree(source,staging,Path('.'),copied)
+    artifact_roots=artifact_roots or {'executables':staging.parent/'binaries'/'executables','libraries':staging.parent/'binaries'/'libraries','boot_images':staging.parent/'boot-images'}
     if artifact_roots.get('executables'):_copy_tree(Path(artifact_roots['executables']),staging,Path('bin'),copied)
     if artifact_roots.get('libraries'):_copy_tree(Path(artifact_roots['libraries']),staging,Path('lib'),copied)
     if artifact_roots.get('boot_images'):_copy_tree(Path(artifact_roots['boot_images']),staging,Path('boot-images'),copied)
