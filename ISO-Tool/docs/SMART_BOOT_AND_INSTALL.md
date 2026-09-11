@@ -1,27 +1,45 @@
 # Smart boot, Live and installation architecture
 
-ISO-Tool now treats the downloaded repository as evidence for image organization. Documentation is indexed for boot/install terminology and produces a machine-readable insight report. An optional LLM/RNN adapter can consume that report and propose a layout; the model is advisory and cannot execute commands or copy arbitrary files without the build-plan authorization layer.
+ISO-Tool treats repository documentation as evidence for image organization. An optional LLM/RNN adapter may propose a layout, but deterministic validation and authorization remain mandatory.
 
-## Boot strategy
+## First-stage firmware paths
 
-The generated image can contain a coordinated menu with entries for a native Chimera II loader, GRUB 2, optional LILO/Syslinux legacy paths, Linux EFI loaders, and an optional Windows Boot Manager chainload target. Loader artifacts are included only when present and compatible with the selected image profile.
+### BIOS
 
-UEFI removable media has a standardized `EFI/BOOT/BOOTx64.EFI` convention (with architecture-specific names for other processor types), so the image planner always reserves the appropriate EFI boot path.
+The BIOS first-stage artifact is a 512-byte real-mode boot sector assembled with NASM. Its conventional BIOS load/handoff address is physical `0x7C00` (`0000:7C00`). The first-stage menu may use BIOS interrupt services such as `INT 10h` for display and `INT 16h` for keyboard input while in real mode. The sample first-stage uses these services only for its initial menu and then hands off to a validated next stage.
 
-Windows boot environments use Boot Manager/BCD structures; ISO-Tool treats those as Windows-provided artifacts rather than recreating Microsoft's binaries. BCDBoot can provision BIOS, UEFI, or both when operating on a Windows system image.
+### UEFI
+
+UEFI is a different execution environment. It does **not** use BIOS interrupts and does not define a universal `0x8000` entry address. A UEFI boot target is normally a PE/COFF EFI application loaded by firmware and entered through its EFI image entry point. ISO-Tool therefore records `efi_main`/the selected EFI entry contract and leaves the actual image load address to firmware.
+
+`0x8000` is supported only as an explicitly configured address for a custom loader/test profile. It must never be described as the generic UEFI entry address.
+
+## Boot validation and fallback
+
+Before final boot-image publication, ISO-Tool statically checks the configured boot artifacts. When QEMU is installed, it can generate an isolated BIOS or UEFI test invocation; the test result is recorded rather than treating static inspection as proof of successful boot.
+
+The menu contains an ordered fallback chain. If the preferred entry is missing, invalid, or fails an isolated validation test, the validator records the reason and selects the next eligible entry. This applies to optional entries such as GRUB, Windows Boot Manager, LILO and Syslinux. A required boot path that has no valid fallback remains a final build failure.
+
+The runtime application displays each attempt and fallback decision in its live operation-details pane.
+
+## Generated menu
+
+The generated image can contain coordinated entries for native Chimera II, GRUB 2, optional LILO/Syslinux legacy paths, Linux EFI loaders, and Windows Boot Manager chainloading. Loader artifacts are included only when present and compatible with the selected profile.
+
+UEFI removable media uses the architecture-specific `EFI/BOOT/BOOT{machine-type}.EFI` convention. Windows Boot Manager binaries are treated as externally supplied Windows artifacts rather than recreated by ISO-Tool.
 
 ## Live media
 
-A Live profile places a kernel/initramfs and runtime filesystem in the image and starts the OS without installing it. The installer profile is a separate menu target that runs the trusted installer and writes a selected OS image to an explicitly selected target disk.
+A Live profile places the kernel/initramfs and runtime filesystem in the image. The install profile is a separate menu target that writes a selected OS image to an explicitly selected target.
 
 ## Installation safety
 
-Writing an OS image to HDD/SSD/NVMe is destructive. ISO-Tool must display the target device, size, model and destructive-operation warning and require explicit confirmation. The core application never chooses a physical disk automatically.
+Writing an OS image to HDD/SSD/NVMe is destructive. ISO-Tool must display the selected target and require explicit confirmation. The core application never silently chooses a physical disk.
 
-## Fail-forward during boot/image preparation
+## Offline recovery
 
-Optional loader discovery and independent packaging jobs use the same fail-forward policy as compilation. If a non-required loader, documentation parser, or packaging step raises a runtime error, ISO-Tool logs the error in the live application details area, advances cumulative progress, and continues with the next independent step. A required boot path or final image integrity failure remains a pipeline-level failure and is not silently bypassed.
+Local source repositories can be analyzed and built without Internet. Remote acquisition can monitor connectivity and wait for restoration before retrying network operations. Network state and retry activity are visible in the live log.
 
-## LLM/RNN boundary
+## Fail-forward
 
-The smart module may classify documentation, infer likely boot artifacts, suggest a directory layout, identify build commands from recognized metadata, and rank loader candidates. It must not invent or execute commands, modify firmware/NVRAM, bypass signatures, or select a physical installation target. All actions pass through a deterministic plan validator.
+Recoverable failures in optional or independent boot/image jobs are logged, recorded, and followed by the next job. Fatal authorization, safety, staging, required-boot, and final-integrity failures are not silently bypassed.
