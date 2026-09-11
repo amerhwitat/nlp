@@ -1,0 +1,47 @@
+#pragma once
+#include <array>
+#include <cstdint>
+#include <string_view>
+
+namespace chimera::thamudic::ona {
+struct Character { char32_t codePoint; std::u32string_view character; std::string_view name; std::string_view transliteration; std::string_view utf8Hex; };
+inline constexpr char32_t kFirst = 0x10A80;
+inline constexpr char32_t kLast = 0x10A9F;
+inline constexpr std::array<Character, 32> kAlphabet = {{
+#define ONA(cp, ch, name, tr, bytes) {cp, U##ch, name, tr, bytes}
+    ONA(0x10A80, "\U00010A80", "OLD NORTH ARABIAN LETTER HEH", "h", "F0 90 AA 80"),
+    ONA(0x10A81, "\U00010A81", "OLD NORTH ARABIAN LETTER LAM", "l", "F0 90 AA 81"),
+    ONA(0x10A82, "\U00010A82", "OLD NORTH ARABIAN LETTER HAH", "ḥ", "F0 90 AA 82"),
+    ONA(0x10A83, "\U00010A83", "OLD NORTH ARABIAN LETTER MEEM", "m", "F0 90 AA 83"),
+    ONA(0x10A84, "\U00010A84", "OLD NORTH ARABIAN LETTER QAF", "q", "F0 90 AA 84"),
+    ONA(0x10A85, "\U00010A85", "OLD NORTH ARABIAN LETTER WAW", "w", "F0 90 AA 85"),
+    ONA(0x10A86, "\U00010A86", "OLD NORTH ARABIAN LETTER ES-2", "s2", "F0 90 AA 86"),
+    ONA(0x10A87, "\U00010A87", "OLD NORTH ARABIAN LETTER REH", "r", "F0 90 AA 87"),
+    ONA(0x10A88, "\U00010A88", "OLD NORTH ARABIAN LETTER BEH", "b", "F0 90 AA 88"),
+    ONA(0x10A89, "\U00010A89", "OLD NORTH ARABIAN LETTER TEH", "t", "F0 90 AA 89"),
+    ONA(0x10A8A, "\U00010A8A", "OLD NORTH ARABIAN LETTER ES-1", "s1", "F0 90 AA 8A"),
+    ONA(0x10A8B, "\U00010A8B", "OLD NORTH ARABIAN LETTER KAF", "k", "F0 90 AA 8B"),
+    ONA(0x10A8C, "\U00010A8C", "OLD NORTH ARABIAN LETTER NOON", "n", "F0 90 AA 8C"),
+    ONA(0x10A8D, "\U00010A8D", "OLD NORTH ARABIAN LETTER KHAH", "ḫ", "F0 90 AA 8D"),
+    ONA(0x10A8E, "\U00010A8E", "OLD NORTH ARABIAN LETTER SAD", "ṣ", "F0 90 AA 8E"),
+    ONA(0x10A8F, "\U00010A8F", "OLD NORTH ARABIAN LETTER ES-3", "s3", "F0 90 AA 8F"),
+    ONA(0x10A90, "\U00010A90", "OLD NORTH ARABIAN LETTER FEH", "f", "F0 90 AA 90"),
+    ONA(0x10A91, "\U00010A91", "OLD NORTH ARABIAN LETTER ALEF", "ʼ", "F0 90 AA 91"),
+    ONA(0x10A92, "\U00010A92", "OLD NORTH ARABIAN LETTER AIN", "ʽ", "F0 90 AA 92"),
+    ONA(0x10A93, "\U00010A93", "OLD NORTH ARABIAN LETTER DAD", "ḍ", "F0 90 AA 93"),
+    ONA(0x10A94, "\U00010A94", "OLD NORTH ARABIAN LETTER GEEM", "g", "F0 90 AA 94"),
+    ONA(0x10A95, "\U00010A95", "OLD NORTH ARABIAN LETTER DAL", "d", "F0 90 AA 95"),
+    ONA(0x10A96, "\U00010A96", "OLD NORTH ARABIAN LETTER GHAIN", "ġ", "F0 90 AA 96"),
+    ONA(0x10A97, "\U00010A97", "OLD NORTH ARABIAN LETTER TAH", "ṭ", "F0 90 AA 97"),
+    ONA(0x10A98, "\U00010A98", "OLD NORTH ARABIAN LETTER ZAIN", "z", "F0 90 AA 98"),
+    ONA(0x10A99, "\U00010A99", "OLD NORTH ARABIAN LETTER THAL", "ḏ", "F0 90 AA 99"),
+    ONA(0x10A9A, "\U00010A9A", "OLD NORTH ARABIAN LETTER YEH", "y", "F0 90 AA 9A"),
+    ONA(0x10A9B, "\U00010A9B", "OLD NORTH ARABIAN LETTER THEH", "ṯ", "F0 90 AA 9B"),
+    ONA(0x10A9C, "\U00010A9C", "OLD NORTH ARABIAN LETTER ZAH", "ẓ", "F0 90 AA 9C"),
+    ONA(0x10A9D, "\U00010A9D", "OLD NORTH ARABIAN NUMBER ONE", "1", "F0 90 AA 9D"),
+    ONA(0x10A9E, "\U00010A9E", "OLD NORTH ARABIAN NUMBER TEN", "10", "F0 90 AA 9E"),
+    ONA(0x10A9F, "\U00010A9F", "OLD NORTH ARABIAN NUMBER TWENTY", "20", "F0 90 AA 9F")
+#undef ONA
+}};
+constexpr bool isOldNorthArabian(char32_t cp) { return cp >= kFirst && cp <= kLast; }
+} // namespace chimera::thamudic::ona
