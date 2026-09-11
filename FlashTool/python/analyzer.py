@@ -3,14 +3,12 @@
 The analyzer is deliberately non-destructive. It recognizes common Android
 artifacts and exposes bounded metadata without applying or modifying images.
 """
-from __future__ import annotations
-
 from dataclasses import asdict, dataclass
 from pathlib import Path
 import hashlib
 import struct
 import zipfile
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
 ANDROID_BOOT_MAGIC = b"ANDROID!"
 AVB_MAGIC = b"AVB0"
@@ -32,7 +30,7 @@ class Analysis:
     payload_version: Optional[int] = None
     manifest_size: Optional[int] = None
     manifest_signature_size: Optional[int] = None
-    notes: list[str] = None
+    notes: Optional[List[str]] = None
 
     def __post_init__(self):
         if self.notes is None:
@@ -84,14 +82,14 @@ def analyze_bytes(data: bytes, path: str = "") -> Analysis:
         result.avb = True
         result.kind = "vbmeta"
         result.notes.append("VBMeta header detected")
-    elif data.endswith(AVB_FOOTER_MAGIC):
+    elif AVB_FOOTER_MAGIC in data[-4096:]:
         result.avb = True
-        result.notes.append("AVB footer marker detected")
+        result.notes.append("AVB footer marker detected near image tail")
 
     return result
 
 
-def analyze_path(path: str | Path) -> Dict[str, object]:
+def analyze_path(path: Union[str, Path]) -> Dict[str, object]:
     p = Path(path)
     data = p.read_bytes()
     result = analyze_bytes(data, str(p))
@@ -113,7 +111,7 @@ def preflight_report(device, plan, partition_size: int = 0, image_size: int = 0)
     """Return a non-destructive compatibility decision."""
     if device is None or plan is None or not plan.partition or not plan.image_path:
         return {"ok": False, "code": "invalid-input", "reason": "device and plan are required"}
-    if device.transport is None or str(device.transport.value) == "none":
+    if device.transport is None or device.transport.value == "none":
         return {"ok": False, "code": "no-transport", "reason": "no supported transport"}
     if not plan.dry_run and not device.bootloader_unlocked:
         return {"ok": False, "code": "locked-write", "reason": "authorized unlocked state is required for writes"}
