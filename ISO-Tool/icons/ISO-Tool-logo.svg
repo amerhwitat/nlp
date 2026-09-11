@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Chimera II OS ISO-Tool</title>
+  <desc id="desc">A circular Chimera-inspired boot disc and infinity emblem for ISO-Tool.</desc>
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f5c451"/>
+      <stop offset="0.5" stop-color="#6fd6ff"/>
+      <stop offset="1" stop-color="#8c6cff"/>
+    </linearGradient>
+    <linearGradient id="core" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17244a"/>
+      <stop offset="1" stop-color="#080d20"/>
+    </linearGradient>
+  </defs>
+  <circle cx="128" cy="128" r="116" fill="#080d20" stroke="url(#ring)" stroke-width="10"/>
+  <circle cx="128" cy="128" r="91" fill="url(#core)" stroke="#6fd6ff" stroke-opacity=".45" stroke-width="2"/>
+  <path d="M64 128c0-27 27-46 55-46 19 0 35 8 46 22-12-5-23-7-34-5-17 3-27 14-27 29s10 26 27 29c11 2 22 0 34-5-11 14-27 22-46 22-28 0-55-19-55-46z" fill="none" stroke="#f5c451" stroke-width="13" stroke-linecap="round"/>
+  <path d="M192 128c0 27-27 46-55 46-19 0-35-8-46-22 12 5 23 7 34 5 17-3 27-14 27-29s-10-26-27-29c-11-2-22 0-34 5 11-14 27-22 46-22 28 0 55 19 55 46z" fill="none" stroke="#6fd6ff" stroke-width="13" stroke-linecap="round"/>
+  <path d="M128 43l12 28-12 12-12-12zM128 213l-12-28 12-12 12 12z" fill="#8c6cff"/>
+  <circle cx="128" cy="128" r="8" fill="#fff"/>
+</svg>
