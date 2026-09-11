@@ -28,8 +28,13 @@ Each build records:
 - linker identity
 - output executable/library paths
 - success/failure status
+- source repository identifier in the combined workspace manifest
 
 The MSVC and GNU builds are separate build trees so compiler-specific generated files and CRT assumptions cannot contaminate one another.
+
+## Related repositories
+
+The same compiler policy is applied independently to compatible C/C++ projects discovered recursively in ChimeraIIOS, BizX and BizXtreme. A missing GNU or MSVC toolchain does not convert that repository into a successful build; the result is recorded as unavailable/failed and independent repositories continue under the fail-forward policy.
 
 ## Compatibility selection
 
