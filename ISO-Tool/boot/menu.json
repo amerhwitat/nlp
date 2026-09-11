@@ -2,12 +2,14 @@
   "title":"ISO-Tool Boot Manager",
   "default":"chimera2-live",
   "timeoutSeconds":8,
+  "fallbackOnValidationFailure":true,
   "entries":[
-    {"id":"chimera2-live","label":"Chimera II OS — Live","loader":"chimera2","mode":"live","kernel":"/boot/chimera/kernel","initrd":"/boot/chimera/initrd"},
-    {"id":"chimera2-install","label":"Chimera II OS — Install","loader":"chimera2","mode":"install","kernel":"/boot/chimera/kernel","initrd":"/boot/chimera/installer.img"},
-    {"id":"grub2","label":"GRUB 2 / Other Linux","loader":"grub2-uefi","mode":"chainload","config":"/boot/grub/grub.cfg"},
-    {"id":"windows","label":"Windows Boot Environment","loader":"windows-bootmgr","mode":"chainload","efi":"/EFI/Microsoft/Boot/bootmgfw.efi"},
-    {"id":"lilo","label":"Legacy Linux / LILO","loader":"lilo","mode":"chainload","image":"/boot/lilo/boot.b"},
-    {"id":"syslinux","label":"Syslinux / Legacy","loader":"syslinux","mode":"chainload","image":"/isolinux/isolinux.bin"}
-  ]
+    {"id":"chimera2-live","label":"Chimera II OS — Live","loader":"chimera2","mode":"live","kernel":"/boot/chimera/kernel","initrd":"/boot/chimera/initrd","firmware":["bios","uefi"],"biosLoadAddress":"0x7C00","biosEntry":"real-mode","biosInterrupts":true,"uefiEntry":"efi_main","validationRequired":true,"fallback":["chimera2-install","grub2","windows","lilo","syslinux"]},
+    {"id":"chimera2-install","label":"Chimera II OS — Install","loader":"chimera2","mode":"install","kernel":"/boot/chimera/kernel","initrd":"/boot/chimera/installer.img","firmware":["bios","uefi"],"biosLoadAddress":"0x7C00","biosEntry":"real-mode","biosInterrupts":true,"uefiEntry":"efi_main","validationRequired":false,"fallback":["grub2","windows","lilo","syslinux"]},
+    {"id":"grub2","label":"GRUB 2 / Other Linux","loader":"grub2-uefi","mode":"chainload","config":"/boot/grub/grub.cfg","firmware":["bios","uefi"],"validationRequired":false,"fallback":["windows","lilo","syslinux"]},
+    {"id":"windows","label":"Windows Boot Environment","loader":"windows-bootmgr","mode":"chainload","efi":"/EFI/Microsoft/Boot/bootmgfw.efi","firmware":["uefi","bios"],"validationRequired":false,"fallback":["lilo","syslinux"]},
+    {"id":"lilo","label":"Legacy Linux / LILO","loader":"lilo","mode":"chainload","image":"/boot/lilo/boot.b","firmware":["bios"],"validationRequired":false,"fallback":["syslinux"]},
+    {"id":"syslinux","label":"Syslinux / Legacy","loader":"syslinux","mode":"chainload","image":"/isolinux/isolinux.bin","firmware":["bios","uefi"],"validationRequired":false,"fallback":[]}
+  ],
+  "customLoaderAddressNote":"0x8000 is allowed only for an explicitly configured custom loader/test profile. UEFI firmware selects the PE/COFF image load address; UEFI has no universal 0x8000 entry address and does not use BIOS interrupts."
 }
