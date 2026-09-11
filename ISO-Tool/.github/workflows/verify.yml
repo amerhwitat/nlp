@@ -50,6 +50,32 @@ jobs:
           if (-not $msbuild) { throw 'MSBuild with VC++ tools was not found' }
           & $msbuild ISO-Tool/vcpp/ISO-Tool.sln /m /p:Configuration=Release /p:Platform=x64 /v:minimal
 
+  windows-mingw:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MinGW-w64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+      - name: Build shared Win32 source with GNU C++
+        shell: msys2 {0}
+        run: |
+          mkdir -p ISO-Tool/codeblocks/bin/CI ISO-Tool/codeblocks/obj/CI
+          g++ -std=c++17 -Wall -Wextra -DUNICODE -D_UNICODE \
+            -mwindows -municode ISO-Tool/vcpp/ISO-Tool.cpp \
+            -lcomctl32 -o ISO-Tool/codeblocks/bin/CI/ISO-Tool.exe
+      - name: Validate Code::Blocks project XML
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content ISO-Tool/codeblocks/ISO-Tool.cbp
+          if ($project.CodeBlocks_project_file.Project.Option.title -ne 'ISO-Tool') {
+            throw 'Unexpected Code::Blocks project title'
+          }
+
   metadata:
     runs-on: ubuntu-latest
     steps:
