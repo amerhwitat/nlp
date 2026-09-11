@@ -1,0 +1,7 @@
+// PATCH INTENT (apply to the existing ISO-Tool.cpp without replacing its body):
+// 1. Add after the Windows include block:
+//      #include <shlobj.h>
+// 2. Ensure the existing pragma block contains:
+//      #pragma comment(lib, "comctl32.lib")
+// This patch is kept as source documentation because the existing monolithic
+// GUI implementation must not be overwritten by a generated replacement.
