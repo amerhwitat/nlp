@@ -41,7 +41,12 @@ class WorkspaceBuilderTests(unittest.TestCase):
                 result['layout'][key].mkdir(parents=True)
             build.return_value = result
             boot.side_effect = lambda source_path, output_path, log=print: output_path.write_bytes(b'boot')
-            create_iso.side_effect = lambda staging, output, **kwargs: output.write_bytes(b'iso')
+
+            def fake_iso(staging, output, **kwargs):
+                output.parent.mkdir(parents=True, exist_ok=True)
+                output.write_bytes(b'iso')
+
+            create_iso.side_effect = fake_iso
             out = tmp / 'output'
             result = build_workspace({'demo': 'https://example.invalid/demo'}, out)
             self.assertEqual(Path(result['iso']).read_bytes(), b'iso')
