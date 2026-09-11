@@ -7,6 +7,8 @@
 #include <thread>
 #include <vector>
 #include <exception>
+#include <stdexcept>
+#include <cstring>
 
 static HWND gRepo, gLog, gProgress, gStatus, gAnalyze, gBuild;
 static constexpr UINT WM_ISOTOOL_LOG = WM_APP + 1;
@@ -42,7 +44,8 @@ static bool SafeStep(const std::wstring& name) {
         PostText(WM_ISOTOOL_LOG, L"[step] " + name + L" completed");
         return true;
     } catch (const std::exception& ex) {
-        std::wstring msg(ex.what(), ex.what() + strlen(ex.what()));
+        std::string narrow(ex.what());
+        std::wstring msg(narrow.begin(), narrow.end());
         PostText(WM_ISOTOOL_LOG, L"[error] " + name + L" skipped after runtime error: " + msg);
         return false;
     } catch (...) {
