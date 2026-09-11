@@ -21,45 +21,26 @@ PACKAGE_MANAGERS = {
     'scoop': ('scoop',),
 }
 
-
 def _present(root: Path, patterns: tuple[str, ...]) -> bool:
     for pattern in patterns:
         if any(root.glob(pattern)):
             return True
     return False
 
-
 def _manager_report() -> dict:
     return {name: {'available': any(shutil.which(binary) for binary in binaries), 'binaries': binaries} for name, binaries in PACKAGE_MANAGERS.items()}
 
-
 def discover_applications(root: Path, target: str = 'auto') -> dict:
-    root = Path(root).resolve()
-    discovered=[]
+    root = Path(root).resolve(); discovered=[]
     for app, patterns in MANIFESTS.items():
         if _present(root, patterns):
             discovered.append({'id': app, 'classification': 'recommended' if app in {'cmake','make'} else 'optional', 'evidence': list(patterns)})
     if (root/'README.md').exists() or (root/'README').exists():
         discovered.append({'id': 'documentation', 'classification': 'required', 'evidence': ['README']})
-    managers=_manager_report()
-    result={'target':target,'root':str(root),'discovered':discovered,'package_managers':managers,'install_authorized':False,'install_command':None}
-    (root/'applications.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
-    return result
-
+    managers=_manager_report(); result={'target':target,'root':str(root),'discovered':discovered,'package_managers':managers,'install_authorized':False,'install_command':None}; (root/'applications.json').write_text(json.dumps(result,indent=2),encoding='utf-8'); return result
 
 def authorize_package_install(result: dict, manager: str, packages: list[str], yes: bool = False) -> dict:
-    if not yes:
-        raise PermissionError('Package installation requires explicit authorization (--yes).')
+    if not yes: raise PermissionError('Package installation requires explicit authorization (--yes).')
     info=result['package_managers'].get(manager)
-    if not info or not info['available']:
-        raise RuntimeError(f'Package manager is unavailable: {manager}')
-    commands={
-        'apt':['apt-get','install','--no-install-recommends'],
-        'dnf':['dnf','install'], 'zypper':['zypper','install'], 'pacman':['pacman','-S'],
-        'apk':['apk','add'], 'xbps':['xbps-install','-y'], 'portage':['emerge'],
-        'homebrew':['brew','install'], 'flatpak':['flatpak','install'], 'snap':['snap','install'],
-        'winget':['winget','install'], 'chocolatey':['choco','install','-y'], 'scoop':['scoop','install'],
-    }
-    command=commands[manager] + packages
-    result=dict(result); result['install_authorized']=True; result['install_command']=command
-    return result
+    if not info or not info['available']: raise RuntimeError(f'Package manager is unavailable: {manager}')
+    commands={'apt':['apt-get','install','--no-install-recommends'],'dnf':['dnf','install'],'zypper':['zypper','install'],'pacman':['pacman','-S'],'apk':['apk','add'],'xbps':['xbps-install','-y'],'portage':['emerge'],'homebrew':['brew','install'],'flatpak':['flatpak','install'],'snap':['snap','install'],'winget':['winget','install'],'chocolatey':['choco','install','-y'],'scoop':['scoop','install']}; result=dict(result); result['install_authorized']=True; result['install_command']=commands[manager]+packages; return result
