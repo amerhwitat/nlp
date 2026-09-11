@@ -1,0 +1,12 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"ISO-Tool Project",
+  "type":"object",
+  "required":["source","image"],
+  "properties":{
+    "source":{"type":"object","required":["repository"],"properties":{"repository":{"type":"string","format":"uri"},"ref":{"type":"string"},"submodules":{"type":"boolean"}}},
+    "build":{"type":"object","properties":{"mode":{"enum":["analyze","trusted","custom"]},"parallelism":{"type":"integer","minimum":1},"toolchains":{"type":"array","items":{"type":"string"}}}},
+    "boot":{"type":"object","properties":{"bios":{"type":"boolean"},"uefi":{"type":"boolean"},"gpt":{"type":"boolean"},"mbr":{"type":"boolean"},"eltorito":{"type":"boolean"},"efiBootImage":{"type":"string"}}},
+    "image":{"type":"object","required":["format"],"properties":{"format":{"enum":["iso9660","iso9660-joliet","iso9660-rockridge","iso9660-joliet-rockridge","udf","iso9660-udf","hybrid-iso-img"]},"volumeLabel":{"type":"string"},"output":{"type":"string"}}}
+  }
+}
