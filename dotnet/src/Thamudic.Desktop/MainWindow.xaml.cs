@@ -1,1 +1,20 @@
-using System.Windows;using Chimera.Thamudic;namespace Chimera.Thamudic.Desktop;public partial class MainWindow:Window{public MainWindow(){InitializeComponent();}private void Extract(object sender,RoutedEventArgs e)=>Output.Text=Thamudic.Extract(Input.Text);}
+using System.Windows;
+using System.Windows.Controls;
+using Chimera.Thamudic;
+namespace Chimera.Thamudic.Desktop;
+
+public partial class MainWindow : Window
+{
+    public MainWindow()
+    {
+        InitializeComponent();
+        AlphabetList.ItemsSource = OldNorthArabian.Alphabet.Select(x => new { x.Character, x.Name, x.Transliteration, x.Utf8Hex, Display = $"{x.Character}  U+{x.CodePoint:X4}  {x.Name}  /  {x.Transliteration}" });
+    }
+    private void Extract(object sender, RoutedEventArgs e) => Output.Text = OldNorthArabian.Transliterate(Input.Text);
+    private void AlphabetSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (AlphabetList.SelectedItem is null) return;
+        dynamic item = AlphabetList.SelectedItem;
+        CharacterDetails.Text = $"Character: {item.Character}\nName: {item.Name}\nTransliteration: {item.Transliteration}\nUTF-8: {item.Utf8Hex}";
+    }
+}
