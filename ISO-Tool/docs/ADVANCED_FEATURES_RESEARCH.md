@@ -1,60 +1,46 @@
 # Advanced ISO-Tool features — research and implementation record
 
-## Research basis
+## Current research basis
 
-The current implementation was expanded after reviewing current documentation for Microsoft Oscdimg, xorriso and QEMU.
+The implementation was reviewed against current Microsoft Oscdimg documentation and open-source ISO tooling, including GNU xorriso/libisoburn and PyCdlib. Microsoft documents ISO 9660, Joliet and UDF mastering plus BIOS/UEFI El Torito multi-boot entries and boot-order files for large images. citeturn0search0
 
-### Bootable multi-firmware mastering
+PyCdlib is a pure-Python ISO9660 reader/writer with ISO9660-1999, El Torito, Joliet, Rock Ridge and UDF support; its current PyPI release is 1.0.2 from August 2026 and requires Python 3.10+, so ISO-Tool keeps its core implementation standard-library-only and Python 3.8 compatible rather than making PyCdlib mandatory. citeturn0search2turn0search6
 
-Microsoft documents BIOS/UEFI multi-boot El Torito images using separate platform IDs and explicit boot entries. Oscdimg supports ISO 9660, Joliet and UDF and exposes boot-order controls for large images. citeturn0search0turn0search1
+GNU xorriso/libisoburn provides mature ISO9660/Rock Ridge mastering and mkisofs-compatible commands. Its current documentation describes EFI El Torito `-e`, platform selection, alternate boot entries and reproducibility through `SOURCE_DATE_EPOCH` and related timestamp controls. citeturn0search1turn1search0turn1search8
 
-ISO-Tool therefore adds explicit image profiles instead of a single generic ISO mode:
+## Implemented improvements
 
-- `bios-only`
-- `uefi-only`
-- `bios-uefi`
-- `data`
+1. Python 3.8-compatible boot validation and emulator helpers.
+2. Hardened El Torito validation-entry checksum checking.
+3. Correct BIOS/UEFI platform interpretation for default and section entries.
+4. Bounded El Torito section parsing with a catalog-entry limit.
+5. Explicit xorriso EFI `-e` mastering rather than treating an EFI image as a BIOS `-b` image. citeturn1search8turn1search12
+6. Reproducible xorriso timestamp flags driven by `SOURCE_DATE_EPOCH`. citeturn1search0turn1search5
+7. Oscdimg BIOS+UEFI multi-boot command generation and large-image boot-order support. citeturn0search0
+8. MSVC common-controls linker dependency fix.
+9. Modernized .NET desktop target to net8.0-windows while retaining net48 compatibility.
+10. CI coverage for Python 3.8/3.11/3.12, .NET 8/net48, MSVC x64 and JSON schemas.
 
-### El Torito and system-area awareness
+## Evidence levels
 
-xorriso documents BIOS El Torito boot images, EFI boot images, MBR/system-area handling and EFI partition image extraction. ISO-Tool adds offline descriptor inspection and records whether an ISO appears to contain ISO 9660, Joliet, UDF and El Torito structures. citeturn0search2
+- **Static**: byte-level or metadata checks performed without executing image contents.
+- **Backend-ready**: a validated command line can be generated for xorriso/Oscdimg.
+- **Emulated**: a disposable QEMU/OVMF run produced observable evidence.
+- **Firmware-verified**: physical or firmware-equivalent boot validation was actually completed.
 
-The inspector is deliberately conservative. It does not claim that a detected descriptor proves that the firmware will boot the image.
+ISO-Tool must not report static inspection as firmware boot success.
 
-### Disposable firmware testing
+## Next layer
 
-QEMU documents snapshot mode for protecting disk images from write-back and supports CD-ROM/disk image attachment. ISO-Tool uses this model for disposable boot validation and distinguishes `emulated` from `unverified`. citeturn0search6turn0search7
+- Full Rock Ridge SUSP/CE parsing and ISO directory traversal.
+- GPT/protective-MBR structural validation.
+- EFI System Partition FAT metadata validation.
+- xorriso `-report_el_torito` and system-area report ingestion.
+- QEMU+OVMF boot tests with captured serial/console evidence.
+- Deterministic staging manifests, duplicate-file detection and SBOM/provenance output.
+- Optional PyCdlib/libarchive read-only backends when installed.
 
-## Features added
-
-1. Declarative image profiles.
-2. BIOS+UEFI mastering intent.
-3. Offline ISO descriptor inspection.
-4. El Torito detection and boot-catalog reporting.
-5. SHA-256 provenance for inspected images.
-6. Resilient Git acquisition with connectivity-aware retry.
-7. Explicit large-image boot-order preparation architecture.
-8. QEMU snapshot-oriented validation guidance.
-9. Regression tests for new image features.
-10. Documentation of evidence levels so static detection is never confused with a real firmware boot test.
-
-## Planned next layer
-
-The next safe extensions are:
-
-- complete El Torito catalog parser and extraction of every BIOS/UEFI entry;
-- GPT/protective-MBR structural parser;
-- EFI System Partition FAT validation;
-- xorriso `-report_el_torito`/system-area report ingestion;
-- QEMU+OVMF execution with captured serial/console evidence;
-- boot-order generation for large images;
-- SBOM/provenance report generation;
-- deterministic staging manifests and duplicate-file detection;
-- optional ISO mount/read-only inspection backends;
-- cross-compiler artifact compatibility matrix;
-- automated QEMU boot regression fixtures.
-
-These are intentionally separated from destructive physical-disk operations.
+These extensions remain separate from destructive physical-disk operations.
 
 ## Safety model
 
