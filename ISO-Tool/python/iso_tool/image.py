@@ -1,9 +1,6 @@
-"""ISO mastering backend selection and command construction.
-
-Backends are xorriso/xorrisofs on POSIX-like systems and Oscdimg on Windows.
-The command is built explicitly so callers can inspect it before execution.
-"""
+"""ISO mastering backend selection and command construction."""
 from __future__ import annotations
+from datetime import datetime, timezone
 from pathlib import Path
 import os
 import shutil
@@ -53,15 +50,14 @@ def build_iso_command(staging: Path, output: Path, label: str = "ISO_TOOL", prof
             cmd += ["-c", "boot.cat", "-b", cfg.bios_boot, "-no-emul-boot", "-boot-load-size", "4", "-boot-info-table"]
         if efi and efi.is_file():
             cmd += ["-eltorito-alt-boot", "-e", cfg.uefi_boot, "-no-emul-boot"]
-        if cfg.large_image_boot_order:
-            cmd += ["-sort", str(staging / "boot.order")] if (staging / "boot.order").is_file() else []
+        if cfg.large_image_boot_order and (staging / "boot.order").is_file():
+            cmd += ["-sort", str(staging / "boot.order")]
         if epoch is not None:
-            cmd += ["--modification-date=%s" % epoch]
-            cmd += ["--set_all_file_dates=%s" % epoch]
+            cmd += ["--modification-date=%s" % epoch, "--set_all_file_dates=%s" % epoch]
         cmd += ["-o", str(output), str(staging)]
         return cmd
 
-    cmd = [backend, "-m", "*", "-o", str(output)]
+    cmd = [backend, "-m", "*", "-l%s" % label, "-o", str(output)]
     bios = staging / cfg.bios_boot if cfg.bios_boot else None
     efi = staging / cfg.uefi_boot if cfg.uefi_boot else None
     if bios and bios.is_file() and efi and efi.is_file():
@@ -75,7 +71,8 @@ def build_iso_command(staging: Path, output: Path, label: str = "ISO_TOOL", prof
     if cfg.large_image_boot_order and (staging / "boot.order").is_file():
         cmd[1:1] = ["-yo%s" % (staging / "boot.order")]
     if epoch is not None:
-        cmd[1:1] = ["-t1970/01/01,00:00:00"] if epoch == "0" else []
+        stamp = datetime.fromtimestamp(int(epoch), timezone.utc).strftime("%m/%d/%Y,%H:%M:%S")
+        cmd[1:1] = ["-t%s" % stamp, "-g"]
     cmd.append(str(staging))
     return cmd
 
