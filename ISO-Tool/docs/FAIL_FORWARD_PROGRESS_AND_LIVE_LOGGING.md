@@ -44,7 +44,10 @@ All three implementations expose a persistent operation-details area:
 - **C# WPF:** timestamped read-only log, status text, and determinate `ProgressBar`.
 - **VC++ Win32:** native multiline log, status label, and common-controls progress bar updated from a worker thread through window messages.
 
-The progress value is monotonic: a completed/skipped job advances the single overall bar instead of resetting it for each stage. This follows Windows progress guidance for long-running operations. citeturn0search0turn0search1
+The progress value is monotonic: a completed/skipped job advances the single overall bar instead of resetting it for each stage. This follows Windows progress guidance for long-running operations.
+
+Reference: https://learn.microsoft.com/en-us/windows/win32/uxguide/progress-bars
+Reference: https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/progress-controls
 
 ## Logging requirements
 
