@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/amerhwitat/nlp/ThamudicEpiPlatform/data/schemas/kpi.schema.json",
+  "title": "Ancient Languages KPI Snapshot",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "application", "metrics"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "application": {"type": "string", "minLength": 1},
+    "metrics": {
+      "type": "object",
+      "additionalProperties": {"type": "number"},
+      "properties": {
+        "objects_total": {"type": "integer", "minimum": 0},
+        "readings_total": {"type": "integer", "minimum": 0},
+        "reviewed_readings": {"type": "integer", "minimum": 0},
+        "translations_total": {"type": "integer", "minimum": 0},
+        "translation_confidence_mean": {"type": "number", "minimum": 0, "maximum": 1},
+        "pdf_imports": {"type": "integer", "minimum": 0},
+        "pdf_exports": {"type": "integer", "minimum": 0},
+        "processing_errors": {"type": "integer", "minimum": 0},
+        "p95_processing_ms": {"type": "number", "minimum": 0}
+      }
+    }
+  },
+  "additionalProperties": true
+}
