@@ -10,14 +10,27 @@ These URLs are integration references. This execution environment returned cache
 
 ## Open-source research references
 
-- READ — Research Environment for Ancient Documents: https://github.com/readsoftware/read — ancient-document research environment with linked images, parallel transcriptions, translations, glossaries and paleographic charts; GPLv3. citeturn0search3
-- Cuneiform Detector: https://github.com/marie-saccucci/cuneiform-detector — open-source FastAPI + React inscription-image detection architecture. citeturn0search2
-- Textorcist: https://github.com/bhagesh-h/textorcist — React/TypeScript/Vite client-side OCR UI patterns, including local processing and export. citeturn0search4
-- OpenEtruscan: https://www.openetruscan.com/docs — open computational epigraphy platform with corpus, API and scholarly provenance/evaluation concepts. citeturn0search10
+- [READ](https://github.com/readsoftware/read) — Research Environment for Ancient Documents; linked images, parallel transcriptions, translations, glossaries and paleographic charts.
+- [Cuneiform Detector](https://github.com/marie-saccucci/cuneiform-detector) — open-source FastAPI + React inscription-image detection architecture.
+- [Textorcist](https://github.com/bhagesh-h/textorcist) — React/TypeScript/Vite OCR UI patterns, including local processing and export.
+- [OpenEtruscan](https://www.openetruscan.com/docs) — computational epigraphy platform with corpus/API and scholarly provenance concepts.
+
+## Unicode, language identification and transliteration
+
+- [Unicode CLDR Project](https://cldr.unicode.org/) — locale and language infrastructure used for internationalized software.
+- [Unicode BCP 47 Extensions](https://cldr.unicode.org/index/bcp47-extension) — machine-readable BCP 47 extension data.
+- [Unicode Transliteration Guidelines](https://cldr.unicode.org/index/cldr-spec/transliteration-guidelines) — distinguishes transliteration from translation and provides transliterator design guidance.
+- [RFC 6497](https://www.rfc-editor.org/rfc/rfc6497) — BCP 47 extension for transformed content, including transliteration, transcription and translation.
+
+## PDF implementation references
+
+- [pypdf](https://github.com/py-pdf/pypdf) — Python PDF parsing and text extraction dependency.
+- [ReportLab](https://www.reportlab.com/) — PDF generation dependency used for research reports.
+- [JSON Schema](https://json-schema.org/) — machine-readable contract validation for PDF/KPI manifests.
 
 ## Public Thamudic image references
 
-Wikimedia Commons contains Thamudic inscription imagery under explicit Creative Commons licenses, for example a Qaryat al-Faw fragment under CC BY 4.0 and a Jubbah inscription under CC BY 2.0. These are suitable examples for provenance-aware dataset ingestion when the license requirements are retained. citeturn1search1turn1search2
+Wikimedia Commons contains Thamudic inscription imagery under explicit Creative Commons licenses. Dataset ingestion must retain the original license and attribution requirements.
 
 ## Existing repository sources
 
@@ -26,6 +39,10 @@ Wikimedia Commons contains Thamudic inscription imagery under explicit Creative 
 - `ThamudicScan/web_ui/` — existing React scanner UI.
 - `SOFTR_DATABASE_MIGRATION.md` — repository's previously documented Softr migration model.
 - `THAMUDIC_SCANNER_RESEARCH.md` — project research notes.
+- `ThamudicEpiPlatform/database/migrations/002_pdf_translation_kpi.sql` — PDF/translation/KPI persistence model.
+- `ThamudicEpiPlatform/server/pdf_import.py` — bounded PDF extraction and page provenance.
+- `ThamudicEpiPlatform/server/pdf_export.py` — provenance-aware research PDF generation.
+- `ThamudicEpiPlatform/server/kpi.py` — common KPI aggregation service.
 
 ## Citation policy
 
