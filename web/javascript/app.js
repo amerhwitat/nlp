@@ -1,0 +1,2 @@
+const input=document.querySelector('#input'),out=document.querySelector('#out');
+input.addEventListener('input',()=>{const text=input.value;out.textContent=JSON.stringify({characters:[...text].length,words:text.trim()?text.trim().split(/\s+/u).length:0,lines:text?text.split(/\r?\n/u).length:0},null,2)});
