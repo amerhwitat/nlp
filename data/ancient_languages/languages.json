@@ -1,0 +1,15 @@
+{
+  "version":"1.0",
+  "languages":[
+    {"id":"hebrew","name":"Hebrew","family":"Northwest Semitic","stages":["hebrew.ancient","hebrew.second_temple","hebrew.masoretic","hebrew.medieval","hebrew.modern"]},
+    {"id":"greek","name":"Greek","family":"Hellenic","stages":["greek.mycenaean","greek.archaic","greek.classical","greek.koine","greek.roman","greek.byzantine","greek.modern"]},
+    {"id":"coptic","name":"Coptic","family":"Egyptian","stages":["coptic.sahidic","coptic.bohairic","coptic.fayumic","coptic.akhmimic","coptic.lycopolitan"]},
+    {"id":"aramaic","name":"Aramaic","family":"Northwest Semitic","stages":["aramaic.ancient","aramaic.imperial","aramaic.biblical","aramaic.achaemenid","aramaic.nabataean","aramaic.palmyrene","aramaic.hatran","aramaic.samaritan","neo_aramaic"]},
+    {"id":"syriac","name":"Syriac","family":"Aramaic","stages":["syriac.classical","syriac.modern"]},
+    {"id":"mandaic","name":"Mandaic","family":"Aramaic","stages":["mandaic.classical","mandaic.modern"]},
+    {"id":"sumerian","name":"Sumerian","family":"language_isolate","stages":["sumerian.ancient"]},
+    {"id":"akkadian","name":"Akkadian","family":"Semitic","stages":["akkadian.old","akkadian.middle","akkadian.neo_assyrian","akkadian.neo_babylonian"]},
+    {"id":"egyptian","name":"Egyptian","family":"Egyptian","stages":["egyptian.old","egyptian.middle","egyptian.new","egyptian.late","egyptian.demotic"]},
+    {"id":"latin","name":"Latin","family":"Italic","stages":["latin.ancient","latin.classical","latin.late","latin.medieval"]}
+  ]
+}
