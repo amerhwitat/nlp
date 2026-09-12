@@ -1,48 +1,62 @@
-# NLP / Ancient North Arabian Research Toolkit
+# NLP / Ancient Scripts Intelligence Research Toolkit
 
-This repository contains Python, C++, .NET, Visual C++ and desktop/web implementations for Thamudic and Ancient North Arabian language research.
+This repository contains Python, C++, .NET, Visual C++, and web implementations for Thamudic and Ancient North Arabian research, now expanded into a language-neutral ancient-script OCR, epigraphy, transliteration and low-resource translation platform.
 
-## ThamudicScan web application
+## ThamudicScan
 
 Public deployment:
 
 https://thamudicscan-s3wz30.public.builtwithrocket.new/
 
-The hosted application provides a browser-accessible interface for the Thamudic / North Arabian research tooling maintained in this repository.
+The deployment is the reference web experience for the Thamudic / North Arabian tooling. The reusable implementation lives under `ancient_scripts/`, `python/ancient_scripts/`, `cpp/ancient_scripts/`, and `typescript/ancient-scripts/`.
 
-## Ancient North Arabian Unicode support
+## Architecture
 
-The repository now includes a canonical registry at `data/ancient_north_arabian/alphabet.json` covering the complete Unicode Old North Arabian block `U+10A80–U+10A9F`:
+`image -> detection -> segmentation -> glyph recognition -> script identification -> Unicode/transliteration -> normalization -> lexical/morphological analysis -> RNN/LLM translation -> retrieval/context -> confidence -> scholarly review`
 
-- 29 letters
-- 3 encoded numbers
-- Unicode character
-- Unicode code point
-- scholarly transliteration
-- exact UTF-8 byte sequence
-- Dadanitic encoding basis
-- variant-script metadata for Safaitic, Hismaic, Taymanitic, Minaic and Thamudic B
+The architecture intentionally preserves uncertainty, damaged signs, alternate readings and provenance.
 
-Unicode encodes Old North Arabian using Dadanitic forms. Variant historical forms are represented as variant/font metadata rather than fabricated Unicode code points.
+## Ancient-script coverage
+
+The registry now includes Dadanitic, Taymanitic, Dumaitic, Safaitic, Hismaic, Thamudic B/C/D, Himaitic/Thamudic F, Nabataean, Old Arabic, Aramaic, Phoenician, Paleo-Hebrew, Ugaritic, Old Persian, Egyptian hieroglyphs, Sumerian, Akkadian and Hittite. Coverage status is represented explicitly rather than implying that every script is equally deciphered.
+
+Ancient North Arabian is a scholarly category covering multiple scripts and text traditions. OCIANA documents the breadth of this material, including tens of thousands of inscriptions and graffiti. Thamudic D remains only partially deciphered; current scholarship continues to identify glyph values and writing formulae.
+
+## RNN / LLM engine
+
+`python/ancient_scripts/rnnllm.py` provides the common inference contract for low-resource models and ensembles. The design supports RNN/LSTM/GRU, Transformer, state-space/Mamba-style models, retrieval augmentation, lexicons and contextual evidence without pretending that pretrained weights are present in source control.
 
 ## Implementations
 
-- `cpp/thamudic/` — C++20 library and Unicode registry.
-- `vcpp/` — Visual Studio native Windows desktop scanner.
-- `dotnet/` — CLI, WPF desktop and web implementations. Core/CLI target `net48;net6.0`; WPF targets `net48;net6.0-windows`; web is pinned to `net6.0` because ASP.NET Core is a modern .NET runtime.
+- `ancient_scripts/` — language-neutral schemas and architecture.
+- `python/ancient_scripts/` — Python research/inference engine.
+- `cpp/ancient_scripts/` — C++ core interface for high-performance implementations.
+- `rust/ancient_scripts/` — memory-safe core primitives.
+- `typescript/ancient-scripts/` — browser/service interface types.
+- `data/ancient_scripts/` — extensible script-family registry.
+- `data/ancient_north_arabian/` — canonical Old North Arabian Unicode registry.
+- `cpp/thamudic/` — C++20 Thamudic implementation.
+- `vcpp/` — Visual Studio native Windows implementation.
+- `dotnet/` — CLI, WPF and web implementations.
 - `python/thamudic/` — Python Unicode/UTF-8/transliteration API.
-- `python/tests/` — Unicode and UTF-8 regression tests.
-- `data/ancient_north_arabian/` — language-neutral canonical registry.
-- `ThamudicScan/` — documentation and link to the public web deployment.
+- `ThamudicScan/` — deployment documentation and integration point.
 
-## Windows desktop
+Additional language ports are organized by implementation role rather than by copying incompatible ML stacks into every language. Python is the research/ML reference; C++/Rust are performance cores; TypeScript is the web layer; .NET/Java/Go/Kotlin/Swift/Dart ports should consume stable schemas and APIs.
 
-The WPF application includes an Ancient North Arabian registry browser, text extraction/transliteration and UTF-8 inspection. The native VC++ application remains a separate implementation and solution.
+## Research integration
+
+The design is informed by public research and software for ancient-script OCR and translation, including OCIANA, MNAMON, CDLI Sumerian-English machine translation work, MARDUK's hybrid Mamba/Transformer/RAG Akkadian approach, and Old Persian OCR research. External code is not copied merely because it is public: license, attribution and redistribution rights are recorded before integration.
+
+## Unicode
+
+The existing `data/ancient_north_arabian/alphabet.json` remains the canonical Unicode registry for Old North Arabian U+10A80–U+10A9F. Unicode encodes Old North Arabian using Dadanitic forms; variant historical forms must not be represented as fabricated Unicode code points.
+
+## Documentation
+
+- `docs/ANCIENT_SCRIPTS_RESEARCH.md`
+- `ancient_scripts/README.md`
+- `ancient_scripts/core/schema.json`
 
 ## Compatibility terminology
 
 Modern .NET 6 is `net6.0`; .NET Framework targets use TFMs such as `net48`. There is no Microsoft target named “.NET Framework 6.0”.
-
-## Sources
-
-Unicode Standard 17.0, Old North Arabian block U+10A80–U+10A9F and the Unicode NamesList are the normative character/code-point sources used by this implementation.
