@@ -8,3 +8,9 @@ reportlab>=4.2,<5
 jsonschema>=4.23,<5
 pytest>=8,<9
 httpx>=0.27,<1
+Pillow>=10,<12
+numpy>=1.26,<3
+opencv-python-headless>=4.10,<5
+pytesseract>=0.3.13,<1
+# Optional historical/non-Latin OCR engine; install separately when a compatible model is available.
+# kraken>=7,<8
