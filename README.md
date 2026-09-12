@@ -34,6 +34,11 @@ Unicode encodes Old North Arabian using Dadanitic forms. Variant historical form
 - `python/tests/` — Unicode and UTF-8 regression tests.
 - `data/ancient_north_arabian/` — language-neutral canonical registry.
 - `ThamudicScan/` — documentation and link to the public web deployment.
+- `chimera/` — shared 128D/P2P interoperability contract.
+
+## Chimera multidimensional + P2P layer
+
+Research records can carry the common Chimera 128D state model, including geometry, time, observer/perspective, light/material response, events, objects, properties, interactions and extensible vector/cognitive state. `chimera/p2p_protocol.json` defines authenticated peer exchange, capability discovery, pub/sub, request/response, replay controls and content-addressed synchronization. Peer discovery is configured rather than arbitrary Internet scanning.
 
 ## Windows desktop
 
@@ -46,3 +51,7 @@ Modern .NET 6 is `net6.0`; .NET Framework targets use TFMs such as `net48`. Ther
 ## Sources
 
 Unicode Standard 17.0, Old North Arabian block U+10A80–U+10A9F and the Unicode NamesList are the normative character/code-point sources used by this implementation.
+
+## License
+
+Original project code is released under the GNU General Public License v3 or later. Third-party components retain their applicable licenses and notices.
