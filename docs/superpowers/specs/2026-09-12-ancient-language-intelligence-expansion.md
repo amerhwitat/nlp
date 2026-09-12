@@ -235,3 +235,45 @@ References:
 - Thesaurus Linguae Aegyptiae.
 
 These references are evidence sources for registry design; their content is not treated as a substitute for scholarly validation.
+
+## Approved Coptic, Greek, and Aramaic expansion
+
+### Coptic
+
+Register Coptic as its own script and language family/stage layer, including Sahidic, Bohairic, Fayumic, Akhmimic, Lycopolitan and other attested varieties when supported by authoritative datasets. Preserve mixed Greek/Coptic passages as separate language/script spans. Coptic characters must retain their dedicated script identity rather than being collapsed into Greek because of historical ancestry.
+
+### Greek historical continuum
+
+Model Greek as a language family with explicit stages and dialect/orthographic metadata: Mycenaean/Linear B where linguistically applicable, Archaic Greek, Classical Greek, major epigraphic/dialectal traditions, Hellenistic/Koine Greek, Roman-period Greek, Byzantine/Medieval Greek, and Modern Greek. Polytonic and monotonic orthographies are separate registry dimensions; historic letters and numeral characters are preserved. Transliteration profiles are versioned by scholarly convention.
+
+### Aramaic ancient-to-modern continuum
+
+Register Ancient/Old Aramaic, Imperial Aramaic, Biblical/Official Aramaic, Achaemenid-period varieties, Nabataean and Palmyrene-related Aramaic contexts, Hatran, Syriac traditions, Mandaic, Samaritan Aramaic, and modern Eastern/Western Neo-Aramaic branches where authoritative metadata is available. Syriac and Mandaic remain distinct script/literary traditions while their language relationships are explicitly represented. Right-to-left direction, shaping, vocalization, combining marks, and historical variants are retained.
+
+### Expanded recognition hierarchy
+
+```text
+visual encoder
+ -> writing-system family
+ -> script
+ -> historical script stage
+ -> language
+ -> historical stage / dialect
+ -> orthography / direction / layout
+ -> glyph or character recognizer
+ -> Unicode + scholarly identifier
+ -> transliteration profile
+ -> morphology / lexicon
+ -> contextual reasoning
+ -> translation
+```
+
+Mixed-script documents use span-level classification so Greek, Coptic, Aramaic/Syriac and other scripts can coexist on one object or page with independent hypotheses and provenance.
+
+### Expanded ER/MADM dimensions
+
+Add `DIALECT`, `SCRIPT_VARIANT`, `ORTHOGRAPHY`, `MODERN_CONTINUATION`, `LANGUAGE_ATTESTATION`, `TRANSLITERATION_SYSTEM`, and `TRANSLITERATION_RULE`. Add corresponding MADM dimensions and facts for historical stage, dialect, orthographic profile, mixed-script span, transliteration confidence, modern continuation, and Unicode normalization profile.
+
+### Expanded validation
+
+Tests must verify that Coptic and Greek character/script identities are not collapsed; polytonic Greek round-trips through Unicode normalization without losing source representation; ancient and modern Aramaic stages remain distinct while preserving family relationships; Syriac and Mandaic RTL/shaping metadata survive persistence; mixed Greek/Coptic/Aramaic spans receive independent hypotheses; UTF-8 byte sequences are reproducible from Unicode code points; and language-stage/script/modern-continuation relationships are provenance-backed.
