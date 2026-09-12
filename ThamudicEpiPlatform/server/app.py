@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DB = Path(os.getenv('THAMUDIC_PLATFORM_DB', ROOT / 'data' / 'thamudic_platform.sqlite'))
 DB.parent.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title='Thamudic Cross-Language Epigraphy API', version='1.2.0')
+app = FastAPI(title='Thamudic Cross-Language Epigraphy API', version='1.3.0')
 origins = [x.strip() for x in os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',') if x.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
 
@@ -58,8 +58,8 @@ def bootstrap():
     with con() as c:
         c.executescript(schema)
         c.executescript(views)
-        migration = ROOT / 'database' / 'migrations' / '002_pdf_translation_kpi.sql'
-        c.executescript(migration.read_text(encoding='utf-8'))
+        for name in ('002_pdf_translation_kpi.sql', '003_ocr_jobs.sql'):
+            c.executescript((ROOT / 'database' / 'migrations' / name).read_text(encoding='utf-8'))
 
 @app.on_event('startup')
 def startup():
@@ -67,7 +67,7 @@ def startup():
 
 @app.get('/api/health')
 def health():
-    return {'ok': True, 'database': str(DB), 'unicode_range': 'U+10A80-U+10A9F', 'api_version': '1.2.0', 'ocr': ['auto', 'kraken', 'tesseract']}
+    return {'ok': True, 'database': str(DB), 'unicode_range': 'U+10A80-U+10A9F', 'api_version': '1.3.0', 'ocr': ['auto', 'kraken', 'tesseract', 'quality-only']}
 
 @app.get('/api/objects')
 def objects(q: str | None = None, limit: int = 50, offset: int = 0):
@@ -132,6 +132,10 @@ async def ocr_scan(file: UploadFile = File(...), engine: str = 'auto', tesseract
         result = scan_image(raw, engine=engine, tesseract_lang=tesseract_lang, kraken_model=kraken_model)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
+    status = 'completed' if result.text else 'error'
+    with con() as c:
+        c.execute('INSERT INTO ocr_jobs(filename,source_sha256,engine,status,confidence,script_candidates_json,warnings_json,preprocessing_json) VALUES(?,?,?,?,?,?,?,?)',
+                  (file.filename, result.source_sha256, result.engine, status, result.confidence, json.dumps(result.script_candidates, ensure_ascii=False), json.dumps(result.warnings, ensure_ascii=False), json.dumps(result.preprocessing, ensure_ascii=False)))
     return {'filename': file.filename, 'content_type': file.content_type, **result.to_dict(),
             'provenance': {'source_filename': file.filename, 'sha256': result.source_sha256, 'recognition_only': True,
                            'translation_required_review': True}}
