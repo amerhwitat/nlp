@@ -56,6 +56,54 @@ Transliteration and target-language translation fields now have browser speech c
 
 Modern speech, scholarly pronunciation, reconstructed pronunciation and reference pronunciation are distinct. Ancient reconstructed speech is explicitly labeled and is never represented as an authenticated historical recording without appropriate evidence.
 
+## Cross-platform automation
+
+The repository now provides source-preserving build, dependency, database and release entrypoints under `scripts/`. PowerShell is the canonical Windows orchestration layer, POSIX shell is the Unix entrypoint, and Python/Perl provide portable orchestration equivalents. Windows `.bat` files are stable launchers for users and CI.
+
+### Bootstrap
+
+- `scripts/bootstrap/install-dependencies.bat`
+- `scripts/bootstrap/install-dependencies.ps1`
+- `scripts/bootstrap/install-dependencies.sh`
+- `scripts/bootstrap/install-dependencies.py`
+- `scripts/bootstrap/install-dependencies.pl`
+
+Profiles include `minimal`, `developer`, `research`, `server`, and `ci` where supported. Web dependencies use `npm ci` when `package-lock.json` is present. Python dependencies use an isolated `.venv` when a requirements file exists.
+
+### Build
+
+- `scripts/build/build-all.bat`
+- `scripts/build/build-all.ps1`
+- `scripts/build/build-all.sh`
+- `scripts/build/build-all.py`
+- `scripts/build/build-all.pl`
+
+The build orchestration preserves native source directories and delegates specialized native/WASM targets to dedicated scripts when they are present. Windows defaults to `Release`; `Debug` can be selected through the PowerShell/Python interfaces.
+
+### Database
+
+- `scripts/database/init-database.bat`
+- `scripts/database/init-database.ps1`
+- `scripts/database/init-database.sh`
+- `scripts/database/init-database.py`
+- `scripts/database/init-database.pl`
+
+Use `check`/`Check` to inspect available clients. Use `init`/`Init` to initialize SQL in deterministic filename order. SQLite is the zero-install local path; PostgreSQL is selected through `NLP_DATABASE_URL` or `DATABASE_URL`. Credentials are never stored in scripts.
+
+### Typical commands
+
+```text
+Windows CMD:      scripts\\bootstrap\\install-dependencies.bat developer
+Windows PowerShell: pwsh scripts\\build\\build-all.ps1 -Configuration Release
+Linux/macOS:      bash scripts/build/build-all.sh
+Python:           python scripts/build/build-all.py --configuration Release
+Perl:             perl scripts/build/build-all.pl
+Database check:   python scripts/database/init-database.py check
+Database init:    python scripts/database/init-database.py init
+```
+
+The same automation contract is intended for local development and CI, reducing platform-specific drift. Generated outputs belong under `artifacts/` and source files remain in their original language directories.
+
 ## ThamudicScan web application
 
 Public deployment:
@@ -96,6 +144,8 @@ Unicode encodes Old North Arabian using Dadanitic forms. Variant historical form
 
 - `docs/superpowers/specs/2026-09-12-ancient-language-intelligence-expansion.md`
 - `docs/superpowers/specs/2026-09-12-hebrew-alphabet-utf8-voice-addendum.md`
+- `docs/superpowers/specs/2026-09-12-web-first-build-deploy-database-batch-architecture-design.md`
+- `docs/superpowers/plans/2026-09-12-cross-platform-build-deploy-scripts-plan.md`
 - `docs/superpowers/plans/2026-09-12-hebrew-alphabet-utf8-voice-plan.md`
 - `docs/ANCIENT_LANGUAGE_VOICE.md`
 
