@@ -63,18 +63,24 @@ class Database:
         session_id = uuid.uuid4().hex
         now = _now()
         with self._lock, self._connect() as db:
-            db.execute("INSERT INTO sessions(id,status,created_at,updated_at) VALUES(?,?,?,?,?)".replace(",?,?,?,?,?", ",?,?,?,?"), (session_id, "created", now, now))
+            db.execute(
+                "INSERT INTO sessions(id,status,created_at,updated_at) VALUES(?,?,?,?)",
+                (session_id, "created", now, now),
+            )
         return session_id
 
     def update_session(self, session_id: str, *, status: str | None = None, processed_count: int | None = None, match_count: int | None = None):
         fields = ["updated_at = ?"]
         values: list[object] = [_now()]
         if status is not None:
-            fields.append("status = ?"); values.append(status)
+            fields.append("status = ?")
+            values.append(status)
         if processed_count is not None:
-            fields.append("processed_count = ?"); values.append(processed_count)
+            fields.append("processed_count = ?")
+            values.append(processed_count)
         if match_count is not None:
-            fields.append("match_count = ?"); values.append(match_count)
+            fields.append("match_count = ?")
+            values.append(match_count)
         values.append(session_id)
         with self._lock, self._connect() as db:
             db.execute(f"UPDATE sessions SET {', '.join(fields)} WHERE id = ?", values)
@@ -92,9 +98,7 @@ class Database:
     def get_session(self, session_id: str) -> dict | None:
         with self._connect() as db:
             row = db.execute("SELECT * FROM sessions WHERE id = ?", (session_id,)).fetchone()
-        if not row:
-            return None
-        return dict(row)
+        return dict(row) if row else None
 
     def list_results(self, session_id: str) -> list[dict]:
         with self._connect() as db:
