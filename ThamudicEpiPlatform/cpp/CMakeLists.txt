@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.20)
+project(thamudic_ocr_cpp LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+find_package(CURL REQUIRED)
+add_executable(ocr_scan ocr_scan.cpp)
+target_link_libraries(ocr_scan PRIVATE CURL::libcurl)
