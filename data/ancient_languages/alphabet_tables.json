@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "source": "Unicode UCD-derived seed; verify against pinned UCD snapshot",
+  "alphabets": {
+    "hebrew.modern": {
+      "script": "Hebr",
+      "direction": "rtl",
+      "members": [
+        {"name":"Alef","char":"א","codepoint":"U+05D0","utf8":"D7 90","transliteration":"ʾ"},
+        {"name":"Bet","char":"ב","codepoint":"U+05D1","utf8":"D7 91","transliteration":"b"},
+        {"name":"Gimel","char":"ג","codepoint":"U+05D2","utf8":"D7 92","transliteration":"g"},
+        {"name":"Dalet","char":"ד","codepoint":"U+05D3","utf8":"D7 93","transliteration":"d"},
+        {"name":"He","char":"ה","codepoint":"U+05D4","utf8":"D7 94","transliteration":"h"},
+        {"name":"Waw","char":"ו","codepoint":"U+05D5","utf8":"D7 95","transliteration":"w/v"},
+        {"name":"Zayin","char":"ז","codepoint":"U+05D6","utf8":"D7 96","transliteration":"z"},
+        {"name":"Het","char":"ח","codepoint":"U+05D7","utf8":"D7 97","transliteration":"ḥ"},
+        {"name":"Tet","char":"ט","codepoint":"U+05D8","utf8":"D7 98","transliteration":"ṭ"},
+        {"name":"Yod","char":"י","codepoint":"U+05D9","utf8":"D7 99","transliteration":"y"},
+        {"name":"Kaf","char":"כ","codepoint":"U+05DB","utf8":"D7 AB","transliteration":"k"},
+        {"name":"Lamed","char":"ל","codepoint":"U+05DC","utf8":"D7 AC","transliteration":"l"},
+        {"name":"Mem","char":"מ","codepoint":"U+05DE","utf8":"D7 AE","transliteration":"m"},
+        {"name":"Nun","char":"נ","codepoint":"U+05E0","utf8":"D7 A0","transliteration":"n"},
+        {"name":"Samekh","char":"ס","codepoint":"U+05E1","utf8":"D7 A1","transliteration":"s"},
+        {"name":"Ayin","char":"ע","codepoint":"U+05E2","utf8":"D7 A2","transliteration":"ʿ"},
+        {"name":"Pe","char":"פ","codepoint":"U+05E4","utf8":"D7 A4","transliteration":"p/f"},
+        {"name":"Tsadi","char":"צ","codepoint":"U+05E6","utf8":"D7 A6","transliteration":"ṣ"},
+        {"name":"Qof","char":"ק","codepoint":"U+05E7","utf8":"D7 A7","transliteration":"q"},
+        {"name":"Resh","char":"ר","codepoint":"U+05E8","utf8":"D7 A8","transliteration":"r"},
+        {"name":"Shin","char":"ש","codepoint":"U+05E9","utf8":"D7 A9","transliteration":"š"},
+        {"name":"Tav","char":"ת","codepoint":"U+05EA","utf8":"D7 AA","transliteration":"t"}
+      ],
+      "final_forms": [
+        {"name":"Final Kaf","char":"ך","codepoint":"U+05DA","utf8":"D7 9A"},
+        {"name":"Final Mem","char":"ם","codepoint":"U+05DD","utf8":"D7 9D"},
+        {"name":"Final Nun","char":"ן","codepoint":"U+05DF","utf8":"D7 9F"},
+        {"name":"Final Pe","char":"ף","codepoint":"U+05E3","utf8":"D7 A3"},
+        {"name":"Final Tsadi","char":"ץ","codepoint":"U+05E5","utf8":"D7 A5"}
+      ]
+    }
+  }
+}
