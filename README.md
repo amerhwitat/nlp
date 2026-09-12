@@ -2,6 +2,14 @@
 
 This repository contains Python, C++, .NET, Visual C++ and desktop/web implementations for Thamudic and Ancient North Arabian language research.
 
+## ThamudicScan web application
+
+Public deployment:
+
+https://thamudicscan-s3wz30.public.builtwithrocket.new/
+
+The hosted application provides a browser-accessible interface for the Thamudic / North Arabian research tooling maintained in this repository.
+
 ## Ancient North Arabian Unicode support
 
 The repository now includes a canonical registry at `data/ancient_north_arabian/alphabet.json` covering the complete Unicode Old North Arabian block `U+10A80–U+10A9F`:
@@ -25,6 +33,7 @@ Unicode encodes Old North Arabian using Dadanitic forms. Variant historical form
 - `python/thamudic/` — Python Unicode/UTF-8/transliteration API.
 - `python/tests/` — Unicode and UTF-8 regression tests.
 - `data/ancient_north_arabian/` — language-neutral canonical registry.
+- `ThamudicScan/` — documentation and link to the public web deployment.
 
 ## Windows desktop
 
