@@ -1,0 +1,16 @@
+{
+  "language_id": "hebrew",
+  "name": "Hebrew",
+  "stages": [
+    {"id":"hebrew.ancient","name":"Ancient/Biblical Hebrew","direction":"rtl","script":"Hebr","pronunciation_type":"reconstructed"},
+    {"id":"hebrew.second_temple","name":"Second Temple Hebrew","direction":"rtl","script":"Hebr","pronunciation_type":"reconstructed"},
+    {"id":"hebrew.masoretic","name":"Masoretic Hebrew","direction":"rtl","script":"Hebr","combining_marks":true,"pronunciation_type":"scholarly"},
+    {"id":"hebrew.medieval","name":"Medieval Hebrew","direction":"rtl","script":"Hebr","pronunciation_type":"scholarly"},
+    {"id":"hebrew.modern","name":"Modern Hebrew","direction":"rtl","script":"Hebr","pronunciation_type":"modern","bcp47":"he"}
+  ],
+  "related_script_contexts": [
+    {"id":"paleo_hebrew","script":"Phnx","relationship":"historical_script_context","language_stage":"hebrew.ancient"},
+    {"id":"samaritan_hebrew","script":"Samr","relationship":"related_distinct_tradition"}
+  ],
+  "features": ["rtl","niqqud","cantillation","final_forms","combining_marks"]
+}
