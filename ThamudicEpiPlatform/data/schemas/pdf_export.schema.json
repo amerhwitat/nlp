@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/amerhwitat/nlp/ThamudicEpiPlatform/data/schemas/pdf_export.schema.json",
+  "title": "Historical Object Research PDF Manifest",
+  "type": "object",
+  "required": ["schema_version", "report_id", "generated_at", "source", "sections"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "report_id": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "source": {
+      "type": "object",
+      "required": ["sha256"],
+      "properties": {
+        "sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+        "source_id": {"type": ["string", "null"]},
+        "rights": {"type": ["string", "null"]}
+      }
+    },
+    "sections": {"type": "array", "items": {"type": "object"}},
+    "provenance": {"type": "array", "items": {"type": "object"}},
+    "citations": {"type": "array", "items": {"type": "object"}}
+  },
+  "additionalProperties": true
+}
