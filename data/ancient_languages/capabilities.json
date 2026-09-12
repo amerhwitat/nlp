@@ -1,0 +1,12 @@
+{
+  "capabilities":[
+    {"language_stage":"hebrew.ancient","level":"TRANSLITERATION_READY","ocr":true,"translation":false,"speech":"PRONUNCIATION_REFERENCE"},
+    {"language_stage":"hebrew.masoretic","level":"TRANSLITERATION_READY","ocr":true,"translation":true,"speech":"PRONUNCIATION_REFERENCE"},
+    {"language_stage":"hebrew.modern","level":"SPEECH_SYNTHESIS_READY","ocr":true,"translation":true,"speech":"native-modern"},
+    {"language_stage":"greek.classical","level":"TRANSLITERATION_READY","ocr":true,"translation":true,"speech":"PRONUNCIATION_REFERENCE"},
+    {"language_stage":"coptic.sahidic","level":"REFERENCE","ocr":false,"translation":false,"speech":"PRONUNCIATION_REFERENCE"},
+    {"language_stage":"aramaic.imperial","level":"REFERENCE","ocr":false,"translation":false,"speech":"PRONUNCIATION_REFERENCE"},
+    {"language_stage":"syriac.classical","level":"REFERENCE","ocr":false,"translation":true,"speech":"PRONUNCIATION_REFERENCE"},
+    {"language_stage":"mandaic.classical","level":"REFERENCE","ocr":false,"translation":false,"speech":"PRONUNCIATION_REFERENCE"}
+  ]
+}
