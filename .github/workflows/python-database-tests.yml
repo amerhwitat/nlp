@@ -10,6 +10,8 @@ on:
       - 'run_thamudic.py'
       - 'historical_periods.py'
       - 'ancient_script_registry.py'
+      - 'python/**'
+      - 'data/ancient_languages/**'
       - 'tests/**'
       - '.github/workflows/python-database-tests.yml'
   pull_request:
@@ -21,6 +23,8 @@ on:
       - 'run_thamudic.py'
       - 'historical_periods.py'
       - 'ancient_script_registry.py'
+      - 'python/**'
+      - 'data/ancient_languages/**'
       - 'tests/**'
       - '.github/workflows/python-database-tests.yml'
 
@@ -36,5 +40,5 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install --upgrade pip pytest Flask Pillow numpy
-      - run: python -m py_compile ancient_objects_db.py database_cli.py thamudic_web_app.py thamudic_desktop.py run_thamudic.py
-      - run: PYTHONPATH=. pytest -q tests/test_ancient_objects_db.py tests/test_thamudic_web_app.py
+      - run: python -m py_compile ancient_objects_db.py database_cli.py thamudic_web_app.py thamudic_desktop.py run_thamudic.py python/ancient_languages/hebrew.py python/ancient_languages/unicode_registry.py python/ancient_languages/pronunciation.py
+      - run: PYTHONPATH=.:python pytest -q tests/test_ancient_objects_db.py tests/test_thamudic_web_app.py python/tests/test_hebrew.py python/tests/test_unicode_snapshot.py python/tests/test_pronunciation.py
