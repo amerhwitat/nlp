@@ -1,0 +1,21 @@
+{
+  "scripts":[
+    {"id":"hebrew","iso15924":"Hebr","unicode_script":"Hebr","direction":"rtl","kind":"abjad"},
+    {"id":"paleo_hebrew","iso15924":"Phnx","unicode_script":"Phnx","direction":"rtl","kind":"abjad","historical_context":"hebrew.ancient"},
+    {"id":"samaritan","iso15924":"Samr","unicode_script":"Samr","direction":"rtl","kind":"abjad"},
+    {"id":"grek","iso15924":"Grek","unicode_script":"Grek","direction":"ltr","kind":"alphabet"},
+    {"id":"coptic","iso15924":"Copt","unicode_script":"Copt","direction":"ltr","kind":"alphabet"},
+    {"id":"imperial_aramaic","iso15924":"Armi","unicode_script":"Armi","direction":"rtl","kind":"abjad"},
+    {"id":"syriac","iso15924":"Syrc","unicode_script":"Syrc","direction":"rtl","kind":"abjad","shaping":true},
+    {"id":"mandaic","iso15924":"Mand","unicode_script":"Mand","direction":"rtl","kind":"abjad","shaping":true},
+    {"id":"nabat","iso15924":"Nbat","unicode_script":"Nbat","direction":"rtl","kind":"abjad"},
+    {"id":"palmyrene","iso15924":"Palm","unicode_script":"Palm","direction":"rtl","kind":"abjad"},
+    {"id":"hatran","iso15924":"Hatr","unicode_script":"Hatr","direction":"rtl","kind":"abjad"},
+    {"id":"ugaritic","iso15924":"Ugar","unicode_script":"Ugar","direction":"ltr","kind":"abjad"},
+    {"id":"egyptian_hieroglyphs","iso15924":"Egyp","unicode_script":"Egyp","direction":"ltr","kind":"logosyllabic"},
+    {"id":"cuneiform","iso15924":"Xsux","unicode_script":"Xsux","direction":"ltr","kind":"logosyllabic"},
+    {"id":"old_north_arabian","iso15924":"Narb","unicode_script":"Narb","direction":"rtl","kind":"abjad"},
+    {"id":"old_south_arabian","iso15924":"Sarb","unicode_script":"Sarb","direction":"rtl","kind":"abjad"},
+    {"id":"latin","iso15924":"Latn","unicode_script":"Latn","direction":"ltr","kind":"alphabet"}
+  ]
+}
