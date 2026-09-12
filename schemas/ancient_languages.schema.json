@@ -1,0 +1,23 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/amerhwitat/nlp/schemas/ancient_languages.schema.json",
+  "title":"Ancient Language Registry",
+  "type":"object",
+  "required":["languages"],
+  "properties":{
+    "version":{"type":"string"},
+    "languages":{
+      "type":"array",
+      "items":{
+        "type":"object",
+        "required":["id","name","family","stages"],
+        "properties":{
+          "id":{"type":"string"},
+          "name":{"type":"string"},
+          "family":{"type":"string"},
+          "stages":{"type":"array","items":{"type":"string"}}
+        }
+      }
+    }
+  }
+}
