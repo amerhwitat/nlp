@@ -11,6 +11,8 @@ def scan(path: str, engine: str = 'auto') -> dict:
     return response.json()
 
 if __name__ == '__main__':
-    p = argparse.ArgumentParser(description='Scan an ancient-language image through ThamudicEpiPlatform')
-    p.add_argument('image'); p.add_argument('--engine', default='auto', choices=['auto','kraken','tesseract'])
-    print(scan(p.parse_args().image, p.parse_args().engine))
+    parser = argparse.ArgumentParser(description='Scan an ancient-language image through ThamudicEpiPlatform')
+    parser.add_argument('image')
+    parser.add_argument('--engine', default='auto', choices=['auto','kraken','tesseract'])
+    args = parser.parse_args()
+    print(scan(args.image, args.engine))
