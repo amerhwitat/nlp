@@ -25,6 +25,11 @@ Unicode encodes Old North Arabian using Dadanitic forms. Variant historical form
 - `python/tests/` — Unicode and UTF-8 regression tests.
 - `data/ancient_north_arabian/` — language-neutral canonical registry.
 - `ThamudicScan/` — documentation and link to the public web deployment.
+- `apple/` — SwiftUI/Xcode iOS/iPadOS and macOS application boundary.
+
+## Apple applications
+
+`apple/project.yml` is an XcodeGen specification with iOS and macOS targets. `apple/Sources/` contains the SwiftUI shell. On macOS, install Xcode/XcodeGen, run `xcodegen generate --spec apple/project.yml`, then build/archive/export through the Apple script. Heavy Python/ML processing remains a separate native/service boundary rather than being assumed to run inside the IPA.
 
 ## Chimera 128D + authenticated P2P
 
@@ -32,7 +37,7 @@ Research records can participate in the common Chimera 128D application profile:
 
 Optional P2P synchronization is authenticated and provenance-preserving. It supports capability exchange, request/response, pub/sub, snapshot/delta and content-addressed research objects. It does not transfer credentials, private keys or arbitrary executable payloads and does not authorize unsolicited network scanning.
 
-See [`docs/CHIMERA_128D_P2P_INTEGRATION.md`](docs/CHIMERA_128D_P2P_INTEGRATION.md).
+See `docs/CHIMERA_128D_P2P_INTEGRATION.md`.
 
 ## Windows desktop
 
