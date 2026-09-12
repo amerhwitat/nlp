@@ -10,7 +10,12 @@ python -m pip install -r server/requirements.txt
 if [[ "${INSTALL_KRAKEN:-0}" == "1" ]]; then python -m pip install 'kraken>=7,<8'; fi
 if command -v tesseract >/dev/null 2>&1; then echo 'Tesseract binary: available'; else echo 'Tesseract binary: not found (optional; install with your OS package manager)'; fi
 python - <<'PY'
-mods=['PIL','numpy','cv2','fastapi','pypdf','reportlab']
+mods=['PIL','numpy','cv2','pytesseract','fastapi','pypdf','reportlab']
 for name in mods:
     __import__(name); print(f'{name}: OK')
+try:
+    import kraken
+    print('kraken: available')
+except Exception:
+    print('kraken: not installed (optional; set INSTALL_KRAKEN=1 to install)')
 PY
