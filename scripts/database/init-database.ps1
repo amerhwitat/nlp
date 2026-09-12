@@ -12,10 +12,12 @@ if($Mode -eq 'Check'){
 }
 if(-not (Test-Path 'db/sql')){ throw 'db/sql directory is missing.' }
 New-Item -ItemType Directory -Force -Path 'artifacts/database' | Out-Null
-if($DatabaseUrl -and (Get-Command psql -ErrorAction SilentlyContinue)){
-  Get-ChildItem db/sql -Filter '*.sql' | Sort-Object Name | ForEach-Object { psql $DatabaseUrl -v ON_ERROR_STOP=1 -f $_.FullName }
-} elseif(Get-Command sqlite3 -ErrorAction SilentlyContinue -ErrorAction SilentlyContinue){
+$psql=Get-Command psql -ErrorAction SilentlyContinue
+$sqlite=Get-Command sqlite3 -ErrorAction SilentlyContinue
+if($DatabaseUrl -and $psql){
+  Get-ChildItem db/sql -Filter '*.sql' | Sort-Object Name | ForEach-Object { & $psql.Source $DatabaseUrl -v ON_ERROR_STOP=1 -f $_.FullName }
+} elseif($sqlite){
   $db=Join-Path $Root 'artifacts/database/nlp.sqlite'
-  Get-ChildItem db/sql -Filter '*.sql' | Sort-Object Name | ForEach-Object { sqlite3 $db ".read '$($_.FullName.Replace("'","''"))'" }
+  Get-ChildItem db/sql -Filter '*.sql' | Sort-Object Name | ForEach-Object { & $sqlite.Source $db ".read `"$($_.FullName)`"" }
 } else { throw 'No supported database client found. Install PostgreSQL client or SQLite.' }
 Write-Host 'Database initialization completed.'
