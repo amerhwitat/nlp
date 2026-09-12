@@ -1,0 +1,1 @@
+{"name":"thamudic-ocr-client-ts","private":true,"type":"module","scripts":{"build":"tsc","scan":"node dist/ocr_scan.js"},"devDependencies":{"@types/node":"^22.0.0","typescript":"^5.8.0"},"engines":{"node":">=20"}}
