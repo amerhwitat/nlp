@@ -6,7 +6,7 @@ from dataclasses import dataclass, asdict
 from typing import Tuple
 @dataclass(frozen=True)
 class ModuleInfo:
-    source: str; module: str; sha256: str; imports: Tuple[str, ...]; classes: Tuple[str, ...]; functions: Tuple[str, ...]
+    source: str; module: str; sha256: str; imports: Tuple[str,...]; classes: Tuple[str,...]; functions: Tuple[str,...]
 def _safe(s: str) -> str: return re.sub(r"[^A-Za-z0-9_]", "_", s).strip("_") or "module"
 def _cstr(s: str) -> str: return json.dumps(s, ensure_ascii=False)
 def inspect_file(path: Path, root: Path) -> ModuleInfo:
@@ -16,11 +16,13 @@ def inspect_file(path: Path, root: Path) -> ModuleInfo:
         elif isinstance(node,ast.ImportFrom): imports.append((node.module or "")+":"+",".join(a.name for a in node.names))
         elif isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef)): functions.append(node.name)
         elif isinstance(node,ast.ClassDef): classes.append(node.name)
-    return ModuleInfo(path.relative_to(root).as_posix(),_safe(path.stem),hashlib.sha256(raw).hexdigest(),tuple(sorted(set(imports))),tuple(sorted(set(classes))),tuple(sorted(set(functions))))
+    rel=path.relative_to(root).as_posix(); module=_safe(rel[:-3] if rel.endswith('.py') else rel)
+    return ModuleInfo(rel,module,hashlib.sha256(raw).hexdigest(),tuple(sorted(set(imports))),tuple(sorted(set(classes))),tuple(sorted(set(functions))))
 def collect(root: Path): return [inspect_file(p,root) for p in sorted(root.rglob("*.py")) if ".git" not in p.parts and "__pycache__" not in p.parts]
 def _arr(xs): return ", ".join(_cstr(x) for x in xs)
 def emit_c(m: ModuleInfo) -> str:
-    n=_safe(m.module); return f'''/* GENERATED; source: {m.source}; sha256: {m.sha256} */\n#include <stddef.h>\nstatic const char* {n}_source={_cstr(m.source)};\nstatic const char* {n}_sha256={_cstr(m.sha256)};\nstatic const char* {n}_functions[]={{ {_arr(m.functions)} }};\nconst char* iso_tool_{n}_source(void){{return {n}_source;}}\nconst char* iso_tool_{n}_sha256(void){{return {n}_sha256;}}\nsize_t iso_tool_{n}_function_count(void){{return sizeof({n}_functions)/sizeof({n}_functions[0]);}}\n'''
+    n=_safe(m.module); funcs=_arr(m.functions) or "NULL"
+    return f'''/* GENERATED; source: {m.source}; sha256: {m.sha256} */\n#include <stddef.h>\nstatic const char* {n}_source={_cstr(m.source)};\nstatic const char* {n}_sha256={_cstr(m.sha256)};\nstatic const char* {n}_functions[]={{ {funcs} }};\nconst char* iso_tool_{n}_source(void){{return {n}_source;}}\nconst char* iso_tool_{n}_sha256(void){{return {n}_sha256;}}\nsize_t iso_tool_{n}_function_count(void){{return sizeof({n}_functions)/sizeof({n}_functions[0]) - ({1 if not m.functions else 0});}}\n'''
 def emit_cpp(m: ModuleInfo) -> str:
     n=_safe(m.module); return f'''// GENERATED; source: {m.source}; sha256: {m.sha256}\n#include <string>\n#include <vector>\nnamespace iso_tool::python_parity {{ struct {n} {{ static constexpr const char* source={_cstr(m.source)}; static constexpr const char* sha256={_cstr(m.sha256)}; static std::vector<std::string> imports(){{return {{{_arr(m.imports)}}};}} static std::vector<std::string> classes(){{return {{{_arr(m.classes)}}};}} static std::vector<std::string> functions(){{return {{{_arr(m.functions)}}};}} }}; }}\n'''
 def emit_csharp(m: ModuleInfo) -> str:
