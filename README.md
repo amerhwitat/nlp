@@ -2,6 +2,28 @@
 
 This repository contains Python, C++, .NET, Visual C++, and web implementations for Thamudic and Ancient North Arabian research, now expanded into a language-neutral ancient-script OCR, epigraphy, transliteration and low-resource translation platform.
 
+## Start here
+
+Use the repository build orchestration layer:
+
+```bat
+build-tools\build.bat
+```
+
+PowerShell:
+
+```powershell
+.\build-tools\build.ps1
+```
+
+POSIX:
+
+```bash
+./build-tools/build.sh
+```
+
+For native C++/MSVC work, use the language-specific build entry point documented under `cpp/`/`vcpp/`. Python executable packaging uses the PyInstaller scripts under `build-tools/python/`.
+
 ## ThamudicScan
 
 Public deployment:
@@ -18,11 +40,11 @@ The architecture intentionally preserves uncertainty, damaged signs, alternate r
 
 ## Database platform
 
-The repository now includes a database portability layer for the main NLP applications and the Chimera II RNN/LLM integration:
+The repository includes a database portability layer for the main NLP applications and the Chimera II RNN/LLM integration:
 
 - **OLTP:** PostgreSQL, MySQL, MariaDB, SQLite, SQL Server, Oracle, IBM Db2 and SAP HANA.
 - **OLAP:** portable star schema plus SAP HANA, Snowflake, BigQuery and DuckDB warehouse definitions.
-- **MDM:** canonical entity/crosswalk/provenance model, with a dedicated SAP HANA implementation and a warehouse-compatible pattern for big-data platforms.
+- **MDM:** canonical entity/crosswalk/provenance model, with SAP HANA and warehouse-compatible patterns.
 - **Microsoft Access:** ACE/Jet DDL plus a VBA bootstrapper for creating an `.accdb` database locally.
 - **Chimera II:** node, trust status, model/model-version, dataset, training-run, inference-event, embedding and synchronization records.
 
@@ -30,9 +52,7 @@ See `database/README.md`, `docs/DATABASE_ARCHITECTURE.md`, `docs/CHIMERA_II_DATA
 
 ## Ancient-script coverage
 
-The registry now includes Dadanitic, Taymanitic, Dumaitic, Safaitic, Hismaic, Thamudic B/C/D, Himaitic/Thamudic F, Nabataean, Old Arabic, Aramaic, Phoenician, Paleo-Hebrew, Ugaritic, Old Persian, Egyptian hieroglyphs, Sumerian, Akkadian and Hittite. Coverage status is represented explicitly rather than implying that every script is equally deciphered.
-
-Ancient North Arabian is a scholarly category covering multiple scripts and text traditions. OCIANA documents the breadth of this material, including tens of thousands of inscriptions and graffiti. Thamudic D remains only partially deciphered; current scholarship continues to identify glyph values and writing formulae.
+The registry includes Dadanitic, Taymanitic, Dumaitic, Safaitic, Hismaic, Thamudic B/C/D, Himaitic/Thamudic F, Nabataean, Old Arabic, Aramaic, Phoenician, Paleo-Hebrew, Ugaritic, Old Persian, Egyptian hieroglyphs, Sumerian, Akkadian and Hittite. Coverage status is represented explicitly rather than implying that every script is equally deciphered.
 
 ## RNN / LLM engine
 
@@ -53,15 +73,13 @@ Ancient North Arabian is a scholarly category covering multiple scripts and text
 - `python/thamudic/` — Python Unicode/UTF-8/transliteration API.
 - `ThamudicScan/` — deployment documentation and integration point.
 
-Additional language ports are organized by implementation role rather than by copying incompatible ML stacks into every language. Python is the research/ML reference; C++/Rust are performance cores; TypeScript is the web layer; .NET/Java/Go/Kotlin/Swift/Dart ports should consume stable schemas and APIs.
-
 ## Research integration
 
 The design is informed by public research and software for ancient-script OCR and translation, including OCIANA, MNAMON, CDLI Sumerian-English machine translation work, MARDUK's hybrid Mamba/Transformer/RAG Akkadian approach, and Old Persian OCR research. External code is not copied merely because it is public: license, attribution and redistribution rights are recorded before integration.
 
 ## Unicode
 
-The existing `data/ancient_north_arabian/alphabet.json` remains the canonical Unicode registry for Old North Arabian U+10A80–U+10A9F. Unicode encodes Old North Arabian using Dadanitic forms; variant historical forms must not be represented as fabricated Unicode code points.
+The existing `data/ancient_north_arabian/alphabet.json` remains the canonical Unicode registry for Old North Arabian U+10A80–U+10A9F. Variant historical forms must not be represented as fabricated Unicode code points.
 
 ## Documentation
 
@@ -71,7 +89,5 @@ The existing `data/ancient_north_arabian/alphabet.json` remains the canonical Un
 - `database/README.md`
 - `ancient_scripts/README.md`
 - `ancient_scripts/core/schema.json`
-
-## Compatibility terminology
 
 Modern .NET 6 is `net6.0`; .NET Framework targets use TFMs such as `net48`. There is no Microsoft target named “.NET Framework 6.0”.
