@@ -1,0 +1,8 @@
+{
+  "orthographies":[
+    {"id":"greek.polytonic","language_stage_ids":["greek.archaic","greek.classical","greek.koine","greek.byzantine"],"script_id":"grek","normalization":"NFC","diacritics":["acute","grave","circumflex","smooth_breathing","rough_breathing","diaeresis"]},
+    {"id":"greek.monotonic","language_stage_ids":["greek.modern"],"script_id":"grek","normalization":"NFC","diacritics":["acute"]},
+    {"id":"hebrew.masoretic","language_stage_ids":["hebrew.masoretic"],"script_id":"hebrew","normalization":"NFC","diacritics":["niqqud","cantillation"]},
+    {"id":"hebrew.modern","language_stage_ids":["hebrew.modern"],"script_id":"hebrew","normalization":"NFC","diacritics":["optional_niqqud"]}
+  ]
+}
