@@ -1,25 +1,25 @@
 # Thamudic Cross-Language Epigraphy Platform
 
-A research-oriented integration layer for the Thamudic/Ancient North Arabian scanner and related ancient-language research workflows. It combines a provenance-aware SQLite/PostgreSQL-compatible data model, FastAPI API, TypeScript/React UI, PDF research exchange, KPI dashboards, Unicode-aware language registries, web asset/source auditing, CSV import/export, and cross-language clients.
+A research-oriented integration layer for the Thamudic/Ancient North Arabian scanner and related ancient-language research workflows. It combines a provenance-aware SQLite/PostgreSQL-compatible data model, FastAPI API, TypeScript/React UI, PDF research exchange, KPI dashboards, Unicode-aware language registries, intelligent OCR adapters, web asset/source auditing, CSV import/export, and cross-language clients.
 
 ## Important source/licensing boundary
 
 The three supplied public deployments are treated as **references and integration targets**, not as permission to republish third-party proprietary bundles. The automated auditor records public HTML/script/style/asset URLs and metadata when a deployment is reachable; it does not silently copy minified third-party bundles into this repository. Implementations in this directory are clean-room equivalents of observed functionality and use only repository-owned code plus permissively licensed/open-source patterns.
-
-The supplied deployments could not be fetched from this execution environment, so `tools/site_audit.py` is included for a reproducible local crawl of:
-
-- `https://thamudicscan-s3wz30.public.builtwithrocket.new/`
-- `https://chimera-ii-os-730893.onhercules.app/`
-- `https://thamudic-scanner.softr.app/`
 
 ## Architecture
 
 ```text
 Historical PDFs / inscriptions / source records
                     |
-             bounded PDF import
+        bounded import + image quality checks
                     |
- Unicode/script/language registry + provenance
+     intelligent OCR engine/router layer
+       |             |             |
+     Kraken      Tesseract     quality-only
+       |             |             |
+       +------ confidence/provenance ------+
+                    |
+ Unicode/script/language registry + review
                     |
    +----------------+----------------+
    |                                 |
@@ -29,9 +29,9 @@ FastAPI research API            KPI service
                    |
           React/TypeScript UI
                    |
- Python | C++ | C# | Java | Go | Rust | JS/TS
+ Python | C++ | C# | Java | Go | Rust | JS | TS
                    |
-        research PDF export
+        transliteration / translation / PDF
 ```
 
 ## Features
@@ -45,15 +45,45 @@ FastAPI research API            KPI service
 - Machine-readable PDF manifest and KPI JSON schemas.
 - SQL views and API endpoints for application KPIs.
 - KPI dimensions for objects, readings, review, translation confidence, PDF jobs, errors and processing performance.
+- **Intelligent OCR scanner** with image SHA-256 provenance, resolution/contrast/blur quality metrics, pluggable Kraken/Tesseract adapters, confidence-based engine selection, Unicode NFC normalization, script candidate scoring and OCR bounding boxes when supplied by the engine.
+- OCR recognition is explicitly separate from transliteration and translation; low-confidence/engine failures are surfaced as warnings rather than fabricated text.
+- Optional Kraken installation for historical/non-Latin material; optional Tesseract adapter for installed traineddata.
 - Parameterized query library and provenance-preserving translation records.
 - Softr CSV import/export with stable `Record ID` support.
 - Public-site asset audit with robots-aware, bounded crawling.
-- Script/style/link manifest with SHA-256 hashes and content types.
-- React/TypeScript research UI with upload, search, readings, annotations and export.
+- React/TypeScript research UI with search, KPI cards, image OCR scanning, readings, annotations and export.
 - FastAPI JSON API.
-- Cross-language REST clients in C++, C#, Java, Go and Rust, with JavaScript/TypeScript integration planned by the common API contract.
-- Windows CMD, PowerShell, Bash and Docker deployment/build automation.
+- Cross-language OCR/API clients in Python, C++, C#, Java, Go, Rust, JavaScript and TypeScript.
+- Windows CMD, PowerShell, Bash and Docker deployment/build automation with dependency checks.
 - Code/source citations collected in `docs/SOURCES.md`.
+
+## OCR workflows
+
+`POST /api/ocr/scan` accepts a bounded image upload and returns a recognition result, confidence, script candidates, bounding boxes, image-quality metrics, warnings, preprocessing steps and SHA-256 provenance.
+
+Supported engine modes:
+
+- `auto`: choose the highest-confidence configured result.
+- `kraken`: historical/non-Latin OCR adapter; a compatible model must be configured with `kraken_model`.
+- `tesseract`: general OCR adapter using installed Tesseract traineddata.
+- `quality-only`: use the scanner as a source-quality/provenance gate without recognition.
+
+The scanner does not assert that an OCR result is a scholarly transliteration or translation. Reviewers must preserve alternatives and uncertainty in the reading layer.
+
+### Dependency automation
+
+```bash
+# Linux/macOS
+./scripts/check-dependencies.sh
+
+# Windows PowerShell
+./scripts/check-dependencies.ps1
+
+# Windows CMD
+scripts\\check-dependencies.bat
+```
+
+Set `INSTALL_KRAKEN=1` when the optional Kraken package should be installed automatically. Tesseract is an operating-system binary and is therefore detected rather than silently installed by Python package management.
 
 ## PDF workflows
 
@@ -66,14 +96,21 @@ FastAPI research API            KPI service
 - `GET /api/kpis/summary`
 - `GET /api/kpis/languages`
 
-The KPI service is designed as the common contract for application dashboards and language clients; the UI must consume API values rather than hardcoded totals.
+The KPI service is designed as the common contract for application dashboards and language clients; the UI consumes API values rather than hardcoded totals.
 
 ## Standards and citations
 
+- Unicode supported scripts: https://www.unicode.org/standard/supported.html
+- Unicode 18.0 implementation/draft data: https://www.unicode.org/versions/Unicode18.0.0/
 - Unicode CLDR: https://cldr.unicode.org/
 - Unicode BCP 47 extensions: https://cldr.unicode.org/index/bcp47-extension
 - Unicode Transliteration Guidelines: https://cldr.unicode.org/index/cldr-spec/transliteration-guidelines
 - RFC 6497 transformed-content extension: https://www.rfc-editor.org/rfc/rfc6497
+- Kraken OCR: https://github.com/mittagessen/kraken
+- Tesseract OCR: https://github.com/tesseract-ocr/tesseract
+- Cuneiform sign-detection research implementation: https://github.com/CompVis/cuneiform-sign-detection-code
+- Electronic Babylonian Literature cuneiform OCR: https://github.com/ElectronicBabylonianLiterature/cuneiform-ocr
+- CuReD: https://github.com/DigitalPasts/CuReD
 - pypdf: https://github.com/py-pdf/pypdf
 - ReportLab: https://www.reportlab.com/
 - JSON Schema: https://json-schema.org/
@@ -82,37 +119,13 @@ See `docs/SOURCES.md`, `docs/PDF_CITATIONS.md`, `docs/KPI_CITATIONS.md`, and the
 
 ## Quick start
 
-### Python API
-
 ```bash
-python -m venv .venv
-# Linux/macOS
+cd ThamudicEpiPlatform
+./scripts/check-dependencies.sh
 source .venv/bin/activate
-# Windows PowerShell: .\\.venv\\Scripts\\Activate.ps1
-pip install -r server/requirements.txt
-uvicorn server.app:app --reload --port 8010
+python -m uvicorn server.app:app --reload --port 8010
 ```
 
-### Web UI
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
-### Database
-
-```bash
-sqlite3 data/thamudic_platform.sqlite < database/schema.sql
-sqlite3 data/thamudic_platform.sqlite < database/views.sql
-sqlite3 data/thamudic_platform.sqlite < database/migrations/002_pdf_translation_kpi.sql
-```
-
-### Audit the supplied sites
-
-```bash
-python tools/site_audit.py --out data/site-audit.json
-```
+For Windows use `scripts\\check-dependencies.ps1` or `scripts\\check-dependencies.bat` first, then start `server.app` with the `.venv` interpreter.
 
 Only crawl sites you are authorized to inspect and respect their terms, robots directives, rate limits and copyright/license terms.
