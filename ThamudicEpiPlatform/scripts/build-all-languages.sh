@@ -9,5 +9,5 @@ run_optional dotnet dotnet build csharp/ThamudicOcr.csproj
 run_optional mvn mvn -q -f java/pom.xml package
 run_optional go go build -o go/ocr_scan ./go
 run_optional cargo cargo build --manifest-path rust/Cargo.toml
-run_optional node node javascript/ocr_scan.mjs --help || true
+run_optional node node --check javascript/ocr_scan.mjs
 if command -v npm >/dev/null 2>&1; then (cd typescript && npm install && npm run build); else echo 'SKIP: npm not installed'; [[ "$STRICT" == 1 ]] && exit 2 || true; fi
