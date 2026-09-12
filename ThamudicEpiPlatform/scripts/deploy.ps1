@@ -1,6 +1,7 @@
 $ErrorActionPreference='Stop'
-py -3 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -r server\requirements.txt
+Set-Location (Resolve-Path "$PSScriptRoot\..")
+& "$PWD\scripts\check-dependencies.ps1"
+$HostValue = if($env:HOST){$env:HOST}else{'0.0.0.0'}
+$PortValue = if($env:PORT){[int]$env:PORT}else{8010}
 New-Item -ItemType Directory -Force data | Out-Null
-.\.venv\Scripts\python.exe -m uvicorn server.app:app --host ($env:HOST ?? '0.0.0.0') --port ([int]($env:PORT ?? '8010'))
+& .\.venv\Scripts\python.exe -m uvicorn server.app:app --host $HostValue --port $PortValue
