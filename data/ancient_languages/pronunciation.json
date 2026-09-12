@@ -1,0 +1,11 @@
+{
+  "version":"1.0",
+  "profiles":[
+    {"id":"hebrew.modern.he","language_stage":"hebrew.modern","type":"modern","locale":"he-IL","backend":"web-speech","label":"Modern Hebrew"},
+    {"id":"hebrew.ancient.reference","language_stage":"hebrew.ancient","type":"reconstructed","locale":"he-IL","backend":"phoneme-fallback","label":"Ancient Hebrew reconstructed/reference pronunciation"},
+    {"id":"greek.ancient.reference","language_stage":"greek.classical","type":"reconstructed","locale":"el-GR","backend":"phoneme-fallback","label":"Ancient Greek reconstructed/reference pronunciation"},
+    {"id":"coptic.reference","language_stage":"coptic.sahidic","type":"reference","locale":"cop","backend":"phoneme-fallback","label":"Sahidic Coptic reference pronunciation"},
+    {"id":"aramaic.reference","language_stage":"aramaic.imperial","type":"reconstructed","locale":"arc","backend":"phoneme-fallback","label":"Imperial Aramaic reconstructed/reference pronunciation"}
+  ],
+  "policy":{"ancient_voice_authenticity":"never_claim_authentic_without_authoritative_audio_or_pronunciation_source","fallback":"label_as_reconstructed_or_reference"}
+}
