@@ -2,15 +2,25 @@
 
 This repository contains Python, C++, .NET, Visual C++ and desktop/web implementations for Thamudic and Ancient North Arabian language research.
 
+## Source-code citation index
+
+- [C++ Thamudic implementation](cpp/thamudic/)
+- [Visual C++ implementation](vcpp/)
+- [.NET implementation](dotnet/)
+- [Python Thamudic implementation](python/thamudic/)
+- [Python regression tests](python/tests/)
+- [Canonical Ancient North Arabian registry](data/ancient_north_arabian/alphabet.json)
+- [ThamudicScan application](ThamudicScan/)
+- [Apple implementation](apple/)
+- [General portfolio Apple companion](https://github.com/amerhwitat/general/tree/master/Apple-Implementations/nlp)
+
 ## Centralized Apple Objective-C + Flutter implementation
 
 The Apple companion is maintained in [`general/Apple-Implementations/nlp`](https://github.com/amerhwitat/general/tree/master/Apple-Implementations/nlp). It provides Objective-C/Xcode native integration and Flutter iOS/macOS UI. Heavy Python/ML workloads remain behind an explicit native/service boundary.
 
 ## ThamudicScan web application
 
-Public deployment:
-
-https://thamudicscan-s3wz30.public.builtwithrocket.new/
+Public deployment is documented in `ThamudicScan/`; deployment credentials are never stored in source control.
 
 ## Ancient North Arabian Unicode support
 
@@ -24,12 +34,12 @@ The repository includes a canonical registry at `data/ancient_north_arabian/alph
 - `python/thamudic/` — Python Unicode/UTF-8/transliteration API.
 - `python/tests/` — Unicode and UTF-8 regression tests.
 - `data/ancient_north_arabian/` — language-neutral canonical registry.
-- `ThamudicScan/` — documentation and link to the public web deployment.
+- `ThamudicScan/` — documentation and web application.
 - `apple/` — existing SwiftUI/Xcode application boundary.
 
 ## Apple applications
 
-Use Xcode/XcodeGen on macOS to generate the native shell. Flutter provides the UI while Objective-C provides Apple framework access and high-performance native services. This structure follows Flutter's supported Objective-C platform-channel integration model for iOS and macOS. citeturn0search0
+Use Xcode/XcodeGen on macOS to generate the native shell. Flutter provides the UI while Objective-C provides Apple framework access and high-performance native services.
 
 ## Chimera 128D + authenticated P2P
 
