@@ -15,10 +15,14 @@ def summary(conn: sqlite3.Connection, application: str = "ThamudicEpiPlatform") 
     translations = scalar("SELECT COUNT(*) FROM translation_results")
     pdf_imports = scalar("SELECT COUNT(*) FROM pdf_imports")
     pdf_exports = scalar("SELECT COUNT(*) FROM pdf_exports")
-    errors = scalar("SELECT COUNT(*) FROM pdf_imports WHERE status='error'")
+    ocr_jobs = scalar("SELECT COUNT(*) FROM ocr_jobs")
+    ocr_completed = scalar("SELECT COUNT(*) FROM ocr_jobs WHERE status='completed'")
+    ocr_errors = scalar("SELECT COUNT(*) FROM ocr_jobs WHERE status='error'")
+    errors = scalar("SELECT COUNT(*) FROM pdf_imports WHERE status='error'") + ocr_errors
     avg_conf = conn.execute("SELECT AVG(confidence) FROM translation_results WHERE confidence IS NOT NULL").fetchone()[0]
+    ocr_avg_conf = conn.execute("SELECT AVG(confidence) FROM ocr_jobs WHERE confidence IS NOT NULL").fetchone()[0]
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "application": application,
         "metrics": {
             "objects_total": objects,
@@ -28,6 +32,10 @@ def summary(conn: sqlite3.Connection, application: str = "ThamudicEpiPlatform") 
             "translation_confidence_mean": float(avg_conf or 0),
             "pdf_imports": pdf_imports,
             "pdf_exports": pdf_exports,
+            "ocr_jobs": ocr_jobs,
+            "ocr_completed": ocr_completed,
+            "ocr_errors": ocr_errors,
+            "ocr_confidence_mean": float(ocr_avg_conf or 0),
             "processing_errors": errors,
         },
     }
