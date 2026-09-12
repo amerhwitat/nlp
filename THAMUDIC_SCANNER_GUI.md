@@ -1,6 +1,6 @@
 # Ancient Script Scanner — Python GUI + Web UI
 
-The Thamudic research system is now Python-first across both desktop and web interfaces.
+The Thamudic research system is Python-first across desktop and web interfaces and now has a shared integration path into `AncientVisualResearchSuite/`.
 
 ## Run
 
@@ -12,8 +12,6 @@ python3 run_thamudic.py web --host 127.0.0.1 --port 5000
 
 ## Professional window hierarchy
 
-Both interfaces share the same information architecture:
-
 1. Dashboard
 2. Scanner
 3. Translator
@@ -23,8 +21,7 @@ Both interfaces share the same information architecture:
 7. Sources & Rights
 8. Database
 9. Research
-
-The desktop implementation is `thamudic_desktop.py` using Tkinter/ttk. `thamudic_scanner_gui.py` remains a compatibility launcher. The web implementation is `thamudic_web_app.py` using Flask.
+10. Historical Event Visualization
 
 ## Main functionality
 
@@ -38,21 +35,21 @@ The desktop implementation is `thamudic_desktop.py` using Tkinter/ttk. `thamudic
 8. Export stable Softr CSV/JSON schemas.
 9. View source institutions and image-rights policies.
 10. Use the same evidence records from the desktop and Flask web application.
+11. Send selected evidence into `AncientVisualResearchSuite/` to construct a time/location-bound historical scene.
+12. Synchronize the scene timeline with excavation findings, artifact positions, environmental layers, characters and astronomical context.
+
+## Historical visualization integration
+
+`AncientVisualResearchSuite/` provides the next stage after OCR and cataloging:
+
+`inscription image -> glyph evidence -> inscription/site -> date/region -> historical event -> map -> environment -> sky -> 3D artifact -> evidence-linked visualization`
+
+Recognition candidates remain distinct from scholarly readings. Reconstructed characters, buildings and events carry evidence IDs and confidence classes.
 
 ## Database
 
 `ancient_objects_db.py` stores objects, annotations and source metadata. `historical_periods.py` covers Paleolithic, Epipaleolithic, Neolithic, Chalcolithic, Bronze Age, Iron Age, Hellenistic/Greek, Roman, Byzantine/Eastern Roman, Early Islamic, Medieval, Early Modern and Modern labels.
 
-## External object/image sources
-
-The catalog architecture is prepared for OCIANA, DASI, The Metropolitan Museum of Art Open Access, Smithsonian Open Access, Europeana and IIIF. The application stores image URLs/IIIF references and rights statements instead of assuming that every remotely visible image can be republished.
-
-## Softr / hosted-site migration
-
-`softr_export.py` produces a CSV/JSON import shape. `softr_api.py` provides optional REST synchronization using an environment variable (`SOFTR_API_KEY`) and database/table identifiers. No credential is stored in GitHub.
-
-The Bubble, BuiltWithRocket and Softr deployments are treated as functional/reference systems. Their platform internals are not copied. The owned replacement is implemented in Python and backed by the canonical SQLite database.
-
 ## Research principle
 
-The scanner distinguishes **segmentation**, **recognition candidates**, **transliteration**, and **translation**. It never presents an OCR candidate as an authoritative scholarly reading. Competing readings, provenance, source record IDs and image rights remain explicit fields.
+The scanner distinguishes **segmentation**, **recognition candidates**, **transliteration**, and **translation**. It never presents an OCR candidate as an authoritative scholarly reading. Competing readings, provenance, source record IDs and image rights remain explicit fields. Historical reconstructions are likewise labeled as observed, supported, inferred, speculative or visualization-only.
