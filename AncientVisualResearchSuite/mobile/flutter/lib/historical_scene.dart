@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 class HistoricalCharacter {
   final String id, role, activity;
   final double x, y, heading;
@@ -16,11 +18,10 @@ class HistoricalScene {
     for(double t=0;t<=seconds+1e-9;t+=step){
       frames.add(characters.map((c){
         final active=(c.activity=='idle'||c.activity=='sleep')?0.0:.5;
-        final phase=c.heading*3.141592653589793/180+t*.15;
-        return HistoricalCharacter(c.id,c.role,c.x+_cos(phase)*active*t,c.y+_sin(phase)*active*t,c.heading,c.activity);
+        final phase=c.heading*math.pi/180+t*.15;
+        return HistoricalCharacter(c.id,c.role,c.x+math.cos(phase)*active*t,c.y+math.sin(phase)*active*t,c.heading,c.activity);
       }).toList());
     }
     return frames;
   }
 }
-double _sin(double x)=>x; double _cos(double x)=>x; // Replace with dart:math in the Flutter target implementation.
