@@ -13,15 +13,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
-from pdf_export import export_research_pdf
-from pdf_import import import_pdf
-from kpi import languages as kpi_languages, summary as kpi_summary
+from server.pdf_export import export_research_pdf
+from server.pdf_import import import_pdf
+from server.kpi import languages as kpi_languages, summary as kpi_summary
+from server.ocr_scanner import scan_image
 
 ROOT = Path(__file__).resolve().parents[1]
 DB = Path(os.getenv('THAMUDIC_PLATFORM_DB', ROOT / 'data' / 'thamudic_platform.sqlite'))
 DB.parent.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title='Thamudic Cross-Language Epigraphy API', version='1.1.0')
+app = FastAPI(title='Thamudic Cross-Language Epigraphy API', version='1.2.0')
 origins = [x.strip() for x in os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',') if x.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
 
@@ -66,7 +67,7 @@ def startup():
 
 @app.get('/api/health')
 def health():
-    return {'ok': True, 'database': str(DB), 'unicode_range': 'U+10A80-U+10A9F', 'api_version': '1.1.0'}
+    return {'ok': True, 'database': str(DB), 'unicode_range': 'U+10A80-U+10A9F', 'api_version': '1.2.0', 'ocr': ['auto', 'kraken', 'tesseract']}
 
 @app.get('/api/objects')
 def objects(q: str | None = None, limit: int = 50, offset: int = 0):
@@ -124,6 +125,17 @@ def export_objects():
     for r in rows: writer.writerow(dict(r))
     return StreamingResponse(iter([out.getvalue()]), media_type='text/csv', headers={'Content-Disposition':'attachment; filename=thamudic-objects.csv'})
 
+@app.post('/api/ocr/scan')
+async def ocr_scan(file: UploadFile = File(...), engine: str = 'auto', tesseract_lang: str | None = None, kraken_model: str | None = None):
+    raw = await file.read()
+    try:
+        result = scan_image(raw, engine=engine, tesseract_lang=tesseract_lang, kraken_model=kraken_model)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return {'filename': file.filename, 'content_type': file.content_type, **result.to_dict(),
+            'provenance': {'source_filename': file.filename, 'sha256': result.source_sha256, 'recognition_only': True,
+                           'translation_required_review': True}}
+
 @app.post('/api/pdf/import')
 async def pdf_import(file: UploadFile = File(...), source_id: int | None = None):
     raw = await file.read()
@@ -132,10 +144,8 @@ async def pdf_import(file: UploadFile = File(...), source_id: int | None = None)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
     with con() as c:
-        cur = c.execute(
-            'INSERT INTO pdf_imports(source_id,filename,sha256,page_count,status,extracted_chars,warnings_json) VALUES(?,?,?,?,?,?,?)',
-            (source_id, result.filename, result.sha256, result.page_count, 'completed', result.total_chars, json.dumps(result.warnings, ensure_ascii=False)),
-        )
+        cur = c.execute('INSERT INTO pdf_imports(source_id,filename,sha256,page_count,status,extracted_chars,warnings_json) VALUES(?,?,?,?,?,?,?)',
+                        (source_id, result.filename, result.sha256, result.page_count, 'completed', result.total_chars, json.dumps(result.warnings, ensure_ascii=False)))
         import_id = cur.lastrowid
     return {'id': import_id, 'filename': result.filename, 'sha256': result.sha256, 'page_count': result.page_count,
             'total_chars': result.total_chars, 'warnings': result.warnings,
