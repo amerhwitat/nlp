@@ -1,0 +1,12 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "Ancient Visual Research Suite",
+  "Description": "Historical events, artifacts, 128D research state and neural visualization bridge.",
+  "Category": "Research",
+  "EnabledByDefault": false,
+  "Modules": [
+    { "Name": "AncientVisualResearchSuite", "Type": "Runtime", "LoadingPhase": "Default" }
+  ]
+}
