@@ -21,6 +21,26 @@ jobs:
       - run: python -m pip install -r ThamudicEpiPlatform/server/requirements.txt
       - run: PYTHONPATH=. pytest ThamudicEpiPlatform/server/tests -q
 
+  schema-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python - <<'PY'
+          import sqlite3
+          from pathlib import Path
+          root=Path('ThamudicEpiPlatform')
+          con=sqlite3.connect(':memory:')
+          con.executescript((root/'database/schema.sql').read_text())
+          con.executescript((root/'database/views.sql').read_text())
+          for name in ['002_pdf_translation_kpi.sql','003_ocr_jobs.sql','004_orientation_translation_chat.sql']:
+              con.executescript((root/'database/migrations'/name).read_text())
+          print('SQLite schema/migrations: OK')
+          PY
+
   cross-language:
     runs-on: ubuntu-latest
     steps:
