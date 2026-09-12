@@ -1,0 +1,6 @@
+# Optional OCR engines; install only when required by the deployment.
+kraken>=7,<8
+easyocr>=1.7,<2
+paddleocr>=3,<4
+# PaddlePaddle runtime is platform/GPU dependent; install the matching wheel separately:
+# https://www.paddlepaddle.org.cn/en/install/quick
