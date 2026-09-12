@@ -6,4 +6,5 @@ py -3 -m venv .venv
 .venv\Scripts\python.exe -m pip install -r server\requirements.txt
 if "%INSTALL_KRAKEN%"=="1" .venv\Scripts\python.exe -m pip install "kraken>=7,<8"
 where tesseract >nul 2>nul && echo Tesseract binary: available || echo Tesseract binary: not found (optional)
-.venv\Scripts\python.exe -c "import PIL,numpy,cv2,fastapi,pypdf,reportlab; print('Python OCR/API dependencies: OK')"
+.venv\Scripts\python.exe -c "import PIL,numpy,cv2,pytesseract,fastapi,pypdf,reportlab; print('Python OCR/API dependencies: OK')"
+.venv\Scripts\python.exe -c "import importlib.util; print('kraken: available' if importlib.util.find_spec('kraken') else 'kraken: optional/not installed')"
