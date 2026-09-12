@@ -2,7 +2,7 @@
 
 ## OCR geometry
 
-The scanner now treats document geometry as an explicit hypothesis rather than assuming horizontal Latin-like text. Supported routing labels are:
+The scanner treats document geometry as an explicit hypothesis rather than assuming horizontal Latin-like text. Supported routing labels are:
 
 - LTR and RTL;
 - top-to-bottom and bottom-to-top vertical text;
@@ -13,9 +13,9 @@ The scanner now treats document geometry as an explicit hypothesis rather than a
 
 The implementation exposes these through `/api/ocr/geometry`. Engine adapters may replace the heuristic router with learned orientation/unwarping models without changing the API contract.
 
-PaddleOCR documents dedicated document-orientation classification, text-line orientation and document-unwarping modules, and its current multilingual recognition documentation includes Chinese, Traditional Chinese and Japanese. Its current PP-OCRv5 documentation lists 106 supported languages. citeturn0search0turn0search1turn0search3
+PaddleOCR documents document-orientation classification, text-line orientation and document-unwarping modules, and its multilingual recognition documentation includes Chinese, Traditional Chinese and Japanese. Its PP-OCRv5 documentation lists 106 supported languages. See [PaddleOCR PP-StructureV3](https://github.com/PaddlePaddle/PaddleOCR/blob/main/docs/version3.x/pipeline_usage/PP-StructureV3.en.md), [orientation module](https://github.com/PaddlePaddle/PaddleOCR/blob/main/docs/version3.x/module_usage/doc_img_orientation_classification.en.md), and [PP-OCRv5 multilingual recognition](https://github.com/PaddlePaddle/PaddleOCR/blob/main/docs/version3.x/algorithm/PP-OCRv5/PP-OCRv5_multi_languages.en.md).
 
-OpenCV perspective correction and deskew patterns are used as clean-room architectural references; the repository does not copy external implementation code. citeturn0search6
+OpenCV perspective correction and deskew patterns are used as clean-room architectural references; the repository does not copy external implementation code. See [document scanner OCR example](https://github.com/pcaswathiii/document-scanner-ocr).
 
 ## Chinese and Japanese
 
@@ -38,14 +38,14 @@ The platform exposes proofing as a model-neutral boundary. A future RNN/Transfor
 
 ## Chatbot
 
-`server/chatbot.py` defines a provider-neutral research chatbot interface. It can be connected to a self-hosted Rasa/LangChain-style orchestration layer, an approved local LLM, or another API through an adapter. Evidence and citations travel with the response.
+`server/chatbot.py` defines a provider-neutral research chatbot interface. It can be connected to a self-hosted conversational orchestration layer, an approved local LLM, or another API through an adapter. Evidence and citations travel with the response.
 
-Rasa is a useful open/self-hosted conversational architecture reference; LangChain is a composable framework for LLM chains, retrieval, memory and tool use. Botpress is listed only as a historical ecosystem reference because its former open-source self-hosted v12 is sunset. citeturn0search5
+Rasa is a useful self-hosted conversational architecture reference; LangChain is a composable framework for LLM chains, retrieval, memory and tool use. Botpress is listed only as an ecosystem reference because its former open-source self-hosted v12 is sunset. See [Rasa comparison](https://rasa.com/compare/langchain-vs-botpress-vs-rasa).
 
 ## OCR engine references
 
-- PaddleOCR: orientation, unwarping, multilingual recognition and Chinese/Japanese support. citeturn0search0turn0search3
-- EasyOCR: multilingual OCR including Simplified/Traditional Chinese, Japanese and Latin. citeturn0search7
+- [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR): orientation, unwarping, multilingual recognition and Chinese/Japanese support.
+- [EasyOCR](https://github.com/JaidedAI/EasyOCR): multilingual OCR including Simplified/Traditional Chinese, Japanese and Latin.
 - Kraken: historical/non-Latin OCR adapter, already supported by this project.
 - Tesseract: general OCR adapter where suitable trained data exists.
 
@@ -53,7 +53,7 @@ Rasa is a useful open/self-hosted conversational architecture reference; LangCha
 
 The project provides SQLite plus portability templates for PostgreSQL and MySQL. JSON and CSV are first-class flat-file exchange formats. Microsoft Access is supported through an optional `pyodbc` adapter and an installed Access ODBC driver; no proprietary driver is bundled.
 
-Additional database adapters should preserve the canonical schema semantics: provenance, source hashes, OCR confidence, translation mode, alternatives and review state.
+Additional database adapters should preserve canonical schema semantics: provenance, source hashes, OCR confidence, translation mode, alternatives and review state.
 
 ## Licensing/provenance
 
