@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "policy": "local-first",
+  "engines": [
+    {"id":"numpy-rnn","source":"nlp","kind":"reference-rnn","language":"python","status":"available"},
+    {"id":"tensor-rnn-128d","source":"ChimeraIIOS/Library","kind":"tensor-rnn","language":"python/cpp","status":"adapter"},
+    {"id":"observer-gnn","source":"ChimeraIIOS/Library","kind":"gnn","language":"python/cpp","status":"adapter"},
+    {"id":"onnx-unified","source":"all-repositories","kind":"onnx","language":"cpp/python/java/csharp/javascript","status":"adapter"},
+    {"id":"sequence-learning","source":"DimensionalStudio","kind":"sequence","language":"python/typescript","status":"adapter"}
+  ],
+  "executionProviders": ["CPUExecutionProvider","CUDAExecutionProvider","TensorrtExecutionProvider","DirectMLExecutionProvider","OpenVINOExecutionProvider","WebGPUExecutionProvider","CoreMLExecutionProvider","NNAPIExecutionProvider","XNNPACK"],
+  "evidencePolicy": "AI outputs are hypotheses unless linked to source evidence"
+}
