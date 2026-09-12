@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ancient Script Record",
+  "type": "object",
+  "required": ["script", "source", "reading"],
+  "properties": {
+    "script": {"type": "string"},
+    "language": {"type": ["string", "null"]},
+    "source": {"type": "string"},
+    "reading": {"type": "string"},
+    "unicode": {"type": "string"},
+    "transliteration": {"type": "string"},
+    "translation_candidates": {"type": "array", "items": {"type": "string"}},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "damage": {"type": "array", "items": {"type": "string"}},
+    "alternates": {"type": "array", "items": {"type": "string"}},
+    "provenance": {"type": "array", "items": {"type": "string"}}
+  }
+}
