@@ -1,0 +1,1 @@
+{"name":"thamudic-ocr-client","private":true,"type":"module","engines":{"node":">=20"},"scripts":{"scan":"node ocr_scan.mjs"}}
