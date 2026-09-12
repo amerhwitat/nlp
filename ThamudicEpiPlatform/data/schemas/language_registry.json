@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "normalization": "NFC",
+  "source_languages": [
+    {"id":"ancient-north-arabian","name":"Ancient North Arabian","directionality":["rtl"],"family":"Semitic"},
+    {"id":"safaitic","name":"Safaitic","directionality":["rtl"],"family":"Semitic"},
+    {"id":"hismaic","name":"Hismaic","directionality":["rtl"],"family":"Semitic"},
+    {"id":"dadanitic","name":"Dadanitic","directionality":["rtl"],"family":"Semitic"},
+    {"id":"sabaic","name":"Sabaic","directionality":["rtl"],"family":"Semitic"},
+    {"id":"minaean","name":"Minaean","directionality":["rtl"],"family":"Semitic"},
+    {"id":"qatabanian","name":"Qatabanian","directionality":["rtl"],"family":"Semitic"},
+    {"id":"hadramitic","name":"Hadramitic","directionality":["rtl"],"family":"Semitic"},
+    {"id":"nabataean","name":"Nabataean","directionality":["rtl"],"family":"Semitic"},
+    {"id":"phoenician","name":"Phoenician","directionality":["rtl"],"family":"Semitic"},
+    {"id":"aramaic","name":"Aramaic","directionality":["rtl"],"family":"Semitic"},
+    {"id":"hebrew","name":"Ancient Hebrew","directionality":["rtl"],"family":"Semitic"},
+    {"id":"akkadian","name":"Akkadian","directionality":["ltr","rtl"],"family":"Semitic"},
+    {"id":"sumerian","name":"Sumerian","directionality":["ltr","rtl"],"family":"language-isolate"},
+    {"id":"elamite","name":"Elamite","directionality":["ltr"],"family":"Elamite"},
+    {"id":"ugaritic","name":"Ugaritic","directionality":["ltr"],"family":"Semitic"},
+    {"id":"ancient-egyptian","name":"Ancient Egyptian","directionality":["ltr","rtl","ttb","btt"],"family":"Egyptian"},
+    {"id":"demotic","name":"Demotic Egyptian","directionality":["rtl"],"family":"Egyptian"},
+    {"id":"coptic","name":"Coptic","directionality":["ltr"],"family":"Egyptian"},
+    {"id":"mycenaean-greek","name":"Mycenaean Greek","directionality":["ltr"],"family":"Greek"},
+    {"id":"ancient-greek","name":"Ancient Greek","directionality":["ltr","boustrophedon"],"family":"Greek"},
+    {"id":"latin","name":"Latin","directionality":["ltr"],"family":"Italic"},
+    {"id":"old-chinese","name":"Old Chinese","directionality":["ltr","rtl","ttb","btt"],"family":"Sinitic"},
+    {"id":"classical-chinese","name":"Classical Chinese","directionality":["ttb","rtl","ltr"],"family":"Sinitic"},
+    {"id":"modern-chinese","name":"Modern Chinese","bcp47":"zh","directionality":["ltr","ttb","rtl"],"family":"Sinitic"},
+    {"id":"classical-japanese","name":"Classical Japanese","bcp47":"ja","directionality":["ttb","rtl","ltr"],"family":"Japonic"},
+    {"id":"modern-japanese","name":"Modern Japanese","bcp47":"ja","directionality":["ttb","rtl","ltr"],"family":"Japonic"}
+  ],
+  "target_languages": {
+    "resolution": "BCP-47/CLDR",
+    "defaults": ["en","ar","zh","ja"],
+    "examples": ["de","es","fr","it","ko","pt","ru","tr","fa","ur","hi","id"]
+  },
+  "translation_modes": ["literal","meaning","interlinear","scholarly"],
+  "proofing": {"preserve_uncertainty": true,"never_invent_readings": true}
+}
