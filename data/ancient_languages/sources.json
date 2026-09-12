@@ -1,0 +1,8 @@
+{
+  "sources":[
+    {"id":"unicode-ucd","name":"Unicode Character Database","authority":"normative_encoding","version":"18.0.0-draft","status":"draft/beta-transition"},
+    {"id":"unicode-unicemet","name":"Unicode Egyptian Hieroglyph Database","authority":"egyptian_hieroglyph_metadata","version":"18.0.0"},
+    {"id":"iso-15924","name":"ISO 15924","authority":"script_codes","version":"2022+Amd1:2025"},
+    {"id":"application-hebrew-seed","name":"Application Hebrew registry seed","authority":"application_registry","version":"1.0","validation":"unicode-cross-checked"}
+  ]
+}
