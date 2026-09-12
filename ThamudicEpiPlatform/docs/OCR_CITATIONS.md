@@ -19,9 +19,13 @@ Historical and non-Latin documents require layout analysis, reading-order handli
 - warnings for low-quality or unavailable-engine conditions;
 - explicit recognition-only provenance.
 
-## Research references
+## Dependency references
 
+As of September 2026, PyPI lists Kraken 7.1.1 as the current release, supporting Python 3.10–3.13 under Apache-2.0. The automation therefore uses the bounded requirement `kraken>=7,<8` when `INSTALL_KRAKEN=1`. Pytesseract 0.3.13 is the Python adapter; the native Tesseract executable and traineddata remain operating-system dependencies. See the project pages below for authoritative installation/licensing information.
+
+- https://pypi.org/project/kraken/
 - https://github.com/mittagessen/kraken
+- https://pypi.org/project/pytesseract/
 - https://github.com/tesseract-ocr/tesseract
 - https://github.com/CompVis/cuneiform-sign-detection-code
 - https://github.com/ElectronicBabylonianLiterature/cuneiform-ocr
