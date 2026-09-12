@@ -6,9 +6,9 @@
     {"codepoint":"U+05D0","name":"HEBREW LETTER ALEF","category":"Lo","script":"Hebr","utf8":"D7 90","block":"Hebrew","bidi_class":"R"},
     {"codepoint":"U+05D1","name":"HEBREW LETTER BET","category":"Lo","script":"Hebr","utf8":"D7 91","block":"Hebrew","bidi_class":"R"},
     {"codepoint":"U+03B1","name":"GREEK SMALL LETTER ALPHA","category":"Ll","script":"Grek","utf8":"CE B1","block":"Greek and Coptic","bidi_class":"L"},
-    {"codepoint":"U+ⲁ","name":"COPTIC SMALL LETTER ALFA","category":"Ll","script":"Copt","utf8":"E2 B2 81","block":"Coptic","bidi_class":"L"},
+    {"codepoint":"U+2C81","name":"COPTIC SMALL LETTER ALFA","category":"Ll","script":"Copt","utf8":"E2 B2 81","block":"Coptic","bidi_class":"L"},
     {"codepoint":"U+0710","name":"SYRIAC LETTER ALAPH","category":"Lo","script":"Syrc","utf8":"DC 90","block":"Syriac","bidi_class":"R"},
-    {"codepoint":"U+10800","name":"CYPRIOT SYLLABLE A","category":"Lo","script":"Cprt","utf8":"F0 88 A0 80","block":"Cypriot Syllabary","bidi_class":"L"},
+    {"codepoint":"U+10800","name":"CYPRIOT SYLLABLE A","category":"Lo","script":"Cprt","utf8":"F0 90 A0 80","block":"Cypriot Syllabary","bidi_class":"L"},
     {"codepoint":"U+10380","name":"UGARITIC LETTER ALPA","category":"Lo","script":"Ugar","utf8":"F0 90 8E 80","block":"Ugaritic","bidi_class":"L"}
   ]
 }
