@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "scripts": [
+    {"id":"dadanitic","family":"ancient_north_arabian","status":"attested"},
+    {"id":"taymanitic","family":"ancient_north_arabian","status":"attested"},
+    {"id":"dumaitic","family":"ancient_north_arabian","status":"attested"},
+    {"id":"safaitic","family":"ancient_north_arabian","status":"attested"},
+    {"id":"hismaic","family":"ancient_north_arabian","status":"attested"},
+    {"id":"thamudic_b","family":"ancient_north_arabian","status":"partially_studied"},
+    {"id":"thamudic_c","family":"ancient_north_arabian","status":"partially_studied"},
+    {"id":"thamudic_d","family":"ancient_north_arabian","status":"partially_deciphered"},
+    {"id":"himaitic_thamudic_f","family":"ancient_north_arabian","status":"attested"},
+    {"id":"nabataean","family":"north_arabian_aramaic","status":"attested"},
+    {"id":"old_arabic","family":"arabic","status":"attested"},
+    {"id":"aramaic","family":"semitic","status":"attested"},
+    {"id":"phoenician","family":"semitic","status":"attested"},
+    {"id":"paleo_hebrew","family":"semitic","status":"attested"},
+    {"id":"ugaritic","family":"semitic","status":"attested"},
+    {"id":"old_persian","family":"iranian","status":"attested"},
+    {"id":"egyptian_hieroglyphs","family":"egyptian","status":"attested"},
+    {"id":"sumerian_cuneiform","family":"cuneiform","status":"attested"},
+    {"id":"akkadian_cuneiform","family":"cuneiform","status":"attested"},
+    {"id":"hittite_cuneiform","family":"anatolian","status":"attested"}
+  ]
+}
