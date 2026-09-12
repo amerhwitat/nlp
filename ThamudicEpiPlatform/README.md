@@ -1,131 +1,120 @@
 # Thamudic Cross-Language Epigraphy Platform
 
-A research-oriented integration layer for the Thamudic/Ancient North Arabian scanner and related ancient-language research workflows. It combines a provenance-aware SQLite/PostgreSQL-compatible data model, FastAPI API, TypeScript/React UI, PDF research exchange, KPI dashboards, Unicode-aware language registries, intelligent OCR adapters, web asset/source auditing, CSV import/export, and cross-language clients.
-
-## Important source/licensing boundary
-
-The three supplied public deployments are treated as **references and integration targets**, not as permission to republish third-party proprietary bundles. The automated auditor records public HTML/script/style/asset URLs and metadata when a deployment is reachable; it does not silently copy minified third-party bundles into this repository. Implementations in this directory are clean-room equivalents of observed functionality and use only repository-owned code plus permissively licensed/open-source patterns.
+A research-oriented integration layer for the Thamudic/Ancient North Arabian scanner and related ancient-language research workflows. It combines provenance-aware databases, FastAPI APIs, OCR, language registries, translation proofing, speech proofing, chatbot orchestration, PDF research exchange, KPI dashboards and cross-language clients.
 
 ## Architecture
 
 ```text
 Historical PDFs / inscriptions / source records
                     |
-        bounded import + image quality checks
+        quality + geometry analysis
                     |
-     intelligent OCR engine/router layer
-       |             |             |
-     Kraken      Tesseract     quality-only
-       |             |             |
-       +------ confidence/provenance ------+
+ RTL/LTR/TTB/BTT | spiral | reverse | skew | weathering
                     |
- Unicode/script/language registry + review
+       OCR adapters + confidence/provenance
                     |
-   +----------------+----------------+
-   |                                 |
-FastAPI research API            KPI service
-   |                                 |
-   +---------------+-----------------+
-                   |
-          React/TypeScript UI
-                   |
- Python | C++ | C# | Java | Go | Rust | JS | TS
-                   |
-        transliteration / translation / PDF
+ Unicode/BCP47/CLDR language registry
+                    |
+ transliteration -> literal/meaning/interlinear/scholarly
+                    |
+ proof -> speech/phonemes -> research chatbot
+                    |
+ FastAPI -> React/TypeScript -> Python/C++/C#/Java/Go/Rust/JS/TS
+                    |
+ SQLite | PostgreSQL | MySQL | JSON | CSV | Access/ODBC
 ```
 
 ## Features
 
 - UTF-8 Old North Arabian/Thamudic support (`U+10A80-U+10A9F`).
-- Ancient-language registry architecture for Mesopotamia, Egypt, Arabia, Greek and Latin.
-- Unicode code-point identity kept separate from UTF-8 interchange encoding.
-- Objects, annotations, readings, sources and periods tables.
-- Provenance-aware PDF import with bounded page/byte limits and page-level extraction.
-- Research PDF export for historical objects, scripts, transliteration, literal/meaning translations, confidence and citations.
-- Machine-readable PDF manifest and KPI JSON schemas.
-- SQL views and API endpoints for application KPIs.
-- KPI dimensions for objects, readings, review, translation confidence, PDF jobs, errors and processing performance.
-- **Intelligent OCR scanner** with image SHA-256 provenance, resolution/contrast/blur quality metrics, pluggable Kraken/Tesseract adapters, confidence-based engine selection, Unicode NFC normalization, script candidate scoring and OCR bounding boxes when supplied by the engine.
-- OCR recognition is explicitly separate from transliteration and translation; low-confidence/engine failures are surfaced as warnings rather than fabricated text.
-- Optional Kraken installation for historical/non-Latin material; optional Tesseract adapter for installed traineddata.
-- Parameterized query library and provenance-preserving translation records.
-- Softr CSV import/export with stable `Record ID` support.
-- Public-site asset audit with robots-aware, bounded crawling.
-- React/TypeScript research UI with search, KPI cards, image OCR scanning, readings, annotations and export.
-- FastAPI JSON API.
-- Cross-language OCR/API clients in Python, C++, C#, Java, Go, Rust, JavaScript and TypeScript.
-- Windows CMD, PowerShell, Bash and Docker deployment/build automation with dependency checks.
-- Code/source citations collected in `docs/SOURCES.md`.
+- Ancient-language registry architecture for Mesopotamia, Egypt, Arabia, Greek, Latin and adjacent Levantine languages.
+- Chinese and Japanese as both source and target languages, including classical/vertical-writing metadata.
+- BCP-47/CLDR target-language resolution instead of a closed target-language list.
+- OCR geometry hypotheses for LTR, RTL, top-to-bottom, bottom-to-top, spiral, reverse, skewed and weathered material.
+- Intelligent OCR with Kraken/Tesseract adapters plus quality-only mode.
+- Unicode NFC normalization, source hashes, script candidates, bounding boxes, confidence and warnings.
+- Literal, meaning, interlinear and scholarly translation contracts.
+- Proofing layer preserving alternatives, uncertainty and human-review requirements.
+- Model-neutral RNN/Transformer/LLM speech proof contract; reconstructed ancient pronunciation is explicitly labelled.
+- Provider-neutral research chatbot API with evidence/citation context.
+- Historical-object PDF import/export and KPI dashboards.
+- SQLite canonical database plus PostgreSQL and MySQL portability schemas.
+- JSON and CSV/TSV flat-file interchange; optional Microsoft Access through `pyodbc` and a locally installed ODBC driver.
+- Cross-language API clients and build automation.
+- Windows CMD, PowerShell, Bash and Docker dependency/build/deployment automation.
 
-## OCR workflows
+## OCR geometry API
 
-`POST /api/ocr/scan` accepts a bounded image upload and returns a recognition result, confidence, script candidates, bounding boxes, image-quality metrics, warnings, preprocessing steps and SHA-256 provenance.
+`POST /api/ocr/geometry` accepts image dimensions and optional quality/orientation hints and returns a conservative routing hypothesis and adapter options. The heuristic does not claim to identify an ancient writing system; it prepares the image pipeline.
 
-Supported engine modes:
+PaddleOCR documents orientation classification, text-line orientation and document unwarping, and its current multilingual documentation includes Chinese, Traditional Chinese and Japanese. See [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR).
 
-- `auto`: choose the highest-confidence configured result.
-- `kraken`: historical/non-Latin OCR adapter; a compatible model must be configured with `kraken_model`.
-- `tesseract`: general OCR adapter using installed Tesseract traineddata.
-- `quality-only`: use the scanner as a source-quality/provenance gate without recognition.
+## OCR scanner
 
-The scanner does not assert that an OCR result is a scholarly transliteration or translation. Reviewers must preserve alternatives and uncertainty in the reading layer.
+`POST /api/ocr/scan` accepts a bounded image upload and returns recognition text, confidence, script candidates, bounding boxes, image-quality metrics, warnings, preprocessing and SHA-256 provenance.
 
-### Dependency automation
+Supported engines: `auto`, `kraken`, `tesseract`, `quality-only`.
 
-```bash
-# Linux/macOS
-./scripts/check-dependencies.sh
+## Translation and proofing
 
-# Windows PowerShell
-./scripts/check-dependencies.ps1
+`POST /api/translation/proof` packages an engine-produced translation as either:
 
-# Windows CMD
-scripts\\check-dependencies.bat
-```
+- **literal** — close lexical/syntactic rendering;
+- **meaning** — context-aware interpreted sense;
+- **interlinear** — aligned source/gloss/translation;
+- **scholarly** — provenance, alternatives and confidence.
 
-Set `INSTALL_KRAKEN=1` when the optional Kraken package should be installed automatically. Tesseract is an operating-system binary and is therefore detected rather than silently installed by Python package management.
+The API does not invent a translation when no model supplies one.
 
-## PDF workflows
+## Speech proofing
 
-`POST /api/pdf/import` accepts a bounded PDF and returns page-level extracted text, SHA-256 identity, page count and warnings. OCR is not implicitly mixed into source extraction; OCR/model output can be attached as a separate provenance layer.
+`POST /api/speech/proof` records language, voice profile, optional phonemes, model type, confidence and whether pronunciation is reconstructed. Empty phoneme data is preserved rather than guessed.
 
-`POST /api/pdf/export` produces a research PDF from explicitly supplied object/reading/translation data and records a manifest containing source identity, rights, provenance, citations and PDF hash.
+## Research chatbot
 
-## KPI API
+`POST /api/chat` is a provider-neutral orchestration boundary. A deployment can attach a self-hosted/local LLM, RAG system or another approved provider. Evidence and citations can be passed in `context`. The default implementation fails safely when no model adapter is configured.
 
-- `GET /api/kpis/summary`
-- `GET /api/kpis/languages`
+Research references include [Rasa](https://github.com/RasaHQ/rasa) and [LangChain](https://github.com/langchain-ai/langchain). Botpress is not treated as a current self-hosted open-source dependency.
 
-The KPI service is designed as the common contract for application dashboards and language clients; the UI consumes API values rather than hardcoded totals.
+## Data exchange and SQL
 
-## Standards and citations
+Canonical database: SQLite. Portability schemas are provided for PostgreSQL and MySQL. `tools/data_exchange.py` supports JSON and CSV output and optional Access export through `pyodbc`.
 
-- Unicode supported scripts: https://www.unicode.org/standard/supported.html
-- Unicode 18.0 implementation/draft data: https://www.unicode.org/versions/Unicode18.0.0/
-- Unicode CLDR: https://cldr.unicode.org/
-- Unicode BCP 47 extensions: https://cldr.unicode.org/index/bcp47-extension
-- Unicode Transliteration Guidelines: https://cldr.unicode.org/index/cldr-spec/transliteration-guidelines
-- RFC 6497 transformed-content extension: https://www.rfc-editor.org/rfc/rfc6497
-- Kraken OCR: https://github.com/mittagessen/kraken
-- Tesseract OCR: https://github.com/tesseract-ocr/tesseract
-- Cuneiform sign-detection research implementation: https://github.com/CompVis/cuneiform-sign-detection-code
-- Electronic Babylonian Literature cuneiform OCR: https://github.com/ElectronicBabylonianLiterature/cuneiform-ocr
-- CuReD: https://github.com/DigitalPasts/CuReD
-- pypdf: https://github.com/py-pdf/pypdf
-- ReportLab: https://www.reportlab.com/
-- JSON Schema: https://json-schema.org/
-
-See `docs/SOURCES.md`, `docs/PDF_CITATIONS.md`, `docs/KPI_CITATIONS.md`, and the design/implementation-plan documents under `docs/superpowers/` for detailed source attribution.
-
-## Quick start
+## Dependency automation
 
 ```bash
-cd ThamudicEpiPlatform
 ./scripts/check-dependencies.sh
-source .venv/bin/activate
-python -m uvicorn server.app:app --reload --port 8010
+# optional OCR extras:
+INSTALL_OCR_EXTRAS=1 ./scripts/check-dependencies.sh
 ```
 
-For Windows use `scripts\\check-dependencies.ps1` or `scripts\\check-dependencies.bat` first, then start `server.app` with the `.venv` interpreter.
+Windows:
 
-Only crawl sites you are authorized to inspect and respect their terms, robots directives, rate limits and copyright/license terms.
+```powershell
+$env:INSTALL_OCR_EXTRAS='1'; .\scripts\check-dependencies.ps1
+```
+
+```bat
+set INSTALL_OCR_EXTRAS=1
+scripts\check-dependencies.bat
+```
+
+## Research citations
+
+- [Unicode supported scripts](https://www.unicode.org/standard/supported.html)
+- [Unicode 18.0](https://www.unicode.org/versions/Unicode18.0.0/)
+- [CLDR](https://cldr.unicode.org/)
+- [BCP47 extensions](https://cldr.unicode.org/index/bcp47-extension)
+- [Unicode Transliteration Guidelines](https://cldr.unicode.org/index/cldr-spec/transliteration-guidelines)
+- [RFC 6497](https://www.rfc-editor.org/rfc/rfc6497)
+- [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)
+- [Kraken](https://github.com/mittagessen/kraken)
+- [EasyOCR](https://github.com/JaidedAI/EasyOCR)
+- [Tesseract](https://github.com/tesseract-ocr/tesseract)
+- [Cuneiform sign detection](https://github.com/CompVis/cuneiform-sign-detection-code)
+- [CuReD](https://github.com/DigitalPasts/CuReD)
+- [pypdf](https://github.com/py-pdf/pypdf)
+- [ReportLab](https://www.reportlab.com/)
+- [JSON Schema](https://json-schema.org/)
+
+See `docs/SOURCES.md` and `docs/OCR_GEOMETRY_TRANSLATION_CHAT.md` for detailed provenance and licensing notes.
