@@ -12,9 +12,21 @@ The deployment is the reference web experience for the Thamudic / North Arabian 
 
 ## Architecture
 
-`image -> detection -> segmentation -> glyph recognition -> script identification -> Unicode/transliteration -> normalization -> lexical/morphological analysis -> RNN/LLM translation -> retrieval/context -> confidence -> scholarly review`
+`image -> detection -> segmentation -> glyph recognition -> script identification -> Unicode/transliteration -> normalization -> lexical/morphological analysis -> RNN/LLM translation -> retrieval/context -> confidence -> scholarly review -> OLTP -> OLAP/MDM`
 
 The architecture intentionally preserves uncertainty, damaged signs, alternate readings and provenance.
+
+## Database platform
+
+The repository now includes a database portability layer for the main NLP applications and the Chimera II RNN/LLM integration:
+
+- **OLTP:** PostgreSQL, MySQL, MariaDB, SQLite, SQL Server, Oracle, IBM Db2 and SAP HANA.
+- **OLAP:** portable star schema plus SAP HANA, Snowflake, BigQuery and DuckDB warehouse definitions.
+- **MDM:** canonical entity/crosswalk/provenance model, with a dedicated SAP HANA implementation and a warehouse-compatible pattern for big-data platforms.
+- **Microsoft Access:** ACE/Jet DDL plus a VBA bootstrapper for creating an `.accdb` database locally.
+- **Chimera II:** node, trust status, model/model-version, dataset, training-run, inference-event, embedding and synchronization records.
+
+See `database/README.md`, `docs/DATABASE_ARCHITECTURE.md`, `docs/CHIMERA_II_DATABASE_INTEGRATION.md` and `sql/`.
 
 ## Ancient-script coverage
 
@@ -54,6 +66,9 @@ The existing `data/ancient_north_arabian/alphabet.json` remains the canonical Un
 ## Documentation
 
 - `docs/ANCIENT_SCRIPTS_RESEARCH.md`
+- `docs/DATABASE_ARCHITECTURE.md`
+- `docs/CHIMERA_II_DATABASE_INTEGRATION.md`
+- `database/README.md`
 - `ancient_scripts/README.md`
 - `ancient_scripts/core/schema.json`
 
