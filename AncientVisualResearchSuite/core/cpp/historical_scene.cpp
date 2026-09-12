@@ -10,12 +10,13 @@ void HistoricalScene::setDomain(std::size_t domain, const std::array<double,16>&
 
 std::vector<Frame> HistoricalScene::simulate(double seconds, double step) const {
     if (seconds < 0 || step <= 0) throw std::invalid_argument("invalid simulation interval");
+    constexpr double pi = 3.1415926535897932384626433832795;
     std::vector<Frame> out;
     for (double t=0; t<=seconds+1e-9; t+=step) {
         Frame f; f.timeSeconds=t;
         for (const auto& c: characters) {
             double active = c.activity == "idle" || c.activity == "sleep" ? 0.0 : 0.5;
-            double phase = c.heading * M_PI / 180.0 + t*0.15;
+            double phase = c.heading * pi / 180.0 + t*0.15;
             f.characters.push_back({c.id, c.x + std::cos(phase)*active*t,
                                     c.y + std::sin(phase)*active*t, c.heading});
         }
