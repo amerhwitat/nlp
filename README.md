@@ -2,17 +2,21 @@
 
 This repository contains Python, C++, .NET, Visual C++ and desktop/web implementations for Thamudic and Ancient North Arabian language research.
 
-## Source-code citation index
+## Complete source-code citation index
 
-- [C++ Thamudic implementation](cpp/thamudic/)
-- [Visual C++ implementation](vcpp/)
-- [.NET implementation](dotnet/)
-- [Python Thamudic implementation](python/thamudic/)
-- [Python regression tests](python/tests/)
-- [Canonical Ancient North Arabian registry](data/ancient_north_arabian/alphabet.json)
-- [ThamudicScan application](ThamudicScan/)
-- [Apple implementation](apple/)
-- [General portfolio Apple companion](https://github.com/amerhwitat/general/tree/master/Apple-Implementations/nlp)
+| Area | Source |
+|---|---|
+| C++ Thamudic | [cpp/thamudic/](cpp/thamudic/) |
+| Visual C++ | [vcpp/](vcpp/) |
+| .NET | [dotnet/](dotnet/) |
+| Python Thamudic | [python/thamudic/](python/thamudic/) |
+| Python tests | [python/tests/](python/tests/) |
+| Ancient North Arabian registry | [data/ancient_north_arabian/alphabet.json](data/ancient_north_arabian/alphabet.json) |
+| ThamudicScan | [ThamudicScan/](ThamudicScan/) |
+| Apple | [apple/](apple/) |
+| Complete tracked repository | [source tree](.) |
+
+These links are the README-level citations for all maintained implementation areas; component READMEs remain the detailed file-level source record.
 
 ## Centralized Apple Objective-C + Flutter implementation
 
@@ -43,7 +47,7 @@ Use Xcode/XcodeGen on macOS to generate the native shell. Flutter provides the U
 
 ## Chimera 128D + authenticated P2P
 
-Research records can participate in the common Chimera 128D application profile: geometry, temporal state, observer/perspective, light/material response, events, objects, properties and interaction relationships, plus an extensible perception/cognition layer.
+Research records can participate in the common Chimera 128D application profile: geometry, temporal state, observer/perspective, light/material response, events, objects, properties and interaction relationships, plus an extensible perception/cognition/vector layer.
 
 Optional P2P synchronization is authenticated and provenance-preserving. It supports capability exchange, request/response, pub/sub, snapshot/delta and content-addressed research objects. It does not transfer credentials, private keys or arbitrary executable payloads and does not authorize unsolicited network scanning.
 
