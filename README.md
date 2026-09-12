@@ -12,7 +12,11 @@ This repository contains Python, C++, .NET, Visual C++ and desktop/web implement
 | Python Thamudic | [python/thamudic/](python/thamudic/) |
 | Python tests | [python/tests/](python/tests/) |
 | Ancient North Arabian registry | [data/ancient_north_arabian/alphabet.json](data/ancient_north_arabian/alphabet.json) |
-| ThamudicScan | [ThamudicScan/](ThamudicScan/) |
+| ThamudicScan web frontend | [ThamudicScan/web_ui/](ThamudicScan/web_ui/) |
+| ThamudicScan FastAPI backend | [ThamudicScan/server/](ThamudicScan/server/) |
+| Web API documentation | [ThamudicScan/docs/WEB_API.md](ThamudicScan/docs/WEB_API.md) |
+| Web architecture | [ThamudicScan/docs/ARCHITECTURE.md](ThamudicScan/docs/ARCHITECTURE.md) |
+| ThamudicScan product docs | [ThamudicScan/](ThamudicScan/) |
 | Apple | [apple/](apple/) |
 | Complete tracked repository | [source tree](.) |
 
@@ -26,6 +30,14 @@ The Apple companion is maintained in [`general/Apple-Implementations/nlp`](https
 
 Public deployment is documented in `ThamudicScan/`; deployment credentials are never stored in source control.
 
+The new browser stack is split into:
+
+- `ThamudicScan/web_ui/` — React + Vite responsive interface with keyword search, inscription/text input, upload/drop-zone, live progress, statistics, Unicode-aware results, session reopen and CSV/JSON export.
+- `ThamudicScan/server/` — FastAPI API, scanner adapter, SQLite session/result/event persistence, ordered SSE progress stream, upload validation and exporters.
+- `ThamudicScan/server/tests/` — pytest contracts for Unicode validation, canonical transliteration integration, persistence, exports and HTTP endpoints.
+
+The web layer reuses `python/thamudic` rather than copying its Old North Arabian mapping tables.
+
 ## Ancient North Arabian Unicode support
 
 The repository includes a canonical registry at `data/ancient_north_arabian/alphabet.json` covering the Unicode Old North Arabian block `U+10A80–U+10A9F`, including encoded characters/numbers, Unicode code points, scholarly transliteration, exact UTF-8 bytes, Dadanitic encoding basis and variant-script metadata.
@@ -38,7 +50,7 @@ The repository includes a canonical registry at `data/ancient_north_arabian/alph
 - `python/thamudic/` — Python Unicode/UTF-8/transliteration API.
 - `python/tests/` — Unicode and UTF-8 regression tests.
 - `data/ancient_north_arabian/` — language-neutral canonical registry.
-- `ThamudicScan/` — documentation and web application.
+- `ThamudicScan/` — React/FastAPI web application and documentation.
 - `apple/` — existing SwiftUI/Xcode application boundary.
 
 ## Apple applications
