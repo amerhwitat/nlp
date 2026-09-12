@@ -42,6 +42,16 @@ def test_export_endpoints(client):
     assert "𐪀" in json_response.text
 
 
+def test_sse_progress_events_are_ordered(client):
+    session_id = client.post("/scan", json={"text": "𐪀", "keywords": []}).json()["session_id"]
+    response = client.get(f"/sessions/{session_id}/events")
+    assert response.status_code == 200
+    assert "event: progress" not in response.text
+    assert "data:" in response.text
+    assert '"sequence": 1' in response.text
+    assert '"sequence": 2' in response.text
+
+
 def test_scan_file_accepts_utf8_text(client):
     response = client.post(
         "/scan_file",
