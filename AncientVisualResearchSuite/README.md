@@ -42,7 +42,7 @@ AVRS uses a backend-neutral compute contract so historical scene tensors, glyph 
 
 The neural layer can select ONNX Runtime execution providers at runtime. Preferred providers include TensorRT, CUDA, DirectML, OpenVINO, CoreML, NNAPI, WebGPU, XNNPACK and CPU fallback. The registry describes capabilities; it does not claim every provider exists on every host.
 
-The Library-derived architecture retains axis-wise 128D embeddings, event/entity GNN message passing, temporal tensor-RNN memory, semantic concept embeddings and observer/perspective weighting. fileciteturn153file1L85-L112
+The Library-derived architecture retains axis-wise 128D embeddings, event/entity GNN message passing, temporal tensor-RNN memory, semantic concept embeddings and observer/perspective weighting.
 
 ## Scientific and historical guardrail
 
