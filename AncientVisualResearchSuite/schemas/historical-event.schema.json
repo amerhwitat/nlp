@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ancient Visual Research Historical Event",
+  "type": "object",
+  "required": ["id", "title", "time", "location", "evidence"],
+  "properties": {
+    "id": {"type": "string"},
+    "title": {"type": "string"},
+    "description": {"type": "string"},
+    "time": {
+      "type": "object",
+      "required": ["start"],
+      "properties": {
+        "start": {"type": "string", "format": "date-time"},
+        "end": {"type": ["string", "null"], "format": "date-time"},
+        "calendar": {"type": "string"},
+        "uncertainty_years": {"type": "number", "minimum": 0}
+      }
+    },
+    "location": {
+      "type": "object",
+      "required": ["latitude", "longitude"],
+      "properties": {
+        "latitude": {"type": "number"},
+        "longitude": {"type": "number"},
+        "elevation_m": {"type": "number"},
+        "region": {"type": "string"},
+        "site_id": {"type": "string"}
+      }
+    },
+    "environment": {"type": "object"},
+    "sky": {"type": "object"},
+    "characters": {"type": "array", "items": {"type": "object"}},
+    "artifacts": {"type": "array", "items": {"type": "object"}},
+    "events": {"type": "array", "items": {"type": "object"}},
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "class", "source"],
+        "properties": {
+          "id": {"type": "string"},
+          "class": {"enum": ["observed", "supported", "inferred", "speculative", "visualization"]},
+          "source": {"type": "string"},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+          "notes": {"type": "string"}
+        }
+      }
+    },
+    "tensor128": {
+      "type": "array",
+      "minItems": 128,
+      "maxItems": 128,
+      "items": {"type": "number"}
+    }
+  }
+}
