@@ -1,0 +1,28 @@
+{
+  "unicode_source":"Unicode code charts / NamesList; verify against pinned UCD during generation",
+  "scripts":[
+    {"id":"grek","name":"Greek","range":"0370..03FF","kind":"alphabet"},
+    {"id":"greek_extended","name":"Greek Extended","range":"1F00..1FFF","kind":"orthography"},
+    {"id":"coptic","name":"Coptic","range":"2C80..2CFF","kind":"alphabet"},
+    {"id":"hebrew","name":"Hebrew","range":"0590..05FF","kind":"abjad"},
+    {"id":"samr","name":"Samaritan","range":"0800..083F","kind":"abjad"},
+    {"id":"armi","name":"Imperial Aramaic","range":"10840..1085F","kind":"abjad"},
+    {"id":"syrc","name":"Syriac","range":"0700..074F","kind":"abjad"},
+    {"id":"mand","name":"Mandaic","range":"0840..085F","kind":"abjad"},
+    {"id":"phnx","name":"Phoenician","range":"10900..1091F","kind":"abjad"},
+    {"id":"ugar","name":"Ugaritic","range":"10380..1039F","kind":"abjad"},
+    {"id":"palm","name":"Palmyrene","range":"10860..1087F","kind":"abjad"},
+    {"id":"nbat","name":"Nabataean","range":"10880..108AF","kind":"abjad"},
+    {"id":"hatr","name":"Hatran","range":"108E0..108FF","kind":"abjad"},
+    {"id":"nrb","name":"Old North Arabian","range":"10A80..10A9F","kind":"abjad"},
+    {"id":"sarb","name":"Old South Arabian","range":"10A60..10A7F","kind":"abjad"},
+    {"id":"xsux","name":"Cuneiform","range":"12000..123FF","kind":"logosyllabic"},
+    {"id":"egyp","name":"Egyptian Hieroglyphs","range":"13000..1342F","kind":"logosyllabic"},
+    {"id":"egyp_ext_a","name":"Egyptian Hieroglyphs Extended-A","range":"13460..143FF","kind":"logosyllabic"},
+    {"id":"cprt","name":"Cypriot Syllabary","range":"10800..1083F","kind":"syllabary"},
+    {"id":"linb","name":"Linear B","range":"10000..1007F","kind":"syllabary"},
+    {"id":"lina","name":"Linear A","range":"10600..1077F","kind":"undeciphered"},
+    {"id":"latn","name":"Latin","range":"0000..024F","kind":"alphabet"},
+    {"id":"ital","name":"Old Italic","range":"10300..1032F","kind":"alphabet"}
+  ]
+}
