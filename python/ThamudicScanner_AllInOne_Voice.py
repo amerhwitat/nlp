@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """Unified Thamudic all-in-one desktop scanner: media import, OCR, transliteration,
-corpus-backed translation, voice playback, history/PDF support inherited from the
-base scanner, and a single GUI entry point.
+corpus-backed translation, voice playback, and the existing history/PDF features.
 
-The implementation keeps the consolidated ``ThamudicScanner_AllInOne.py`` as the
-core runtime and adds the same image/PDF -> extraction/OCR -> scan -> transliterate
--> translate -> voice workflow used by the general NLP all-in-one scanner.
+Workflow: image/PDF/text -> extraction/OCR -> script scan -> transliteration ->
+corpus-backed translation -> GUI output -> spoken transliteration/translation.
 """
 from __future__ import annotations
 
@@ -16,8 +14,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from ThamudicScanner_AllInOne import ThamudicScannerApp as BaseScannerApp, translate
 from thamudic.desktop_voice import DesktopVoice
-from thamudic.media_pipeline import extract_media_text, scan_translate_media
-
+from thamudic.media_pipeline import extract_media_text
 
 SUPPORTED_MEDIA = [
     ("Images / PDF / text", "*.png *.jpg *.jpeg *.webp *.bmp *.tif *.tiff *.pdf *.txt *.md *.csv"),
@@ -37,16 +34,11 @@ class UnifiedThamudicScannerApp(BaseScannerApp):
 
     def _add_media_controls(self):
         frame = ttk.Frame(self.root, padding=(10, 4))
-        frame.pack(fill="x", before=self._first_content_widget())
+        frame.pack(fill="x")
         ttk.Button(frame, text="Import image/PDF/text", command=self.import_media).pack(side="left", padx=4)
         ttk.Button(frame, text="Process imported media", command=self.process_media).pack(side="left", padx=4)
         self.media_status = ttk.Label(frame, text="Media: ready")
         self.media_status.pack(side="left", padx=10)
-
-    def _first_content_widget(self):
-        # Tkinter pack insertion before an existing widget is not universally
-        # supported; returning the root keeps this safe across Tk versions.
-        return self.root
 
     def import_media(self):
         path = filedialog.askopenfilename(title="Import inscription image/PDF/text", filetypes=SUPPORTED_MEDIA)
@@ -57,14 +49,12 @@ class UnifiedThamudicScannerApp(BaseScannerApp):
 
     def process_media(self):
         if not self.media_path:
-            self.media_path = self._choose_media_if_needed()
-        if not self.media_path:
-            return
+            path = filedialog.askopenfilename(title="Choose inscription image/PDF/text", filetypes=SUPPORTED_MEDIA)
+            if not path:
+                return
+            self.media_path = Path(path)
         try:
             text, meta = extract_media_text(self.media_path)
-            # The base all-in-one GUI exposes its source/transliteration/output
-            # widgets; use them directly so the imported text follows the same
-            # translation path as manually entered text.
             source_widget = getattr(self, "source", None)
             if source_widget is not None:
                 source_widget.delete("1.0", "end")
@@ -83,10 +73,6 @@ class UnifiedThamudicScannerApp(BaseScannerApp):
         except Exception as exc:
             messagebox.showerror("Import/OCR error", str(exc))
             self.media_status.config(text="Media: processing failed")
-
-    def _choose_media_if_needed(self):
-        path = filedialog.askopenfilename(title="Choose media", filetypes=SUPPORTED_MEDIA)
-        return Path(path) if path else None
 
     def _add_voice_controls(self):
         ttk.Separator(self.root, orient="horizontal").pack(fill="x", padx=10, pady=4)
@@ -135,7 +121,6 @@ def main(argv=None):
     parser.add_argument("--gui", action="store_true", help="start GUI")
     args = parser.parse_args(argv)
 
-    # GUI is the primary all-in-one workflow; a supplied file is imported on start.
     app = UnifiedThamudicScannerApp()
     if args.file:
         app.media_path = Path(args.file)
