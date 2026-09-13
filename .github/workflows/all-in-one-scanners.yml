@@ -3,13 +3,19 @@ name: All-in-One Scanner Smoke Tests
 on:
   push:
     paths:
+      - 'run_thamudic002.py'
+      - 'python/thamudic/resilient_ocr.py'
       - 'python/ThamudicScanner_AllInOne.py'
       - 'python/NLPScanner_AllInOne.py'
+      - 'python/thamudic_all_in_one.py'
       - '.github/workflows/all-in-one-scanners.yml'
   pull_request:
     paths:
+      - 'run_thamudic002.py'
+      - 'python/thamudic/resilient_ocr.py'
       - 'python/ThamudicScanner_AllInOne.py'
       - 'python/NLPScanner_AllInOne.py'
+      - 'python/thamudic_all_in_one.py'
       - '.github/workflows/all-in-one-scanners.yml'
 
 jobs:
@@ -20,10 +26,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Compile standalone applications
-        run: python -m py_compile python/ThamudicScanner_AllInOne.py python/NLPScanner_AllInOne.py
+      - name: Compile scanner applications
+        run: python -m py_compile run_thamudic002.py python/thamudic/resilient_ocr.py python/ThamudicScanner_AllInOne.py python/NLPScanner_AllInOne.py python/thamudic_all_in_one.py
       - name: Check CLI help
         run: |
+          python run_thamudic002.py --help
           python python/ThamudicScanner_AllInOne.py --help
           python python/NLPScanner_AllInOne.py --help
       - name: Check offline text scanning
