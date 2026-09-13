@@ -4,12 +4,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from nlp_thamudic_all_in_one import (
-    build_text_outputs,
-    nlp_analyze,
-    scan_image_safe,
-    transliterate_ona,
-)
+from thamudic_all_in_one import build_text_outputs, scan_image_safe, transliterate_ona
+from nlp_thamudic_all_in_one import nlp_analyze
 
 
 def test_ona_unicode_is_transliterated():
