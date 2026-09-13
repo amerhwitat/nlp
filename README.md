@@ -13,6 +13,7 @@ This repository contains Python, C++, .NET, Visual C++ and desktop/web implement
 | Python translation/NLP | [python/thamudic/ancient_translation.py](python/thamudic/ancient_translation.py) |
 | Universal ancient translation facade | [python/thamudic/universal_translation.py](python/thamudic/universal_translation.py) |
 | Translation history/audit logger | [python/thamudic/translation_log.py](python/thamudic/translation_log.py) |
+| PDF report/export engine | [python/thamudic/pdf_export.py](python/thamudic/pdf_export.py) |
 | Script summary/report exporter | [python/thamudic/script_summary.py](python/thamudic/script_summary.py) |
 | Voice/TTS/STT capability layer | [python/thamudic/voice.py](python/thamudic/voice.py) |
 | Python source-language scanner | [python/thamudic/source_language_scanner.py](python/thamudic/source_language_scanner.py) |
@@ -39,9 +40,11 @@ The script-report layer combines one selected script/language with the actual so
 FastAPI endpoints:
 
 - `GET /script-summary/{language}`
-- `GET /script-summary/{language}/export?format=json|md|txt`
+- `GET /script-summary/{language}/export?format=json|md|txt|pdf`
 - `POST /script-report`
-- `POST /script-report/export`
+- `POST /script-report/export` with `format=json|md|txt|pdf`
+
+PDF generation is provided by `python/thamudic/pdf_export.py` using ReportLab Platypus. ReportLab's Platypus engine supports flowing paragraphs, tables and multi-page documents. urlReportLab Platypus documentationhttps://docs.reportlab.com/reportlab/userguide/ch5_platypus/
 
 Historical dates are intentionally broad research metadata and do not override inscription-specific palaeographic or archaeological dating.
 
@@ -64,11 +67,21 @@ Override with `THAMUDIC_TRANSLATION_LOG`.
 API:
 
 - `GET /translation-log`
-- `GET /translation-log/export?format=json|jsonl|txt`
+- `GET /translation-log/export?format=json|jsonl|txt|pdf`
 
 The integrity checker detects modified records by recomputing each record's deterministic SHA-256 hash. This is an integrity aid, not a substitute for signed or immutable archival storage.
 
-See [docs/TRANSLATION_HISTORY.md](docs/TRANSLATION_HISTORY.md).
+PDF history reports are generated from the same verified records and contain the full provenance fields; PDF is not a second source of truth.
+
+## Scanner/session exports
+
+Persisted scanner sessions support:
+
+- CSV
+- JSON
+- PDF
+
+through `GET /export/{session_id}?format=csv|json|pdf`. The browser application exposes all three export choices.
 
 ## Voice / speech capabilities
 
@@ -93,7 +106,7 @@ See [docs/RESEARCH_SOURCES.md](docs/RESEARCH_SOURCES.md).
 
 ## ThamudicScan web application
 
-The browser stack is split into `ThamudicScan/web_ui/` and `ThamudicScan/server/`. The FastAPI service provides scanning, validation, translation, universal translation, source-language scanning, language registry, script reports, voice capabilities, translation history, exports, persistence and SSE progress.
+The browser stack is split into `ThamudicScan/web_ui/` and `ThamudicScan/server/`. The FastAPI service provides scanning, validation, translation, universal translation, source-language scanning, language registry, script reports, voice capabilities, translation history, PDF/JSON/Markdown/TXT/CSV exports, persistence and SSE progress.
 
 ## Ancient North Arabian Unicode support
 
