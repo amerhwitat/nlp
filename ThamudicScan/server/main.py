@@ -13,9 +13,9 @@ from .db import Database
 from .exporter import export_results_csv, export_results_json
 from .models import ScanRequest, ScanResponse, ScanResult, ScanSummary, ValidationRequest
 from .progress import emit
-from .scanner_adapter import scan_text, validate_text
+from .scanner_adapter import scan_text, translate_text, validate_text
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 DEFAULT_UPLOADS = {".txt", ".md", ".csv", ".json", ".xml", ".html", ".htm"}
 
 
@@ -46,6 +46,17 @@ def create_app() -> FastAPI:
     @app.post("/validate")
     def validate(request: ValidationRequest):
         return validate_text(request.text)
+
+    @app.post("/translate")
+    def translate_endpoint(request: dict):
+        text = str(request.get("text", ""))
+        script = str(request.get("script", "Dadanitic"))
+        target_language = str(request.get("target_language", "en"))
+        if not text.strip():
+            raise HTTPException(status_code=422, detail="text is required")
+        if target_language.casefold().split("-")[0] not in {"en", "ar"}:
+            raise HTTPException(status_code=400, detail="supported target languages: en, ar")
+        return translate_text(text, script=script, target_language=target_language)
 
     def execute_scan(text: str, keywords: list[str], source: str) -> ScanResponse:
         session_id = db.create_session()
@@ -96,7 +107,6 @@ def create_app() -> FastAPI:
     @app.post("/scan_file", response_model=ScanResponse)
     async def scan_file(file: UploadFile = File(...)):
         data = await _read_upload(file)
-        suffix = Path(file.filename or "").suffix.lower()
         try:
             text = data.decode("utf-8-sig")
         except UnicodeDecodeError as exc:
