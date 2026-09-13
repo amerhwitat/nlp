@@ -1,46 +1,35 @@
 #!/usr/bin/env python3
-"""Resilient compatibility launcher for the unified Thamudic/NLP scanners.
+"""Resilient Thamudic/NLP all-in-one launcher.
 
-Fixes the historical `Native worker timed out after 180s` failure by routing
-image OCR through the bounded, process-cleaning worker in
-`python/thamudic/resilient_ocr.py`. OCR failure is recoverable and does not
-terminate the GUI/NLP pipeline.
+EasyOCR runs in an isolated native worker with a bounded timeout. A timeout is
+recorded as recoverable metadata and glyph segmentation/NLP processing continues.
 """
 from __future__ import annotations
-import argparse, sys
+import argparse,sys
 from pathlib import Path
-
 ROOT=Path(__file__).resolve().parent
-sys.path.insert(0,str(ROOT))
 sys.path.insert(0,str(ROOT/"python"))
+from thamudic.resilient_ocr import DEFAULT_TIMEOUT,ocr_image
 
-from thamudic.resilient_ocr import DEFAULT_TIMEOUT, ocr_image
-
-
-def _patch(module):
-    original_extract=module.extract
+def launch(mode="nlp",db="ancient_objects.sqlite"):
+    import thamudic_all_in_one as app
+    original=app.scan_image_safe
     worker=ROOT/"python"/"thamudic"/"ocr_worker.py"
-    def extract(path):
-        p=Path(path).expanduser(); suffix=p.suffix.casefold()
-        if suffix in {".png",".jpg",".jpeg",".webp",".bmp",".tif",".tiff"}:
-            r=ocr_image(p,worker,timeout=DEFAULT_TIMEOUT)
-            meta={"provider":"easyocr-subprocess","media_type":"image","source_file":str(p),"ocr_available":bool(r.get("ok") and r.get("text")),"ocr_error":"" if r.get("ok") else f"{r.get('error_type','Error')}: {r.get('error','OCR unavailable')}","ocr_timed_out":bool(r.get("timed_out")),"ocr_recoverable":True}
-            for k in ("detections","ocr_confidence"):
-                if k in r: meta[k]=r[k]
-            return str(r.get("text","")),meta
-        return original_extract(path)
-    module.extract=extract
-    return module
-
+    def safe(path,**kwargs):
+        r=ocr_image(path,worker,timeout=DEFAULT_TIMEOUT)
+        hint=str(r.get("text","")) if r.get("ok") else kwargs.get("text_hint","")
+        payload=original(path,**kwargs,text_hint=hint)
+        if payload.get("ok"):
+            payload["result"]["ocr"]={"provider":r.get("provider","easyocr-subprocess"),"ocr_available":bool(r.get("ok") and r.get("text")),"ocr_error":"" if r.get("ok") else f"{r.get('error_type','Error')}: {r.get('error','OCR unavailable')}","ocr_timed_out":bool(r.get("timed_out")),"ocr_recoverable":True,"ocr_confidence":r.get("ocr_confidence",0.0),"detections":r.get("detections",0),"source_file":str(path)}
+            payload["result"]["recognition_status"]="easyocr_text_plus_glyph_segmentation" if r.get("ok") and r.get("text") else "glyph_segmentation_after_recoverable_ocr_failure"
+        return payload
+    app.scan_image_safe=safe
+    cls=app.NLPApp if mode=="nlp" else app.App
+    cls(db_path=db).mainloop()
 
 def main(argv=None):
-    parser=argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--mode",choices=("nlp","thamudic"),default="nlp")
-    known,rest=parser.parse_known_args(argv)
-    module_name="NLPScanner_AllInOne" if known.mode=="nlp" else "ThamudicScanner_AllInOne"
-    module=__import__(module_name,fromlist=["*"])
-    module=_patch(module)
-    return module.cli(rest,module_name)
-
-if __name__=="__main__":
-    raise SystemExit(main())
+    p=argparse.ArgumentParser(description="Resilient Thamudic/NLP scanner")
+    p.add_argument("--mode",choices=("nlp","thamudic"),default="nlp")
+    p.add_argument("--db",default="ancient_objects.sqlite")
+    a=p.parse_args(argv); launch(a.mode,a.db); return 0
+if __name__=="__main__":raise SystemExit(main())
