@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from typing import Protocol, Any
 
 from .ancient_alphabet_registry import language_profile, translation_directions
-from .script_summary import build_script_summary
 from .translation_log import append_record, make_record
 
 
@@ -54,6 +53,9 @@ def _basic_transliteration(text: str) -> str:
 
 
 def _log_result(result: TranslationResult, request_metadata: dict[str, Any] | None = None) -> None:
+    # Local import avoids a module cycle: script_summary itself uses this facade
+    # to build complete script reports.
+    from .script_summary import build_script_summary
     metadata = build_script_summary(result.source_language)
     record = make_record(
         source=result.source, source_language=result.source_language,
