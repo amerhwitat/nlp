@@ -5,3 +5,7 @@ scikit-learn>=1.5
 Pillow>=10.0
 pytest>=8.0
 reportlab>=5.0
+pypdf>=5.0
+# Optional OCR for images and scanned PDFs:
+easyocr>=1.7
+pypdfium2>=4.30
