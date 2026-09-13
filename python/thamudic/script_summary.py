@@ -30,7 +30,7 @@ def build_script_report(language: str, original_text: str, target_language: str 
     if not target_language.strip(): raise ValueError("target_language is required")
     result = translate_ancient(original_text, language, target_language, source_form="script").as_dict()
     return {
-        "report_version": "1.0", "script_information": build_script_summary(language),
+        "report_version": "1.1", "script_information": build_script_summary(language),
         "original_text": original_text, "source_language": language, "target_language": target_language,
         "transliteration": result.get("transliteration"), "translation": result.get("translation"),
         "translation_status": result.get("status", result.get("translation_status")),
@@ -39,7 +39,7 @@ def build_script_report(language: str, original_text: str, target_language: str 
     }
 
 
-def _export(payload: dict[str, Any], fmt: str, filename_base: str) -> tuple[str, str, str]:
+def _export(payload: dict[str, Any], fmt: str, filename_base: str) -> tuple[str | bytes, str, str]:
     if fmt == "json": return json.dumps(payload, ensure_ascii=False, indent=2), "application/json; charset=utf-8", f"{filename_base}.json"
     if fmt == "txt":
         lines = [f"{payload.get('script_information', {}).get('name', filename_base)} — Ancient Script Report", ""]
@@ -49,12 +49,15 @@ def _export(payload: dict[str, Any], fmt: str, filename_base: str) -> tuple[str,
         lines = [f"# {payload.get('script_information', {}).get('name', filename_base)} — Ancient Script Report", ""]
         for key, value in payload.items(): lines.append(f"- **{key.replace('_', ' ').title()}**: {value}")
         return "\n".join(lines) + "\n", "text/markdown; charset=utf-8", f"{filename_base}.md"
-    raise ValueError("format must be json, md, or txt")
+    if fmt == "pdf":
+        from .pdf_export import report_pdf_bytes
+        return report_pdf_bytes(payload), "application/pdf", f"{filename_base}.pdf"
+    raise ValueError("format must be json, md, txt, or pdf")
 
 
-def export_script_summary(language: str, format: str = "json") -> tuple[str, str, str]:
+def export_script_summary(language: str, format: str = "json") -> tuple[str | bytes, str, str]:
     return _export(build_script_summary(language), format.casefold(), f"{language_profile(language)['id']}-script-summary")
 
 
-def export_script_report(language: str, original_text: str, target_language: str = "en", format: str = "json") -> tuple[str, str, str]:
+def export_script_report(language: str, original_text: str, target_language: str = "en", format: str = "json") -> tuple[str | bytes, str, str]:
     return _export(build_script_report(language, original_text, target_language), format.casefold(), f"{language_profile(language)['id']}-script-report")
