@@ -2,6 +2,7 @@
 from .old_north_arabian import BY_CHARACTER, BY_CODEPOINT, CHARACTERS, FIRST, LAST, VARIANT_FORMS, is_old_north_arabian, transliterate as transliterate_ona, utf8_bytes
 from .ancient_translation import CorpusEntry, InMemoryCorpus, OCIANA_SEED, supported_targets, translate, transliterate_source
 from .source_language_scanner import encode_utf8, scan_source_language, supported_source_languages
+from .ancient_alphabet_registry import load_alphabet_registry, supported_alphabet_languages, language_profile, variations, translation_capabilities, translation_directions
 
 is_thamudic = is_old_north_arabian
 
@@ -21,4 +22,6 @@ __all__ = [
     "CorpusEntry", "InMemoryCorpus", "OCIANA_SEED", "extract", "is_old_north_arabian",
     "is_thamudic", "supported_targets", "translate", "transliterate", "transliterate_source",
     "supported_source_languages", "scan_source_language", "encode_utf8", "utf8_bytes",
+    "load_alphabet_registry", "supported_alphabet_languages", "language_profile", "variations",
+    "translation_capabilities", "translation_directions",
 ]
