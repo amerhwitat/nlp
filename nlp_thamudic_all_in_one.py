@@ -8,6 +8,7 @@ transliteration, Arabic translation, English translation and evidence boxes.
 from __future__ import annotations
 import json
 import re
+from tkinter import ttk
 from thamudic_all_in_one import App, LEXICON, build_text_outputs, _normalize_token
 
 
@@ -35,8 +36,7 @@ class NLPApp(App):
         super()._scanner()
         right = self.workspace.winfo_children()[0].winfo_children()[1]
         box = right.winfo_children()[0]
-        ttk_button = __import__("tkinter").ttk.Button
-        ttk_button(box, text="NLP Analyze", style="Primary.TButton", command=self.nlp_run).pack(fill="x", pady=3)
+        ttk.Button(box, text="NLP Analyze", style="Primary.TButton", command=self.nlp_run).pack(fill="x", pady=3)
 
     def nlp_run(self):
         result = nlp_analyze(self.source_text.get("1.0", "end-1c"))
