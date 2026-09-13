@@ -22,8 +22,9 @@ def test_greek_extended():
 
 
 def test_japanese_kana_and_chinese_han_overlap_is_visible():
-    result = scan_source_language("日本語かな", language="japanese")
-    assert result["matched_character_count"] == 5
+    result = scan_source_language("日本語かな")
+    assert result["counts"]["japanese"] == 5
+    assert result["counts"]["chinese"] == 3
     assert result["ambiguous_script_overlap"] is True
 
 
