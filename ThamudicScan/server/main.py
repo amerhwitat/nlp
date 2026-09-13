@@ -13,18 +13,16 @@ from .models import ScanRequest, ScanResponse, ScanResult, ScanSummary, Validati
 from .progress import emit
 from .scanner_adapter import (alphabet_languages, alphabet_profile, alphabet_variations, scan_source_language_text, translation_directions_for, translation_modes, scan_text, translate_text, validate_text, translate_ancient_text, all_translation_directions, script_summary, voice_speak, voice_backends, voice_commands, speech_recognition, translation_log_path, translation_log_records, translation_log_verify, translation_log_export)
 from python.thamudic.script_summary import export_script_summary, build_script_report, export_script_report
+from python.thamudic.pdf_export import records_pdf_bytes
 
-APP_VERSION = "1.7.0"
+APP_VERSION = "1.8.0"
 DEFAULT_UPLOADS = {".txt", ".md", ".csv", ".json", ".xml", ".html", ".htm"}
-
 
 def _db_path() -> Path: return Path(os.getenv("THAMUDIC_DB_PATH", str(Path(__file__).with_name("data") / "sessions.sqlite3")))
 def _allowed_extensions() -> set[str]:
     raw = os.getenv("THAMUDIC_ALLOWED_EXTENSIONS", "")
     return {item.strip().lower() for item in raw.split(",") if item.strip()} or DEFAULT_UPLOADS
-
 def _max_upload_bytes() -> int: return int(os.getenv("THAMUDIC_MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
-
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Thamudic Scanner API", version=APP_VERSION)
@@ -32,7 +30,7 @@ def create_app() -> FastAPI:
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=["GET", "POST"], allow_headers=["*"])
     db = Database(_db_path()); app.state.db = db
     @app.get("/health")
-    def health(): return {"status": "ok", "service": "thamudic-scanner", "version": APP_VERSION}
+    def health(): return {"status": "ok", "service": "thamudic-scanner", "version": APP_VERSION, "pdf_exports": True}
     @app.get("/alphabet-languages")
     def alphabet_language_endpoint(): return {"languages": list(alphabet_languages())}
     @app.get("/alphabet-languages/{language}")
@@ -48,8 +46,8 @@ def create_app() -> FastAPI:
     @app.get("/script-summary/{language}/export")
     def script_summary_export_endpoint(language: str, format: str = "json"):
         try: body, media_type, filename = export_script_summary(language, format)
-        except ValueError as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
-        return Response(body, media_type=media_type, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+        except (ValueError, RuntimeError) as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return Response(content=body, media_type=media_type, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
     @app.post("/script-report")
     def script_report_endpoint(request: dict):
         text, language, target = str(request.get("original_text", request.get("text", ""))), str(request.get("source_language", "")), str(request.get("target_language", "en"))
@@ -61,8 +59,8 @@ def create_app() -> FastAPI:
         text, language, target, format = str(request.get("original_text", request.get("text", ""))), str(request.get("source_language", "")), str(request.get("target_language", "en")), str(request.get("format", "json"))
         if not text.strip() or not language.strip(): raise HTTPException(status_code=422, detail="original_text and source_language are required")
         try: body, media_type, filename = export_script_report(language, text, target, format)
-        except ValueError as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
-        return Response(body, media_type=media_type, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+        except (ValueError, RuntimeError) as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return Response(content=body, media_type=media_type, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
     @app.get("/voice/capabilities")
     def voice_capabilities_endpoint(): return {"tts_backends": voice_backends(), "commands": voice_commands(), "speech_recognition": speech_recognition()}
     @app.post("/voice/speak")
@@ -71,13 +69,12 @@ def create_app() -> FastAPI:
         try: return voice_speak(text, language, mode)
         except ValueError as exc: raise HTTPException(status_code=422, detail=str(exc)) from exc
     @app.get("/translation-log")
-    def translation_log_endpoint():
-        return {"path": translation_log_path(), "records": translation_log_records(), "verification": translation_log_verify()}
+    def translation_log_endpoint(): return {"path": translation_log_path(), "records": translation_log_records(), "verification": translation_log_verify()}
     @app.get("/translation-log/export")
     def translation_log_export_endpoint(format: str = "json"):
         try: body, media_type, filename = translation_log_export(format)
-        except ValueError as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
-        return Response(body, media_type=media_type, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+        except (ValueError, RuntimeError) as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return Response(content=body, media_type=media_type, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
     @app.post("/validate")
     def validate(request: ValidationRequest): return validate_text(request.text)
     @app.post("/translate")
@@ -98,7 +95,6 @@ def create_app() -> FastAPI:
         if not text.strip(): raise HTTPException(status_code=422, detail="text is required")
         try: return scan_source_language_text(text, language=str(language) if language else None)
         except ValueError as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
-
     def execute_scan(text: str, keywords: list[str], source: str) -> ScanResponse:
         session_id = db.create_session(); db.update_session(session_id, status="running")
         emit(db, session_id, event_type="started", status="running", progress=0, processed_count=0, match_count=0, source=source, message="Scan started")
@@ -150,10 +146,14 @@ def create_app() -> FastAPI:
     @app.get("/export/{session_id}")
     def export_session(session_id: str, format: str = "csv"):
         if not db.get_session(session_id): raise HTTPException(status_code=404, detail="Session not found")
-        results = db.list_results(session_id)
-        if format.lower() == "csv": return Response(export_results_csv(results), media_type="text/csv; charset=utf-8", headers={"Content-Disposition": f'attachment; filename="thamudic-{session_id}.csv"'})
-        if format.lower() == "json": return Response(export_results_json(results), media_type="application/json; charset=utf-8", headers={"Content-Disposition": f'attachment; filename="thamudic-{session_id}.json"'})
-        raise HTTPException(status_code=400, detail="format must be csv or json")
+        results = db.list_results(session_id); fmt = format.casefold()
+        if fmt == "csv": return Response(export_results_csv(results), media_type="text/csv; charset=utf-8", headers={"Content-Disposition": f'attachment; filename="thamudic-{session_id}.csv"'})
+        if fmt == "json": return Response(export_results_json(results), media_type="application/json; charset=utf-8", headers={"Content-Disposition": f'attachment; filename="thamudic-{session_id}.json"'})
+        if fmt == "pdf":
+            try: body = records_pdf_bytes(results, title=f"Thamudic Scan Session {session_id}")
+            except RuntimeError as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
+            return Response(content=body, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="thamudic-{session_id}.pdf"'})
+        raise HTTPException(status_code=400, detail="format must be csv, json, or pdf")
     return app
 
 app = create_app()
