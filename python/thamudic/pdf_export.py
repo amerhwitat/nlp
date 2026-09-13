@@ -1,12 +1,13 @@
 """PDF exports for translation history and ancient-script reports.
 
-Uses ReportLab Platypus so reports can flow across pages and remain readable for
-large translation histories. PDF generation is optional at import time; callers
-receive a clear RuntimeError when ReportLab is not installed.
+Uses ReportLab Platypus so reports can flow across pages. The exporter prefers a
+Unicode TrueType font when one is available, avoiding the narrow glyph coverage
+of PDF base fonts for ancient-script characters and Arabic text.
 """
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -27,28 +28,58 @@ def _reportlab():
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib.enums import TA_CENTER
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
         from reportlab.lib import colors
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
     except ImportError as exc:
         raise RuntimeError("PDF export requires ReportLab; install the project PDF dependencies") from exc
-    return A4, getSampleStyleSheet, ParagraphStyle, TA_CENTER, SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, colors
+    return A4, getSampleStyleSheet, ParagraphStyle, TA_CENTER, SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, colors, pdfmetrics, TTFont
+
+
+def _unicode_font(pdfmetrics, TTFont) -> str:
+    requested = os.getenv("THAMUDIC_PDF_FONT", "")
+    candidates = [requested] if requested else []
+    candidates += [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+        "/usr/local/share/fonts/DejaVuSans.ttf",
+        "C:/Windows/Fonts/DejaVuSans.ttf",
+        "C:/Windows/Fonts/arial.ttf",
+        "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+        "/Library/Fonts/Arial Unicode.ttf",
+    ]
+    for candidate in candidates:
+        if not candidate or not Path(candidate).is_file():
+            continue
+        try:
+            font_name = "ThamudicUnicode"
+            pdfmetrics.registerFont(TTFont(font_name, candidate))
+            return font_name
+        except Exception:
+            continue
+    return "Helvetica"
 
 
 def _header_footer(canvas, doc):
     canvas.saveState()
-    canvas.setFont("Helvetica", 8)
+    canvas.setFont(doc._pdf_export_font, 8)
     canvas.drawString(40, 24, "Ancient Language NLP — evidence-aware export")
     canvas.drawRightString(555, 24, f"Page {doc.page}")
     canvas.restoreState()
 
 
 def _document(title: str, output: str | Path):
-    A4, getSampleStyleSheet, ParagraphStyle, TA_CENTER, SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, colors = _reportlab()
+    A4, getSampleStyleSheet, ParagraphStyle, TA_CENTER, SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, colors, pdfmetrics, TTFont = _reportlab()
+    font = _unicode_font(pdfmetrics, TTFont)
     doc = SimpleDocTemplate(str(output), pagesize=A4, rightMargin=40, leftMargin=40, topMargin=44, bottomMargin=38, title=title, author="amerhwitat/nlp")
+    doc._pdf_export_font = font
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name="ReportTitle", parent=styles["Title"], alignment=TA_CENTER, spaceAfter=18))
-    styles.add(ParagraphStyle(name="Small", parent=styles["BodyText"], fontSize=8, leading=10, spaceAfter=4))
-    styles.add(ParagraphStyle(name="Key", parent=styles["Heading3"], fontSize=10, leading=12, spaceBefore=8, spaceAfter=4))
+    for style in styles.byName.values():
+        style.fontName = font
+    styles.add(ParagraphStyle(name="ReportTitle", parent=styles["Title"], fontName=font, alignment=TA_CENTER, spaceAfter=18))
+    styles.add(ParagraphStyle(name="Small", parent=styles["BodyText"], fontName=font, fontSize=8, leading=10, spaceAfter=4))
+    styles.add(ParagraphStyle(name="Key", parent=styles["Heading3"], fontName=font, fontSize=10, leading=12, spaceBefore=8, spaceAfter=4))
     return doc, styles, Paragraph, Spacer, Table, TableStyle, colors
 
 
