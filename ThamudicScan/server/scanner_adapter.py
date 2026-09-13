@@ -3,7 +3,7 @@ from __future__ import annotations
 from python.thamudic import (
     BY_CHARACTER, extract, is_old_north_arabian, scan_source_language, translate, transliterate,
     supported_alphabet_languages, language_profile, variations, translation_capabilities,
-    translation_directions,
+    translation_directions, translate_ancient, translation_matrix,
 )
 
 
@@ -38,6 +38,10 @@ def translate_text(text: str, script: str = "Dadanitic", target_language: str = 
     return translate(extracted, script=script, target_language=target_language)
 
 
+def translate_ancient_text(text: str, source_language: str, target_language: str, source_form: str = "script") -> dict:
+    return translate_ancient(text, source_language, target_language, source_form=source_form).as_dict()
+
+
 def scan_source_language_text(text: str, language: str | None = None) -> dict:
     """Scan Unicode source text using the universal source-language registry."""
     return scan_source_language(text, language=language)
@@ -61,6 +65,10 @@ def translation_modes(language: str) -> tuple[str, ...]:
 
 def translation_directions_for(language: str) -> dict[str, bool]:
     return translation_directions(language)
+
+
+def all_translation_directions() -> dict[str, dict[str, bool]]:
+    return translation_matrix()
 
 
 def validate_text(text: str) -> dict:
