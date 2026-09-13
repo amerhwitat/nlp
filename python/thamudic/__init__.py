@@ -4,8 +4,8 @@ from .ancient_translation import CorpusEntry, InMemoryCorpus, OCIANA_SEED, suppo
 from .source_language_scanner import encode_utf8, scan_source_language, supported_source_languages
 from .ancient_alphabet_registry import load_alphabet_registry, supported_alphabet_languages, language_profile, variations, translation_capabilities, translation_directions
 from .universal_translation import TranslationResult, TranslationProvider, translate_ancient, translation_matrix
-from .script_summary import build_script_summary, export_script_summary
-from .voice import VoiceRequest, speak, available_tts_backends, voice_control_commands, speech_recognition_capability
+from .script_summary import build_script_summary, build_script_report, export_script_summary, export_script_report
+from .voice import VoiceRequest, speak as voice_speak, available_tts_backends, voice_control_commands, speech_recognition_capability
 
 is_thamudic = is_old_north_arabian
 
@@ -15,5 +15,5 @@ def transliterate(text: str, mapping: dict[int, str] | None = None) -> str:
     return transliterate_ona(text)
 
 __all__ = [
-    "BY_CHARACTER", "BY_CODEPOINT", "CHARACTERS", "FIRST", "LAST", "VARIANT_FORMS", "CorpusEntry", "InMemoryCorpus", "OCIANA_SEED", "extract", "is_old_north_arabian", "is_thamudic", "supported_targets", "translate", "transliterate", "transliterate_source", "supported_source_languages", "scan_source_language", "encode_utf8", "utf8_bytes", "load_alphabet_registry", "supported_alphabet_languages", "language_profile", "variations", "translation_capabilities", "translation_directions", "TranslationResult", "TranslationProvider", "translate_ancient", "translation_matrix", "build_script_summary", "export_script_summary", "VoiceRequest", "speak", "available_tts_backends", "voice_control_commands", "speech_recognition_capability",
+    "BY_CHARACTER", "BY_CODEPOINT", "CHARACTERS", "FIRST", "LAST", "VARIANT_FORMS", "CorpusEntry", "InMemoryCorpus", "OCIANA_SEED", "extract", "is_old_north_arabian", "is_thamudic", "supported_targets", "translate", "transliterate", "transliterate_source", "supported_source_languages", "scan_source_language", "encode_utf8", "utf8_bytes", "load_alphabet_registry", "supported_alphabet_languages", "language_profile", "variations", "translation_capabilities", "translation_directions", "TranslationResult", "TranslationProvider", "translate_ancient", "translation_matrix", "build_script_summary", "build_script_report", "export_script_summary", "export_script_report", "VoiceRequest", "voice_speak", "available_tts_backends", "voice_control_commands", "speech_recognition_capability",
 ]
