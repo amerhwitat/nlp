@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from python.thamudic import BY_CHARACTER, extract, is_old_north_arabian, scan_source_language, translate, transliterate
+from python.thamudic import (
+    BY_CHARACTER, extract, is_old_north_arabian, scan_source_language, translate, transliterate,
+    supported_alphabet_languages, language_profile, variations, translation_capabilities,
+    translation_directions,
+)
 
 
 def _matches_keywords(text: str, transliterated: str, keywords: list[str]) -> bool:
@@ -35,8 +39,28 @@ def translate_text(text: str, script: str = "Dadanitic", target_language: str = 
 
 
 def scan_source_language_text(text: str, language: str | None = None) -> dict:
-    """Scan Ancient Egyptian, Chinese, Japanese, Greek, or Latin Unicode input."""
+    """Scan Unicode source text using the universal source-language registry."""
     return scan_source_language(text, language=language)
+
+
+def alphabet_languages() -> tuple[str, ...]:
+    return supported_alphabet_languages()
+
+
+def alphabet_profile(language: str) -> dict:
+    return language_profile(language)
+
+
+def alphabet_variations(language: str) -> tuple[str, ...]:
+    return variations(language)
+
+
+def translation_modes(language: str) -> tuple[str, ...]:
+    return translation_capabilities(language)
+
+
+def translation_directions_for(language: str) -> dict[str, bool]:
+    return translation_directions(language)
 
 
 def validate_text(text: str) -> dict:
