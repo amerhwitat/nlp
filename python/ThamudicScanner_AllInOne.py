@@ -5,8 +5,8 @@ The GUI follows the native run_thammudic-style Tkinter layout while adding image
 import, local extraction/OCR, transliteration, evidence-backed translation, metadata,
 history/PDF actions, and visible desktop voice controls.
 
-No Tesseract or camel_tools dependency is required. Unsupported ancient readings are
-reported as unavailable rather than fabricated.
+A Windows runtime guard is initialized before package/scientific imports so common
+EasyOCR/PyTorch + NumPy/OpenMP DLL conflicts do not abort startup.
 """
 from __future__ import annotations
 
@@ -21,6 +21,10 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
+# IMPORTANT: configure native runtime before importing thamudic modules.
+from thamudic.runtime import configure_runtime
+configure_runtime()
+
 from thamudic.ancient_translation import translate
 from thamudic.ancient_alphabet_registry import supported_alphabet_languages
 from thamudic.desktop_voice import DesktopVoice
@@ -28,7 +32,7 @@ from thamudic.media_pipeline import extract_media_text
 from thamudic.pdf_export import write_report_pdf
 from thamudic.script_summary import build_script_summary
 from thamudic.source_language_scanner import scan_source_language
-from thamudic.translation_log import read_records, verify_records
+from thamudic.translation_log import read_records
 
 try:
     from thamudic.pdf_export import write_records_pdf
@@ -76,13 +80,8 @@ class ThamudicScannerApp:
         tk, ttk = self.tk, self.ttk
         outer = ttk.Frame(self.root, padding=16)
         outer.pack(fill="both", expand=True)
-
         ttk.Label(outer, text="Thamudic / Ancient North Arabian", font=("TkDefaultFont", 18, "bold")).pack(anchor="w")
-        ttk.Label(
-            outer,
-            text="Import an inscription image/PDF/text, inspect the script, transliterate it, and translate only when evidence is available.",
-        ).pack(anchor="w", pady=(2, 10))
-
+        ttk.Label(outer, text="Import an inscription image/PDF/text, inspect the script, transliterate it, and translate only when evidence is available.").pack(anchor="w", pady=(2, 10))
         media = ttk.LabelFrame(outer, text="Import / media")
         media.pack(fill="x", pady=(0, 8))
         ttk.Button(media, text="Import image / PDF", command=self.import_media).pack(side="left", padx=5, pady=6)
@@ -90,7 +89,6 @@ class ThamudicScannerApp:
         ttk.Button(media, text="Process imported media", command=self.process_media).pack(side="left", padx=5, pady=6)
         self.media_status = ttk.Label(media, text="Media: ready")
         self.media_status.pack(side="left", padx=12)
-
         controls = ttk.Frame(outer)
         controls.pack(fill="x", pady=(0, 8))
         ttk.Label(controls, text="Script").pack(side="left")
@@ -109,12 +107,10 @@ class ThamudicScannerApp:
         ttk.Button(controls, text="Script metadata", command=self.metadata).pack(side="left", padx=5)
         ttk.Button(controls, text="History PDF", command=self.history_pdf).pack(side="left", padx=5)
         ttk.Button(controls, text="Print history", command=self.print_history).pack(side="left", padx=5)
-
         source_frame = ttk.LabelFrame(outer, text="Original script / inscription / scholarly transliteration")
         source_frame.pack(fill="x", pady=(0, 8))
         self.source = tk.Text(source_frame, height=8, wrap="word")
         self.source.pack(fill="x", padx=6, pady=6)
-
         panes = ttk.Panedwindow(outer, orient="vertical")
         panes.pack(fill="both", expand=True)
         f1 = ttk.LabelFrame(panes, text="Transliteration / scan")
@@ -125,7 +121,6 @@ class ThamudicScannerApp:
         self.trans.pack(fill="both", expand=True, padx=6, pady=6)
         self.out = tk.Text(f2, wrap="word")
         self.out.pack(fill="both", expand=True, padx=6, pady=6)
-
         voice = ttk.LabelFrame(outer, text="Voice controls")
         voice.pack(fill="x", pady=(8, 4))
         ttk.Button(voice, text="▶ Read transliteration", command=self.speak_transliteration).pack(side="left", padx=4, pady=7)
@@ -136,7 +131,6 @@ class ThamudicScannerApp:
         ttk.Scale(voice, from_=60, to=300, variable=self.voice_rate, orient="horizontal", length=190).pack(side="left")
         self.voice_status = ttk.Label(voice, text="TTS: available" if self._voice.available() else "TTS: install pyttsx3")
         self.voice_status.pack(side="left", padx=12)
-
         self.status = ttk.Label(outer, text="Ready")
         self.status.pack(anchor="w", pady=(5, 0))
 
@@ -183,9 +177,8 @@ class ThamudicScannerApp:
         if not text.strip():
             self.status.config(text="Enter or import source text first")
             return
-        language = self.script.get()
         try:
-            result = scan_source_language(text, language=language)
+            result = scan_source_language(text, language=self.script.get())
             _set_text(self.trans, _safe_json(result))
             self.status.config(text=f"Matched characters: {result['matched_character_count']}")
         except Exception as exc:
