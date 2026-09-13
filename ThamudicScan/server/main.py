@@ -13,9 +13,9 @@ from .db import Database
 from .exporter import export_results_csv, export_results_json
 from .models import ScanRequest, ScanResponse, ScanResult, ScanSummary, ValidationRequest
 from .progress import emit
-from .scanner_adapter import scan_text, translate_text, validate_text
+from .scanner_adapter import scan_source_language_text, scan_text, translate_text, validate_text
 
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 DEFAULT_UPLOADS = {".txt", ".md", ".csv", ".json", ".xml", ".html", ".htm"}
 
 
@@ -57,6 +57,17 @@ def create_app() -> FastAPI:
         if target_language.casefold().split("-")[0] not in {"en", "ar"}:
             raise HTTPException(status_code=400, detail="supported target languages: en, ar")
         return translate_text(text, script=script, target_language=target_language)
+
+    @app.post("/scan_language")
+    def scan_language_endpoint(request: dict):
+        text = str(request.get("text", ""))
+        language = request.get("language")
+        if not text.strip():
+            raise HTTPException(status_code=422, detail="text is required")
+        try:
+            return scan_source_language_text(text, language=str(language) if language else None)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     def execute_scan(text: str, keywords: list[str], source: str) -> ScanResponse:
         session_id = db.create_session()
