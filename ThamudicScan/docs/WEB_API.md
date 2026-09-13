@@ -1,4 +1,4 @@
-# Thamudic Scanner Web API
+# Thamudic / Ancient Script Scanner Web API
 
 The browser client talks to the FastAPI service in `ThamudicScan/server`.
 
@@ -14,12 +14,55 @@ The service binds to `127.0.0.1:8000` by default.
 ## Endpoints
 
 - `GET /health` — service status and version.
-- `POST /validate` — return recognized Old North Arabian characters, code points and canonical metadata.
+- `GET /alphabet-languages` — all registered ancient/classical language IDs.
+- `GET /alphabet-languages/{language}` — script, historical variants, Unicode blocks and translation directions.
+- `GET /translation-matrix` — translation capability matrix.
+- `POST /scan_language` — source-language Unicode/UTF-8 scan.
+- `POST /validate` — recognized Old North Arabian characters, code points and canonical metadata.
+- `POST /translate` — audited Ancient North Arabian baseline translation.
+- `POST /translate_ancient` — universal provider-facing translation contract.
+- `GET /script-summary/{language}` — complete metadata summary for one script/language.
+- `GET /script-summary/{language}/export?format=json|md|txt` — metadata export.
+- `POST /script-report` — combine exact original text with script metadata, transliteration and translation result.
+- `POST /script-report/export` — export the combined report as JSON, Markdown or TXT.
+- `GET /voice/capabilities` — available TTS/STT capabilities and voice-control vocabulary.
+- `POST /voice/speak` — request a voice-provider playback capability response.
 - `POST /scan` — scan JSON `{text, keywords, source}` and create a persisted session.
 - `POST /scan_file` — scan a bounded UTF-8 text upload.
 - `GET /sessions/{session_id}` — reopen session state, results and progress history.
 - `GET /sessions/{session_id}/events` — ordered Server-Sent Events progress stream.
 - `GET /export/{session_id}?format=csv|json` — download session results.
+
+## Complete script report
+
+Example:
+
+```json
+{
+  "original_text": "𐪀𐪁𐪂",
+  "source_language": "ancient-north-arabian",
+  "target_language": "en"
+}
+```
+
+The returned report keeps these layers separate:
+
+- exact original characters;
+- script/language identity;
+- historical variants;
+- direction and direction description;
+- approximate dating and dating status;
+- geographic scope and materials;
+- related scripts;
+- Unicode blocks;
+- transliteration systems;
+- actual scholarly transliteration, if available;
+- actual corpus/model translation, if available;
+- confidence, provider and provenance.
+
+## Voice
+
+The web UI uses browser Speech Synthesis where available and provides Original / Transliteration / Translation plus Pause / Resume / Stop controls. Native pronunciation of an ancient language is not inferred from a modern TTS voice; the API reports `pronunciation_provider_required` when no scholarly pronunciation provider is installed.
 
 ## Unicode
 
