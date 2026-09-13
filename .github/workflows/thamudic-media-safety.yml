@@ -1,0 +1,37 @@
+name: Thamudic Media Safety
+
+on:
+  push:
+    paths:
+      - 'python/ThamudicScanner_AllInOne.py'
+      - 'python/ThamudicScanner_AllInOne_Voice.py'
+      - 'python/NLPScanner_AllInOne.py'
+      - 'python/thamudic/runtime.py'
+      - 'python/thamudic/media_pipeline.py'
+      - 'python/thamudic/ocr_worker.py'
+      - 'python/tests/test_media_pipeline_safety.py'
+      - '.github/workflows/thamudic-media-safety.yml'
+  pull_request:
+    paths:
+      - 'python/ThamudicScanner_AllInOne.py'
+      - 'python/ThamudicScanner_AllInOne_Voice.py'
+      - 'python/NLPScanner_AllInOne.py'
+      - 'python/thamudic/runtime.py'
+      - 'python/thamudic/media_pipeline.py'
+      - 'python/thamudic/ocr_worker.py'
+      - 'python/tests/test_media_pipeline_safety.py'
+      - '.github/workflows/thamudic-media-safety.yml'
+
+jobs:
+  python-media-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade pip pytest
+      - run: python -m compileall -q python/ThamudicScanner_AllInOne.py python/ThamudicScanner_AllInOne_Voice.py python/NLPScanner_AllInOne.py python/thamudic
+      - env:
+          PYTHONPATH: python
+        run: pytest python/tests/test_media_pipeline_safety.py -q
