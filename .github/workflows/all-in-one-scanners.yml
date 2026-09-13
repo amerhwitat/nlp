@@ -1,0 +1,32 @@
+name: All-in-One Scanner Smoke Tests
+
+on:
+  push:
+    paths:
+      - 'python/ThamudicScanner_AllInOne.py'
+      - 'python/NLPScanner_AllInOne.py'
+      - '.github/workflows/all-in-one-scanners.yml'
+  pull_request:
+    paths:
+      - 'python/ThamudicScanner_AllInOne.py'
+      - 'python/NLPScanner_AllInOne.py'
+      - '.github/workflows/all-in-one-scanners.yml'
+
+jobs:
+  syntax-and-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile standalone applications
+        run: python -m py_compile python/ThamudicScanner_AllInOne.py python/NLPScanner_AllInOne.py
+      - name: Check CLI help
+        run: |
+          python python/ThamudicScanner_AllInOne.py --help
+          python python/NLPScanner_AllInOne.py --help
+      - name: Check offline text scanning
+        run: |
+          python python/ThamudicScanner_AllInOne.py --text 'test' --scan
+          python python/NLPScanner_AllInOne.py --text 'test' --scan
