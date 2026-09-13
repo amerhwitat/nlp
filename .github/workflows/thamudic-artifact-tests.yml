@@ -1,0 +1,40 @@
+name: Thamudic artifact database tests
+
+on:
+  push:
+    paths:
+      - 'python/thamudic/artifacts_db.py'
+      - 'python/tests/test_artifacts_db.py'
+      - 'ThamudicScan/server/artifact_api.py'
+      - 'ThamudicScan/server/artifact_features_api.py'
+      - 'ThamudicScan/server/artifact_app.py'
+      - 'ThamudicScan/web_ui/src/artifacts.js'
+      - 'docs/ARTIFACT_WEB_INTEGRATION.md'
+      - 'ARTIFACT_DATABASE.md'
+      - '.github/workflows/thamudic-artifact-tests.yml'
+  pull_request:
+    paths:
+      - 'python/thamudic/artifacts_db.py'
+      - 'python/tests/test_artifacts_db.py'
+      - 'ThamudicScan/server/artifact_api.py'
+      - 'ThamudicScan/server/artifact_features_api.py'
+      - 'ThamudicScan/server/artifact_app.py'
+      - 'ThamudicScan/web_ui/src/artifacts.js'
+      - 'docs/ARTIFACT_WEB_INTEGRATION.md'
+      - 'ARTIFACT_DATABASE.md'
+      - '.github/workflows/thamudic-artifact-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip pytest fastapi uvicorn pypdf reportlab
+      - run: python -m py_compile python/thamudic/artifacts_db.py ThamudicScan/server/artifact_api.py ThamudicScan/server/artifact_features_api.py ThamudicScan/server/artifact_app.py
+      - run: PYTHONPATH=. pytest -q python/tests/test_artifacts_db.py
