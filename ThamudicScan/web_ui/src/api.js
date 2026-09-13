@@ -39,6 +39,14 @@ export function translateText(text, script = 'Dadanitic', targetLanguage = 'en')
   })
 }
 
+export function scanSourceLanguage(text, language = '') {
+  return request('/scan_language', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, language: language || null }),
+  })
+}
+
 export function getSession(sessionId) {
   return request(`/sessions/${encodeURIComponent(sessionId)}`)
 }
