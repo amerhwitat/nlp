@@ -12,9 +12,9 @@ from .exporter import export_results_csv, export_results_json
 from .models import ScanRequest, ScanResponse, ScanResult, ScanSummary, ValidationRequest
 from .progress import emit
 from .scanner_adapter import (alphabet_languages, alphabet_profile, alphabet_variations, scan_source_language_text, translation_directions_for, translation_modes, scan_text, translate_text, validate_text, translate_ancient_text, all_translation_directions, script_summary, voice_speak, voice_backends, voice_commands, speech_recognition)
-from python.thamudic.script_summary import export_script_summary
+from python.thamudic.script_summary import export_script_summary, build_script_report, export_script_report
 
-APP_VERSION = "1.5.0"
+APP_VERSION = "1.6.0"
 DEFAULT_UPLOADS = {".txt", ".md", ".csv", ".json", ".xml", ".html", ".htm"}
 
 
@@ -31,7 +31,6 @@ def create_app() -> FastAPI:
     origins = [o.strip() for o in os.getenv("THAMUDIC_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if o.strip()]
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=["GET", "POST"], allow_headers=["*"])
     db = Database(_db_path()); app.state.db = db
-
     @app.get("/health")
     def health(): return {"status": "ok", "service": "thamudic-scanner", "version": APP_VERSION}
     @app.get("/alphabet-languages")
@@ -49,6 +48,19 @@ def create_app() -> FastAPI:
     @app.get("/script-summary/{language}/export")
     def script_summary_export_endpoint(language: str, format: str = "json"):
         try: body, media_type, filename = export_script_summary(language, format)
+        except ValueError as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return Response(body, media_type=media_type, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+    @app.post("/script-report")
+    def script_report_endpoint(request: dict):
+        text, language, target = str(request.get("original_text", request.get("text", ""))), str(request.get("source_language", "")), str(request.get("target_language", "en"))
+        if not text.strip() or not language.strip(): raise HTTPException(status_code=422, detail="original_text and source_language are required")
+        try: return build_script_report(language, text, target)
+        except ValueError as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
+    @app.post("/script-report/export")
+    def script_report_export_endpoint(request: dict):
+        text, language, target, format = str(request.get("original_text", request.get("text", ""))), str(request.get("source_language", "")), str(request.get("target_language", "en")), str(request.get("format", "json"))
+        if not text.strip() or not language.strip(): raise HTTPException(status_code=422, detail="original_text and source_language are required")
+        try: body, media_type, filename = export_script_report(language, text, target, format)
         except ValueError as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
         return Response(body, media_type=media_type, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
     @app.get("/voice/capabilities")
