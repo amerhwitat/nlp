@@ -4,8 +4,8 @@ import ProgressPanel from './components/ProgressPanel'
 import ResultsTable from './components/ResultsTable'
 import StatsPanel from './components/StatsPanel'
 import {
-  browserSpeak, exportScriptReport, exportScriptSummary, exportSession, getAlphabetLanguages, getScriptSummary, getSession,
-  getVoiceCapabilities, pauseVoice, resumeVoice, scanFile, scanSourceLanguage, scanText, stopVoice,
+  browserSpeak, exportScriptReport, exportScriptSummary, exportSession, exportTranslationLog, getAlphabetLanguages, getScriptSummary, getSession,
+  getTranslationLog, getVoiceCapabilities, pauseVoice, resumeVoice, scanFile, scanSourceLanguage, scanText, stopVoice,
   subscribeProgress, translateAncient, translateText, validateText, voiceSpeak,
 } from './api'
 
@@ -18,14 +18,14 @@ export default function App() {
   const [translation, setTranslation] = useState(null); const [sourceScan, setSourceScan] = useState(null)
   const [sessionId, setSessionId] = useState(''); const [progress, setProgress] = useState(null); const [summary, setSummary] = useState(null)
   const [scriptSummary, setScriptSummary] = useState(null); const [results, setResults] = useState([]); const [validation, setValidation] = useState(null)
-  const [languages, setLanguages] = useState([]); const [voice, setVoice] = useState(null)
+  const [languages, setLanguages] = useState([]); const [voice, setVoice] = useState(null); const [logInfo, setLogInfo] = useState(null)
   const [busy, setBusy] = useState(false); const [translationBusy, setTranslationBusy] = useState(false); const [sourceScanBusy, setSourceScanBusy] = useState(false); const [summaryBusy, setSummaryBusy] = useState(false); const [error, setError] = useState('')
   const keywordList = useMemo(() => keywords.split(',').map((value) => value.trim()).filter(Boolean), [keywords])
-  useEffect(() => { getAlphabetLanguages().then((r) => setLanguages(r.languages || [])).catch(() => {}); getVoiceCapabilities().then(setVoice).catch(() => {}) }, [])
+  useEffect(() => { getAlphabetLanguages().then((r) => setLanguages(r.languages || [])).catch(() => {}); getVoiceCapabilities().then(setVoice).catch(() => {}); getTranslationLog().then(setLogInfo).catch(() => {}) }, [])
   useEffect(() => { if (!sessionId) return undefined; return subscribeProgress(sessionId, setProgress, () => {}) }, [sessionId])
-  async function handleScan() { setBusy(true); setError(''); setProgress(null); try { const r = await scanText({ text, keywords: keywordList, source: 'text-input' }); setSessionId(r.session_id); setResults(r.results); setSummary(r.summary); setValidation(await validateText(text)) } catch (e) { setError(e.message) } finally { setBusy(false) } }
-  async function handleTranslate() { setTranslationBusy(true); setError(''); try { setTranslation(await translateText(text, script, targetLanguage)) } catch (e) { setError(e.message) } finally { setTranslationBusy(false) } }
-  async function handleAncientTranslate() { setTranslationBusy(true); setError(''); try { setTranslation(await translateAncient(text, sourceLanguage, targetLanguage, sourceForm)) } catch (e) { setError(e.message) } finally { setTranslationBusy(false) } }
+  async function handleScan() { setBusy(true); setError(''); setProgress(null); try { const r = await scanText({ text, keywords: keywordList, source: 'text-input' }); setSessionId(r.session_id); setResults(r.results); setSummary(r.summary); setValidation(await validateText(text)); setLogInfo(await getTranslationLog()) } catch (e) { setError(e.message) } finally { setBusy(false) } }
+  async function handleTranslate() { setTranslationBusy(true); setError(''); try { setTranslation(await translateText(text, script, targetLanguage)); setLogInfo(await getTranslationLog()) } catch (e) { setError(e.message) } finally { setTranslationBusy(false) } }
+  async function handleAncientTranslate() { setTranslationBusy(true); setError(''); try { setTranslation(await translateAncient(text, sourceLanguage, targetLanguage, sourceForm)); setLogInfo(await getTranslationLog()) } catch (e) { setError(e.message) } finally { setTranslationBusy(false) } }
   async function handleSourceScan() { setSourceScanBusy(true); setError(''); try { setSourceScan(await scanSourceLanguage(text, sourceLanguage)) } catch (e) { setError(e.message) } finally { setSourceScanBusy(false) } }
   async function handleSummary() { setSummaryBusy(true); setError(''); try { setScriptSummary(await getScriptSummary(sourceLanguage || script.toLowerCase())) } catch (e) { setError(e.message) } finally { setSummaryBusy(false) } }
   async function handleFile(file) { setBusy(true); setError(''); setProgress(null); try { const r = await scanFile(file); setSessionId(r.session_id); setResults(r.results); setSummary(r.summary) } catch (e) { setError(e.message) } finally { setBusy(false) } }
@@ -60,13 +60,15 @@ export default function App() {
           <div className="button-row"><button onClick={pauseVoice}>Pause</button><button onClick={resumeVoice}>Resume</button><button onClick={stopVoice}>Stop</button></div>
           {voice && <small>Voice backends: {voice.tts_backends?.join(', ') || 'browser'} · native ancient TTS requires a pronunciation provider.</small>}
           <div className="panel-heading">Complete script report</div>
-          {scriptSummary && <div className="validation-result"><strong>{scriptSummary.name}</strong><div>{scriptSummary.original_script}</div><div>Direction: {scriptSummary.writing_direction}</div><div>Dating: {scriptSummary.dating}</div><div>Region: {scriptSummary.geographic_scope}</div><div>Related: {(scriptSummary.related_scripts || []).join(', ')}</div><div>Variants: {(scriptSummary.variations || []).join(', ')}</div><div>Transliteration: {(scriptSummary.transliteration_systems || []).join(', ')}</div><div className="button-row"><button onClick={() => exportScriptSummary(sourceLanguage, 'json')}>Metadata JSON</button><button onClick={() => exportScriptReport(reportPayload, 'json')}>Full JSON</button><button onClick={() => exportScriptReport(reportPayload, 'md')}>Full Markdown</button><button onClick={() => exportScriptReport(reportPayload, 'txt')}>Full TXT</button></div></div>}
+          {scriptSummary && <div className="validation-result"><strong>{scriptSummary.name}</strong><div>{scriptSummary.original_script}</div><div>Direction: {scriptSummary.writing_direction}</div><div>Dating: {scriptSummary.dating}</div><div>Region: {scriptSummary.geographic_scope}</div><div>Related: {(scriptSummary.related_scripts || []).join(', ')}</div><div>Variants: {(scriptSummary.variations || []).join(', ')}</div><div>Transliteration: {(scriptSummary.transliteration_systems || []).join(', ')}</div><div className="button-row"><button onClick={() => exportScriptSummary(sourceLanguage, 'json')}>Metadata JSON</button><button onClick={() => exportScriptSummary(sourceLanguage, 'pdf')}>Metadata PDF</button><button onClick={() => exportScriptReport(reportPayload, 'json')}>Full JSON</button><button onClick={() => exportScriptReport(reportPayload, 'md')}>Full Markdown</button><button onClick={() => exportScriptReport(reportPayload, 'txt')}>Full TXT</button><button onClick={() => exportScriptReport(reportPayload, 'pdf')}>Full PDF</button></div></div>}
+          <div className="panel-heading">Translation history</div>
+          {logInfo && <div className="validation-result"><strong>{logInfo.records?.length || 0} records</strong><div>Integrity: {logInfo.verification?.valid || 0} valid / {logInfo.verification?.invalid || 0} invalid</div><small>{logInfo.path}</small><div className="button-row"><button onClick={() => exportTranslationLog('json')}>JSON</button><button onClick={() => exportTranslationLog('jsonl')}>JSONL</button><button onClick={() => exportTranslationLog('txt')}>TXT</button><button onClick={() => exportTranslationLog('pdf')}>PDF</button></div></div>}
           <div className="panel-heading">Validation</div><button disabled={busy || !text.trim()} onClick={async () => { try { setValidation(await validateText(text)); setError('') } catch (e) { setError(e.message) } }}>Validate Unicode</button>
           {validation && <div className="validation-result"><div className="validation-glyphs" dir="ltr">{validation.characters.join('')}</div><strong>{validation.count} recognized characters</strong><small>{validation.codepoints.map((cp) => `U+${cp.toString(16).toUpperCase()}`).join(' · ')}</small></div>}
         </aside>
       </section>
       <ProgressPanel progress={progress} /><StatsPanel summary={summary} validation={validation} /><ResultsTable results={results} />
-      {sessionId && <section className="export-bar"><div><strong>Session</strong><code>{sessionId}</code></div><div className="button-row"><button onClick={() => exportSession(sessionId, 'csv')}>Export CSV</button><button onClick={() => exportSession(sessionId, 'json')}>Export JSON</button></div></section>}
+      {sessionId && <section className="export-bar"><div><strong>Session</strong><code>{sessionId}</code></div><div className="button-row"><button onClick={() => exportSession(sessionId, 'csv')}>Export CSV</button><button onClick={() => exportSession(sessionId, 'json')}>Export JSON</button><button onClick={() => exportSession(sessionId, 'pdf')}>Export PDF</button></div></section>}
     </main>
     <footer>Ancient-script dates are approximate research metadata; Unicode identity, historical dating, transliteration and translation are separate evidence layers.</footer>
   </div>
