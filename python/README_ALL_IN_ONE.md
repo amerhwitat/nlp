@@ -12,26 +12,34 @@
 - Append-only translation history with SHA-256 record integrity checks
 - Translation-history PDF generation
 - Script-report data generation
-- Optional modern-language TTS capability detection
+- Optional modern-language desktop TTS
+- GUI controls to read transliteration and translated text aloud
+- Voice stop control and adjustable speech rate
+- Voice-enabled launcher: `ThamudicScanner_AllInOne_Voice.py`
 - Tkinter desktop GUI
 - CLI operation
 
 ## Run
 
+Standard all-in-one GUI:
+
 ```bash
 python python/ThamudicScanner_AllInOne.py --gui
 ```
 
-CLI examples:
+Voice-enabled GUI:
 
 ```bash
-python python/ThamudicScanner_AllInOne.py --text "..." --scan --script ancient-north-arabian
-python python/ThamudicScanner_AllInOne.py --text "..." --translate --script ancient-north-arabian --target en
-python python/ThamudicScanner_AllInOne.py --history-pdf translation-history.pdf
-python python/ThamudicScanner_AllInOne.py --verify-history
+python python/ThamudicScanner_AllInOne_Voice.py --gui
 ```
 
-PDF output requires the project's ReportLab dependency. GUI operation requires Tkinter, which is normally supplied by the Python distribution on desktop systems.
+Install the optional desktop TTS engine when needed:
+
+```bash
+pip install pyttsx3
+```
+
+The voice layer prefers an installed operating-system voice matching the requested language (English for scholarly transliteration and the selected target language for translations). It falls back to the system default voice when language metadata is unavailable.
 
 ## Modular compatibility
 
@@ -39,4 +47,4 @@ The original modules remain in `python/thamudic/` for library users, tests, API/
 
 ## Research safety
 
-Unicode script recognition is not proof of language identification. Corpus-backed translations are distinguished from unsupported readings. The application does not invent a native pronunciation for ancient languages. Unknown translations are explicitly reported as unavailable/provider-required.
+Unicode script recognition is not proof of language identification. Corpus-backed translations are distinguished from unsupported readings. The application does not invent a native pronunciation for ancient languages. Unknown translations are explicitly reported as unavailable/provider-required. TTS is a playback convenience for transliteration/modern-language translations, not evidence that an ancient script has a historically established native pronunciation.
