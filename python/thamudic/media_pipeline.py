@@ -1,81 +1,152 @@
-"""Import image/PDF media, extract text, then scan/transliterate/translate it.
+"""Crash-safe image/PDF media extraction for the desktop scanner.
 
-OCR is provider based: PDF text is extracted locally with pypdf when available;
-images and scanned PDFs can use EasyOCR when installed. The pipeline never invents
-ancient readings. OCR confidence and provider are retained in the result.
+Text PDFs are handled in-process with pypdf. Native EasyOCR/PyTorch work is isolated
+in ``ocr_worker.py`` so a Windows OpenMP/DLL conflict cannot terminate the Tkinter
+parent process. OCR failures are returned as actionable errors instead of crashing
+or fabricating a reading.
 """
 from __future__ import annotations
 
+import json
+import os
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
 from typing import Any
 
 from .ancient_translation import translate
 from .source_language_scanner import scan_source_language
 
 
+_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"}
+_TEXT_SUFFIXES = {".txt", ".md", ".csv"}
+
+
 def _pdf_text(path: Path) -> tuple[str, dict[str, Any]]:
     try:
         from pypdf import PdfReader  # type: ignore
     except ImportError as exc:
-        raise RuntimeError("PDF text extraction requires pypdf") from exc
-    reader = PdfReader(str(path))
-    pages = []
-    for number, page in enumerate(reader.pages, 1):
-        pages.append(page.extract_text() or "")
-    text = "\n".join(pages).strip()
-    return text, {"provider": "pypdf", "pages": len(reader.pages), "scanned_pages": not bool(text)}
+        raise RuntimeError("PDF text extraction requires pypdf. Install python/requirements.txt dependencies.") from exc
+    try:
+        reader = PdfReader(str(path))
+        pages = []
+        for page in reader.pages:
+            pages.append(page.extract_text() or "")
+        text = "\n".join(pages).strip()
+        return text, {"provider": "pypdf", "pages": len(reader.pages), "scanned_pages": not bool(text)}
+    except Exception as exc:
+        raise RuntimeError(f"Could not read PDF '{path.name}': {type(exc).__name__}: {exc}") from exc
+
+
+def _worker_path() -> Path:
+    return Path(__file__).with_name("ocr_worker.py")
 
 
 def _easyocr_image(path: Path, languages: list[str] | None = None) -> tuple[str, dict[str, Any]]:
-    try:
-        import easyocr  # type: ignore
-    except ImportError as exc:
-        raise RuntimeError("Image OCR requires optional dependency easyocr") from exc
+    """Run EasyOCR out-of-process so native DLL failures cannot kill the GUI."""
+    worker = _worker_path()
+    if not worker.exists():
+        raise RuntimeError(f"OCR worker is missing: {worker}")
     langs = languages or ["en", "ar"]
-    reader = easyocr.Reader(langs, gpu=False, verbose=False)
-    rows = reader.readtext(str(path), detail=1, paragraph=False)
-    rows = sorted(rows, key=lambda x: (min(p[1] for p in x[0]), min(p[0] for p in x[0])))
-    text = "\n".join(str(x[1]) for x in rows).strip()
-    confidence = sum(float(x[2]) for x in rows) / len(rows) if rows else 0.0
-    return text, {"provider": "easyocr", "detections": len(rows), "ocr_confidence": round(confidence, 6)}
+    timeout = max(30, int(os.environ.get("THAMUDIC_OCR_TIMEOUT", "180")))
+    env = os.environ.copy()
+    env.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+    env.setdefault("OMP_NUM_THREADS", "1")
+    env.setdefault("MKL_NUM_THREADS", "1")
+    env.setdefault("OPENBLAS_NUM_THREADS", "1")
+    env.setdefault("NUMEXPR_NUM_THREADS", "1")
+    command = [sys.executable, str(worker), str(path), "--languages", ",".join(langs)]
+    try:
+        completed = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+            env=env,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"OCR timed out after {timeout}s; the GUI was protected and remains running.") from exc
+    except OSError as exc:
+        raise RuntimeError(f"Could not start isolated OCR worker: {exc}") from exc
+
+    stdout = (completed.stdout or "").strip()
+    if not stdout:
+        detail = (completed.stderr or "").strip()
+        raise RuntimeError(
+            "OCR worker exited without a result" + (f": {detail[-1000:]}" if detail else f" (exit code {completed.returncode})")
+        )
+    try:
+        payload = json.loads(stdout.splitlines()[-1])
+    except json.JSONDecodeError as exc:
+        detail = (completed.stderr or "").strip()
+        raise RuntimeError(f"OCR worker returned invalid JSON{': ' + detail[-1000:] if detail else ''}") from exc
+    if not payload.get("ok"):
+        message = payload.get("error") or f"worker exit code {completed.returncode}"
+        raise RuntimeError(f"OCR unavailable: {payload.get('error_type', 'Error')}: {message}")
+    return str(payload.get("text", "")), {
+        "provider": payload.get("provider", "easyocr-subprocess"),
+        "detections": int(payload.get("detections", 0)),
+        "ocr_confidence": float(payload.get("ocr_confidence", 0.0)),
+    }
+
+
+def _render_pdf_page(path: Path, page_number: int, output: Path) -> None:
+    """Render one PDF page in a child process to isolate pypdfium2 native code."""
+    worker = _worker_path()
+    command = [sys.executable, str(worker), "--render-pdf", str(path), "--page", str(page_number), "--output", str(output)]
+    timeout = max(30, int(os.environ.get("THAMUDIC_PDF_RENDER_TIMEOUT", "120")))
+    completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, check=False)
+    if completed.returncode != 0 or not output.exists():
+        detail = (completed.stderr or completed.stdout or "unknown PDF rendering error").strip()
+        raise RuntimeError(f"PDF page rendering failed safely: {detail[-1000:]}")
 
 
 def extract_media_text(path: str | Path, ocr_languages: list[str] | None = None) -> tuple[str, dict[str, Any]]:
-    p = Path(path)
-    if not p.exists():
+    p = Path(path).expanduser()
+    if not p.exists() or not p.is_file():
         raise FileNotFoundError(p)
     suffix = p.suffix.casefold()
     if suffix == ".pdf":
         text, meta = _pdf_text(p)
         if text:
             return text, {"source_file": str(p), "media_type": "pdf", **meta}
-        # Scanned PDFs: render pages and OCR through pypdfium2 if available.
         try:
-            import pypdfium2 as pdfium  # type: ignore
-        except ImportError as exc:
-            raise RuntimeError("Scanned PDF OCR requires pypdfium2 and easyocr") from exc
-        reader = pdfium.PdfDocument(str(p))
-        all_text = []
-        confidences = []
-        for i in range(len(reader)):
-            page = reader[i]
-            bitmap = page.render(scale=2.0)
-            image_path = p.with_name(f".{p.stem}.page-{i+1}.png")
-            bitmap.to_pil().save(image_path)
-            try:
+            from pypdf import PdfReader  # type: ignore
+            page_count = len(PdfReader(str(p)).pages)
+        except Exception as exc:
+            raise RuntimeError(f"Scanned PDF page count could not be read: {exc}") from exc
+        all_text: list[str] = []
+        confidences: list[float] = []
+        with tempfile.TemporaryDirectory(prefix="thamudic-pdf-") as tmp:
+            for index in range(page_count):
+                image_path = Path(tmp) / f"page-{index + 1}.png"
+                _render_pdf_page(p, index, image_path)
                 page_text, ocr_meta = _easyocr_image(image_path, ocr_languages)
-                all_text.append(page_text)
+                if page_text:
+                    all_text.append(page_text)
                 if "ocr_confidence" in ocr_meta:
                     confidences.append(ocr_meta["ocr_confidence"])
-            finally:
-                image_path.unlink(missing_ok=True)
-        meta = {"source_file": str(p), "media_type": "pdf", "provider": "pypdfium2+easyocr", "pages": len(reader), "ocr_confidence": round(sum(confidences)/len(confidences), 6) if confidences else 0.0, "scanned_pages": True}
-        return "\n".join(x for x in all_text if x).strip(), meta
-    if suffix in {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"}:
+        meta = {
+            "source_file": str(p),
+            "media_type": "pdf",
+            "provider": "pypdfium2+easyocr-subprocess",
+            "pages": page_count,
+            "ocr_confidence": round(sum(confidences) / len(confidences), 6) if confidences else 0.0,
+            "scanned_pages": True,
+        }
+        return "\n".join(all_text).strip(), meta
+    if suffix in _IMAGE_SUFFIXES:
         text, meta = _easyocr_image(p, ocr_languages)
         return text, {"source_file": str(p), "media_type": "image", **meta}
-    if suffix in {".txt", ".md", ".csv"}:
-        return p.read_text(encoding="utf-8"), {"source_file": str(p), "media_type": "text", "provider": "utf8"}
+    if suffix in _TEXT_SUFFIXES:
+        try:
+            return p.read_text(encoding="utf-8"), {"source_file": str(p), "media_type": "text", "provider": "utf8"}
+        except UnicodeDecodeError as exc:
+            raise RuntimeError(f"Text file is not valid UTF-8: {p.name}") from exc
     raise ValueError(f"unsupported media type: {suffix}")
 
 
