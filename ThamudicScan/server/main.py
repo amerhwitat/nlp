@@ -13,9 +13,12 @@ from .db import Database
 from .exporter import export_results_csv, export_results_json
 from .models import ScanRequest, ScanResponse, ScanResult, ScanSummary, ValidationRequest
 from .progress import emit
-from .scanner_adapter import scan_source_language_text, scan_text, translate_text, validate_text
+from .scanner_adapter import (
+    alphabet_languages, alphabet_profile, alphabet_variations, scan_source_language_text,
+    translation_directions_for, translation_modes, scan_text, translate_text, validate_text,
+)
 
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.3.0"
 DEFAULT_UPLOADS = {".txt", ".md", ".csv", ".json", ".xml", ".html", ".htm"}
 
 
@@ -43,6 +46,22 @@ def create_app() -> FastAPI:
     def health():
         return {"status": "ok", "service": "thamudic-scanner", "version": APP_VERSION}
 
+    @app.get("/alphabet-languages")
+    def alphabet_language_endpoint():
+        return {"languages": list(alphabet_languages())}
+
+    @app.get("/alphabet-languages/{language}")
+    def alphabet_profile_endpoint(language: str):
+        try:
+            return {
+                "profile": alphabet_profile(language),
+                "variations": list(alphabet_variations(language)),
+                "translation_modes": list(translation_modes(language)),
+                "translation_directions": translation_directions_for(language),
+            }
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
     @app.post("/validate")
     def validate(request: ValidationRequest):
         return validate_text(request.text)
@@ -55,7 +74,7 @@ def create_app() -> FastAPI:
         if not text.strip():
             raise HTTPException(status_code=422, detail="text is required")
         if target_language.casefold().split("-")[0] not in {"en", "ar"}:
-            raise HTTPException(status_code=400, detail="supported target languages: en, ar")
+            raise HTTPException(status_code=400, detail="supported target languages: en, ar in the deterministic baseline")
         return translate_text(text, script=script, target_language=target_language)
 
     @app.post("/scan_language")
