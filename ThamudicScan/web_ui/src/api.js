@@ -31,6 +31,14 @@ export function validateText(text) {
   })
 }
 
+export function translateText(text, script = 'Dadanitic', targetLanguage = 'en') {
+  return request('/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, script, target_language: targetLanguage }),
+  })
+}
+
 export function getSession(sessionId) {
   return request(`/sessions/${encodeURIComponent(sessionId)}`)
 }
