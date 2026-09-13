@@ -6,6 +6,7 @@ from python.thamudic import (
     translation_directions, translate_ancient, translation_matrix,
 )
 from python.thamudic.script_summary import build_script_summary
+from python.thamudic.translation_log import default_log_path, read_records, verify_records, export_records
 from python.thamudic.voice import VoiceRequest, speak, available_tts_backends, voice_control_commands, speech_recognition_capability
 
 
@@ -29,8 +30,8 @@ def translate_text(text: str, script: str = "Dadanitic", target_language: str = 
     return translate(extracted, script=script, target_language=target_language)
 
 
-def translate_ancient_text(text: str, source_language: str, target_language: str, source_form: str = "script") -> dict:
-    return translate_ancient(text, source_language, target_language, source_form=source_form).as_dict()
+def translate_ancient_text(text: str, source_language: str, target_language: str, source_form: str = "script", request_metadata: dict | None = None) -> dict:
+    return translate_ancient(text, source_language, target_language, source_form=source_form, request_metadata=request_metadata).as_dict()
 
 
 def scan_source_language_text(text: str, language: str | None = None) -> dict:
@@ -48,6 +49,10 @@ def voice_speak(text: str, language: str, mode: str = "translation") -> dict: re
 def voice_backends() -> list[str]: return available_tts_backends()
 def voice_commands() -> list[str]: return voice_control_commands()
 def speech_recognition() -> dict: return speech_recognition_capability()
+def translation_log_path() -> str: return str(default_log_path())
+def translation_log_records() -> list[dict]: return read_records()
+def translation_log_verify() -> dict: return verify_records(translation_log_records())
+def translation_log_export(format: str = "json") -> tuple[str, str, str]: return export_records(format)
 
 
 def validate_text(text: str) -> dict:
