@@ -1,24 +1,21 @@
 #!/usr/bin/env python3
-"""Unified launcher for the progress-enabled Thamudic + NLP workbench."""
+"""Primary launcher for the unified Thamudic + NLP all-in-one workbench.
+
+The implementation lives in ``run_thamudic002.py`` so both entry points expose
+the same GUI, resilient OCR, source scanning, transliteration, translation,
+voice, history/PDF export, and CLI workflows.
+"""
 from __future__ import annotations
-import argparse
 
+import sys
+from pathlib import Path
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Run the unified Thamudic/NLP scanner")
-    parser.add_argument("mode", choices=("desktop", "nlp", "web"), nargs="?", default="desktop")
-    parser.add_argument("--db", default="ancient_objects.sqlite")
-    parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=5000)
-    args = parser.parse_args()
-    if args.mode in ("desktop", "nlp"):
-        from thamudic_progress_all_in_one import NLPProgressApp, ThamudicProgressApp
-        (NLPProgressApp if args.mode == "nlp" else ThamudicProgressApp)(db_path=args.db).mainloop()
-        return 0
-    from thamudic_web_app import create_app
-    create_app(args.db).run(host=args.host, port=args.port, debug=False)
-    return 0
+ROOT = Path(__file__).resolve().parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from run_thamudic002 import main
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))
