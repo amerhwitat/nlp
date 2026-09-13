@@ -1,6 +1,6 @@
-# Translation history, provenance, and audit logging
+# Translation history, provenance, audit logging, and PDF exports
 
-The NLP toolkit now records every call through the universal ancient-language translation layer in an append-only JSON Lines log.
+The NLP toolkit records every call through the universal ancient-language translation layer in an append-only JSON Lines log.
 
 ## Record contents
 
@@ -44,6 +44,20 @@ JSON Lines is used for durable append operations, streaming processing, and reco
 - `GET /translation-log/export?format=json` — formatted JSON export.
 - `GET /translation-log/export?format=jsonl` — JSON Lines export.
 - `GET /translation-log/export?format=txt` — human-readable text export.
+- `GET /translation-log/export?format=pdf` — paginated PDF report of the same records.
+- `GET /export/{session_id}?format=pdf` — PDF report of persisted scanner results.
+- `GET /script-summary/{language}/export?format=pdf` — PDF metadata report.
+- `POST /script-report/export` with `{"format":"pdf"}` — PDF script/translation report.
+
+PDF is an export/presentation format only; the canonical translation history remains the JSONL record set.
+
+## PDF generation
+
+PDF generation is implemented in `python/thamudic/pdf_export.py` using ReportLab Platypus. Platypus separates document layout from content and supports flowable paragraphs, tables and multi-page documents. urlReportLab Platypus documentationhttps://docs.reportlab.com/reportlab/userguide/ch5_platypus/
+
+The dependency is `reportlab>=5.0`. ReportLab 5.0 was released in June 2026 and retained the PDF-generation behavior of the previous release line while applying security-related settings changes. citeturn0search7turn0search5
+
+If ReportLab is unavailable, the application remains importable and the PDF endpoint reports a clear dependency error. This prevents optional PDF support from breaking the scanner itself.
 
 ## Integrity
 
