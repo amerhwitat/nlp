@@ -1,0 +1,7 @@
+const $ = id => document.getElementById(id);
+async function api(path, options={}) { const r=await fetch(path,options); const data=await r.json(); if(!r.ok) throw new Error(data.error||r.statusText); return data; }
+async function stats(){const s=await api('/api/artifacts/stats'); $('artifactsCount').textContent=s.artifacts; $('scansCount').textContent=s.artifact_scans; $('mediaCount').textContent=s.artifact_media; $('annotationsCount').textContent=s.artifact_annotations;}
+async function search(){const q=encodeURIComponent($('query').value);const t=encodeURIComponent($('objectType').value);const d=await api(`/api/artifacts?q=${q}&object_type=${t}&limit=100`);$('artifactRows').innerHTML=d.artifacts.map(a=>`<tr data-id="${a.id}"><td>${esc(a.title)}</td><td>${esc(a.script_variant||'')}</td><td>${esc(a.period_name||a.period_key||'')}</td><td>${esc(a.site||a.country||'')}</td><td>${esc(a.translation||'')}</td></tr>`).join('')||'<tr><td colspan="5">No records found.</td></tr>';}
+async function scan(){try{$('scanResult').textContent=JSON.stringify(await api('/api/scan',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:$('scanText').value,script:$('script').value})}),null,2);}catch(e){$('scanResult').textContent=e.message;}}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+$('refresh').onclick=()=>Promise.all([stats(),search()]); $('search').onclick=search; $('scan').onclick=scan; stats(); search();
