@@ -12,11 +12,14 @@ This repository contains Python, C++, .NET, Visual C++ and desktop/web implement
 | Python Thamudic | [python/thamudic/](python/thamudic/) |
 | Python translation/NLP | [python/thamudic/ancient_translation.py](python/thamudic/ancient_translation.py) |
 | Universal ancient translation facade | [python/thamudic/universal_translation.py](python/thamudic/universal_translation.py) |
+| Script summary/report exporter | [python/thamudic/script_summary.py](python/thamudic/script_summary.py) |
+| Voice/TTS/STT capability layer | [python/thamudic/voice.py](python/thamudic/voice.py) |
 | Python source-language scanner | [python/thamudic/source_language_scanner.py](python/thamudic/source_language_scanner.py) |
 | Python ancient alphabet registry | [python/thamudic/ancient_alphabet_registry.py](python/thamudic/ancient_alphabet_registry.py) |
 | Python tests | [python/tests/](python/tests/) |
 | Ancient/classical Unicode registry | [data/source_languages/ancient_classical_unicode.json](data/source_languages/ancient_classical_unicode.json) |
 | Ancient alphabet/variation registry | [data/source_languages/ancient_language_alphabets.json](data/source_languages/ancient_language_alphabets.json) |
+| Historical script metadata/dating | [data/source_languages/ancient_script_metadata.json](data/source_languages/ancient_script_metadata.json) |
 | Ancient-language NLP documentation | [docs/ANCIENT_LANGUAGE_NLP_TRANSLATION.md](docs/ANCIENT_LANGUAGE_NLP_TRANSLATION.md) |
 | Ancient North Arabian registry | [data/ancient_north_arabian/alphabet.json](data/ancient_north_arabian/alphabet.json) |
 | ThamudicScan web frontend | [ThamudicScan/web_ui/](ThamudicScan/web_ui/) |
@@ -25,7 +28,32 @@ This repository contains Python, C++, .NET, Visual C++ and desktop/web implement
 | Web architecture | [ThamudicScan/docs/ARCHITECTURE.md](ThamudicScan/docs/ARCHITECTURE.md) |
 | ThamudicScan product docs | [ThamudicScan/](ThamudicScan/) |
 | Apple | [apple/](apple/) |
-| Complete tracked repository | [source tree](.) |
+
+## Complete script report and export
+
+The new script-report layer combines **one selected script/language** with the actual source material. A report can preserve:
+
+1. Original source characters exactly as entered.
+2. Unicode/script metadata and script family.
+3. Writing direction and a human-readable direction description.
+4. Historical variants and orthographic forms.
+5. Approximate dating and dating confidence/status.
+6. Geographic scope and writing materials.
+7. Related/ancestor/sister script relationships.
+8. Unicode blocks and code-point information.
+9. Scholarly transliteration-system metadata.
+10. Corpus/model translation, when available.
+11. Translation target language, provider, confidence and provenance.
+12. Explicit unavailable/uncertain status instead of fabricated translation.
+
+FastAPI endpoints:
+
+- `GET /script-summary/{language}` — metadata-only script summary.
+- `GET /script-summary/{language}/export?format=json|md|txt` — metadata export.
+- `POST /script-report` — combines original text, transliteration, translation and script metadata.
+- `POST /script-report/export` — exports the complete report as JSON, Markdown or TXT.
+
+Historical dates are intentionally broad research metadata. They do not override inscription-specific palaeographic or archaeological dating.
 
 ## Translation and transliteration
 
@@ -35,9 +63,9 @@ Translation results retain script variant, corpus identifier, confidence and pro
 
 ## Universal ancient-language translation architecture
 
-`python/thamudic/universal_translation.py` now provides a provider-oriented facade for the entire alphabet/variation registry. A provider can implement:
+`python/thamudic/universal_translation.py` provides a provider-oriented facade for the entire alphabet/variation registry. A provider can implement:
 
-`source script -> transliteration -> target language`
+`original script -> scholarly transliteration -> target language`
 
 and, where attested resources permit:
 
@@ -45,17 +73,33 @@ and, where attested resources permit:
 
 The facade supports `script`, `transliteration`, and `translation` source forms, returns confidence/provider/provenance metadata, and reports `provider_required` when a registered direction has no local corpus/model. It never fabricates an ancient-language translation merely from an alphabet table.
 
-FastAPI now exposes:
+## Voice / speech capabilities
 
-- `POST /translate_ancient` — universal provider-facing translation contract.
-- `GET /translation-matrix` — registered bidirectional capability matrix.
-- Existing `/translate` remains the audited Ancient North Arabian deterministic baseline.
+Voice support is now exposed through both the web and Python desktop applications.
+
+### Web
+
+- Browser Speech Synthesis playback.
+- Original-script, transliteration and translation playback controls.
+- Pause, resume and stop.
+- Voice capability discovery.
+- Optional backend fallback through the API.
+- Speech-recognition capability reporting.
+
+### Python desktop
+
+- Optional `pyttsx3` local TTS.
+- Original/transliteration/translation voice controls.
+- Pause/resume/stop controls with backend-specific behavior.
+- No silent substitution of a modern voice for an ancient language.
+
+Ancient-script **native pronunciation is a separate scholarly model/provider**. When one is not installed, the application explicitly returns `pronunciation_provider_required`; it does not pretend that an English/Arabic TTS engine knows an ancient pronunciation.
 
 ## Ancient alphabet, script and historical-variation registry
 
 The `data/source_languages/ancient_language_alphabets.json` registry provides common metadata for Ancient Egyptian, Akkadian, Sumerian, Ugaritic, Phoenician/Punic, Ancient/Paleo-Hebrew, Aramaic families, Ancient North Arabian and Old South Arabian, Ancient Greek, Latin, historical Chinese, historical Japanese, Old Persian, Sanskrit, Coptic, Hittite, Luwian, Etruscan, Gothic, Old Turkic, Linear B/Mycenaean Greek and Cypro-Minoan.
 
-Each entry records language identifiers, script families, historical/orthographic variations, directionality, relevant Unicode blocks and translation-capability modes. The Python registry exposes `language_profile()`, `variations()`, `translation_capabilities()` and `translation_directions()`.
+`data/source_languages/ancient_script_metadata.json` adds dating, dating uncertainty, regions, script type, writing materials, related scripts, transliteration systems and scholarly notes for every registry entry.
 
 ## Ancient Egyptian, Chinese, Japanese, Greek and Latin source scanner
 
@@ -67,11 +111,9 @@ This is deliberately a scanner rather than a false language classifier: Unicode 
 
 The browser stack is split into:
 
-- `ThamudicScan/web_ui/` — React + Vite interface with scanning, validation, source-language Unicode/UTF-8 scanning, translation, transliteration, target-language selection and export.
-- `ThamudicScan/server/` — FastAPI API with `/scan`, `/validate`, `/translate`, `/translate_ancient`, `/scan_language`, `/alphabet-languages`, `/translation-matrix`, file upload, persistence, SSE progress and exporters.
+- `ThamudicScan/web_ui/` — React + Vite interface with scanning, validation, source-language Unicode/UTF-8 scanning, language/variant selection, translation, transliteration, complete script reports, JSON/Markdown/TXT export and voice controls.
+- `ThamudicScan/server/` — FastAPI API with `/scan`, `/validate`, `/translate`, `/translate_ancient`, `/scan_language`, `/alphabet-languages`, `/translation-matrix`, `/script-summary`, `/script-report`, `/voice/capabilities`, `/voice/speak`, file upload, persistence, SSE progress and exporters.
 - `ThamudicScan/server/tests/` — pytest contracts.
-
-The web layer reuses `python/thamudic` rather than copying Old North Arabian mapping tables.
 
 ## Ancient North Arabian Unicode support
 
@@ -80,18 +122,6 @@ The repository includes a canonical registry at `data/ancient_north_arabian/alph
 ## Ancient-language NLP research
 
 The repository documents an adapter architecture for Thamudic sequence prediction, cuneiform transliteration/segmentation, Akkadian machine translation, Sumerian-English NMT, lexicon retrieval and human-in-the-loop scholarly correction. These model integrations are kept separate from the deterministic scanner so that uncertainty and provenance remain visible.
-
-## Implementations
-
-- `cpp/thamudic/` — C++20 library and Unicode registry.
-- `vcpp/` — Visual Studio native Windows desktop scanner.
-- `dotnet/` — CLI, WPF desktop and web implementations.
-- `python/thamudic/` — Python Unicode/UTF-8/transliteration, deterministic translation, universal translation facade, alphabet registry and source-language scanner.
-- `python/tests/` — Unicode, transliteration, translation, source-language scanner, alphabet-registry and universal-translation regression tests.
-- `data/ancient_north_arabian/` — language-neutral Ancient North Arabian registry.
-- `data/source_languages/` — language-oriented Unicode/UTF-8 and historical alphabet/variation registries.
-- `ThamudicScan/` — React/FastAPI web application and documentation.
-- `apple/` — existing SwiftUI/Xcode application boundary.
 
 ## Methodological note
 
