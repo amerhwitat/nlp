@@ -1,4 +1,5 @@
 Pillow>=10.0
 numpy>=1.24
 PyMuPDF>=1.24
+reportlab>=4.0
 pytest>=8.0
