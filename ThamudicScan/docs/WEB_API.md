@@ -6,14 +6,15 @@ The browser client talks to the FastAPI service in `ThamudicScan/server`.
 
 ```bash
 python -m pip install -r ThamudicScan/server/requirements.txt
+python -m pip install -r python/requirements.txt
 python ThamudicScan/server/run.py
 ```
 
-The service binds to `127.0.0.1:8000` by default.
+The service binds to `127.0.0.1:8000` by default. PDF generation uses ReportLab Platypus, which is designed for flowing paragraphs, tables and other document elements across pages. urlReportLab Platypus documentationhttps://docs.reportlab.com/reportlab/userguide/ch5_platypus/
 
 ## Endpoints
 
-- `GET /health` — service status and version.
+- `GET /health` — service status, version and PDF capability.
 - `GET /alphabet-languages` — all registered ancient/classical language IDs.
 - `GET /alphabet-languages/{language}` — script, historical variants, Unicode blocks and translation directions.
 - `GET /translation-matrix` — translation capability matrix.
@@ -22,18 +23,24 @@ The service binds to `127.0.0.1:8000` by default.
 - `POST /translate` — audited Ancient North Arabian baseline translation.
 - `POST /translate_ancient` — universal provider-facing translation contract; every call is logged.
 - `GET /script-summary/{language}` — complete metadata summary for one script/language.
-- `GET /script-summary/{language}/export?format=json|md|txt` — metadata export.
+- `GET /script-summary/{language}/export?format=json|md|txt|pdf` — metadata export, including PDF.
 - `POST /script-report` — combine exact original text with script metadata, transliteration and translation result.
-- `POST /script-report/export` — export the combined report as JSON, Markdown or TXT.
+- `POST /script-report/export` — export the combined report as JSON, Markdown, TXT or PDF.
 - `GET /voice/capabilities` — available TTS/STT capabilities and voice-control vocabulary.
 - `POST /voice/speak` — request a voice-provider playback capability response.
 - `GET /translation-log` — translation history plus SHA-256 integrity verification.
-- `GET /translation-log/export?format=json|jsonl|txt` — export translation history.
+- `GET /translation-log/export?format=json|jsonl|txt|pdf` — export translation history, including a paginated PDF report.
 - `POST /scan` — scan JSON `{text, keywords, source}` and create a persisted session.
 - `POST /scan_file` — scan a bounded UTF-8 text upload.
 - `GET /sessions/{session_id}` — reopen session state, results and progress history.
 - `GET /sessions/{session_id}/events` — ordered Server-Sent Events progress stream.
-- `GET /export/{session_id}?format=csv|json` — download session results.
+- `GET /export/{session_id}?format=csv|json|pdf` — download session results in CSV, JSON or PDF.
+
+## PDF export
+
+PDF exports preserve the same evidence boundaries as JSON/TXT/Markdown rather than inventing missing translations. Translation records include source text, source form, transliteration, translation, status, confidence, provider, provenance, metadata, request metadata, timestamp and record hash. Script reports include the complete script-information object and translation result.
+
+The PDF implementation is intentionally optional at import time: if ReportLab is not installed, the API returns a clear HTTP 400 error instead of failing application startup. Install `reportlab>=5.0` from `python/requirements.txt` to enable PDF generation. ReportLab 5.0 was released in June 2026 and retains the PDF-generation behavior of the 4.5 series while tightening security settings. citeturn0search7turn0search5
 
 ## Complete script report
 
@@ -67,6 +74,8 @@ The returned report keeps these layers separate:
 The universal translation layer writes append-only JSON Lines records to `translation_logs/translations.jsonl` by default. Set `THAMUDIC_TRANSLATION_LOG` to change the location.
 
 Each record stores the original source, source language/form, target language/form, transliteration, translation when available, status, confidence, provider, provenance, full script metadata, request metadata, UTC timestamp, and a deterministic SHA-256 hash. The logger does not accept credentials or authorization headers as fields.
+
+PDF history exports are generated from the same verified records, so the PDF is a presentation/export format rather than a separate data store.
 
 See `docs/TRANSLATION_HISTORY.md` for the audit/provenance design and integrity model.
 
