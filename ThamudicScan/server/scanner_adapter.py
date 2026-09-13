@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from python.thamudic import BY_CHARACTER, extract, is_old_north_arabian, transliterate
+from python.thamudic import BY_CHARACTER, extract, is_old_north_arabian, translate, transliterate
 
 
 def _matches_keywords(text: str, transliterated: str, keywords: list[str]) -> bool:
@@ -25,6 +25,14 @@ def scan_text(text: str, keywords: list[str] | None = None) -> dict:
         "script_variant": "Dadanitic",
         "codepoints": [ord(ch) for ch in extracted],
     }
+
+
+def translate_text(text: str, script: str = "Dadanitic", target_language: str = "en") -> dict:
+    extracted = extract(text)
+    if not extracted:
+        # Permit scholarly transliteration input as well as Unicode ANA input.
+        extracted = text
+    return translate(extracted, script=script, target_language=target_language)
 
 
 def validate_text(text: str) -> dict:
