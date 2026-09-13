@@ -12,8 +12,10 @@ This repository contains Python, C++, .NET, Visual C++ and desktop/web implement
 | Python Thamudic | [python/thamudic/](python/thamudic/) |
 | Python translation/NLP | [python/thamudic/ancient_translation.py](python/thamudic/ancient_translation.py) |
 | Python source-language scanner | [python/thamudic/source_language_scanner.py](python/thamudic/source_language_scanner.py) |
+| Python ancient alphabet registry | [python/thamudic/ancient_alphabet_registry.py](python/thamudic/ancient_alphabet_registry.py) |
 | Python tests | [python/tests/](python/tests/) |
 | Ancient/classical Unicode registry | [data/source_languages/ancient_classical_unicode.json](data/source_languages/ancient_classical_unicode.json) |
+| Ancient alphabet/variation registry | [data/source_languages/ancient_language_alphabets.json](data/source_languages/ancient_language_alphabets.json) |
 | Ancient-language NLP documentation | [docs/ANCIENT_LANGUAGE_NLP_TRANSLATION.md](docs/ANCIENT_LANGUAGE_NLP_TRANSLATION.md) |
 | Ancient North Arabian registry | [data/ancient_north_arabian/alphabet.json](data/ancient_north_arabian/alphabet.json) |
 | ThamudicScan web frontend | [ThamudicScan/web_ui/](ThamudicScan/web_ui/) |
@@ -30,26 +32,26 @@ The Python scanner has a real translation service boundary. The UI action **Tran
 
 Translation results retain script variant, corpus identifier, confidence and provenance. Transliteration is kept separate from translation because a scholarly transliteration is a representation of the reading, not a target-language translation.
 
+## Ancient alphabet, script and historical-variation registry
+
+The new `data/source_languages/ancient_language_alphabets.json` registry provides a common metadata table for ancient/classical source languages and their documented writing variations. It currently covers Ancient Egyptian, Akkadian, Sumerian, Ugaritic, Phoenician/Punic, Ancient/Paleo-Hebrew, Aramaic families, Ancient North Arabian and Old South Arabian, Ancient Greek, Latin, historical Chinese, historical Japanese, Old Persian, Sanskrit, Coptic, Hittite, Luwian, Etruscan, Gothic, Old Turkic, Linear B/Mycenaean Greek and Cypro-Minoan.
+
+Each entry records language identifiers, script families, historical/orthographic variations, directionality, relevant Unicode blocks and translation-capability modes. The Python registry exposes `language_profile()`, `variations()`, `translation_capabilities()` and `translation_directions()` and the FastAPI service exposes `/alphabet-languages` and `/alphabet-languages/{language}`.
+
+The registry is intentionally capability-aware rather than claiming that every listed language already has a production translation model. Source-to-transliteration, transliteration-to-translation and reverse script retrieval are represented as explicit capabilities so model/corpus adapters can be attached without confusing an alphabet table with a translation engine.
+
 ## Ancient Egyptian, Chinese, Japanese, Greek and Latin source scanner
 
-The repository now includes a language-oriented Unicode/UTF-8 scanner registry at `data/source_languages/ancient_classical_unicode.json` and Python implementation at `python/thamudic/source_language_scanner.py` for:
+The repository includes a language-oriented Unicode/UTF-8 scanner registry at `data/source_languages/ancient_classical_unicode.json` and Python implementation at `python/thamudic/source_language_scanner.py` for Ancient Egyptian, Chinese, Japanese, Greek/Ancient Greek and Latin/Classical Latin. For every matched character the scanner exposes Unicode code point, Unicode name, NFC form, UTF-8 hexadecimal bytes and byte array. It also reports language-profile counts and script overlap.
 
-- **Ancient Egyptian** — Egyptian Hieroglyphs `U+13000–U+1342F` and Egyptian Hieroglyphs Extended-A `U+13460–U+143FF`.
-- **Chinese** — Han/CJK Unified Ideographs and their encoded extensions.
-- **Japanese** — Hiragana, Katakana, Kana extensions, and Han/Kanji coverage.
-- **Greek / Ancient Greek** — Greek `U+0370–U+03FF` and Greek Extended `U+1F00–U+1FFF`.
-- **Latin / Classical Latin** — Basic Latin plus relevant Latin Extended and scholarly ranges.
-
-For every matched character the scanner exposes Unicode code point, Unicode name, NFC form, UTF-8 hexadecimal bytes and byte array. It also reports language-profile counts and script overlap. This is deliberately a scanner rather than a false language classifier: Unicode encodes scripts/characters, not languages, and Han is shared by Chinese and Japanese.
-
-The FastAPI endpoint `POST /scan_language` and web UI expose the same implementation so desktop/Python and browser workflows share one registry and one UTF-8 policy.
+This is deliberately a scanner rather than a false language classifier: Unicode encodes scripts/characters, not languages, and Han is shared by Chinese and Japanese.
 
 ## ThamudicScan web application
 
 The browser stack is split into:
 
 - `ThamudicScan/web_ui/` — React + Vite interface with scanning, validation, source-language Unicode/UTF-8 scanning, translation, transliteration, target-language selection and export.
-- `ThamudicScan/server/` — FastAPI API with `/scan`, `/validate`, `/translate`, `/scan_language`, file upload, persistence, SSE progress and exporters.
+- `ThamudicScan/server/` — FastAPI API with `/scan`, `/validate`, `/translate`, `/scan_language`, `/alphabet-languages`, file upload, persistence, SSE progress and exporters.
 - `ThamudicScan/server/tests/` — pytest contracts.
 
 The web layer reuses `python/thamudic` rather than copying Old North Arabian mapping tables.
@@ -67,10 +69,10 @@ The repository documents an adapter architecture for Thamudic sequence predictio
 - `cpp/thamudic/` — C++20 library and Unicode registry.
 - `vcpp/` — Visual Studio native Windows desktop scanner.
 - `dotnet/` — CLI, WPF desktop and web implementations.
-- `python/thamudic/` — Python Unicode/UTF-8/transliteration, translation API and universal source-language scanner.
-- `python/tests/` — Unicode, transliteration, translation and source-language scanner regression tests.
+- `python/thamudic/` — Python Unicode/UTF-8/transliteration, translation API, alphabet registry and universal source-language scanner.
+- `python/tests/` — Unicode, transliteration, translation, source-language scanner and alphabet-registry regression tests.
 - `data/ancient_north_arabian/` — language-neutral Ancient North Arabian registry.
-- `data/source_languages/` — language-oriented Unicode/UTF-8 scanner registry.
+- `data/source_languages/` — language-oriented Unicode/UTF-8 and historical alphabet/variation registries.
 - `ThamudicScan/` — React/FastAPI web application and documentation.
 - `apple/` — existing SwiftUI/Xcode application boundary.
 
@@ -78,7 +80,7 @@ The repository documents an adapter architecture for Thamudic sequence predictio
 
 “Thamudic” is retained as a user-facing research category, but the implementation records script variants explicitly. OCIANA notes that the historical Thamudic label covers multiple Ancient North Arabian groups and that some categories remain incompletely classified. The application therefore preserves the distinction between script identification, transliteration, translation and scholarly uncertainty.
 
-Unicode similarly encodes scripts rather than languages. The new Ancient Egyptian/Chinese/Japanese/Greek/Latin scanner therefore reports Unicode evidence and overlap rather than asserting language identity from a single character.
+Unicode similarly encodes scripts rather than languages. The alphabet registry consequently records script/language relationships and historical variants without treating a Unicode block as proof of language identity. Translation requires a corpus, lexicon or trained model; unsupported reverse translations remain retrieval/model tasks rather than fabricated character substitutions.
 
 ## Licensing
 
