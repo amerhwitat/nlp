@@ -11,6 +11,8 @@ This repository contains Python, C++, .NET, Visual C++ and desktop/web implement
 | .NET | [dotnet/](dotnet/) |
 | Python Thamudic | [python/thamudic/](python/thamudic/) |
 | **Python all-in-one scanner** | **[python/ThamudicScanner_AllInOne.py](python/ThamudicScanner_AllInOne.py)** |
+| **Python all-in-one NLP/media scanner** | **[python/NLPScanner_AllInOne.py](python/NLPScanner_AllInOne.py)** |
+| **Image/PDF media pipeline** | **[python/thamudic/media_pipeline.py](python/thamudic/media_pipeline.py)** |
 | Python translation/NLP | [python/thamudic/ancient_translation.py](python/thamudic/ancient_translation.py) |
 | Universal ancient translation facade | [python/thamudic/universal_translation.py](python/thamudic/universal_translation.py) |
 | Translation history/audit logger | [python/thamudic/translation_log.py](python/thamudic/translation_log.py) |
@@ -44,16 +46,22 @@ Run the GUI with:
 python python/ThamudicScanner_AllInOne.py --gui
 ```
 
-Useful CLI operations:
+## Media import: image/PDF → OCR/text → transliteration → translation
+
+Both the modular Thamudic GUI and the standalone NLP scanner now support importing images, PDFs and text files. Text PDFs are extracted with `pypdf`. Images and scanned PDFs can use the optional EasyOCR + pypdfium2 pipeline. After extraction/OCR, the same scanner passes the resulting text through script detection, transliteration and the evidence-backed translation layer.
 
 ```bash
-python python/ThamudicScanner_AllInOne.py --text "..." --scan --script ancient-north-arabian
-python python/ThamudicScanner_AllInOne.py --text "..." --translate --script ancient-north-arabian --target en
-python python/ThamudicScanner_AllInOne.py --history-pdf translation-history.pdf
-python python/ThamudicScanner_AllInOne.py --verify-history
+python python/NLPScanner_AllInOne.py --gui
+python python/NLPScanner_AllInOne.py inscription.pdf --script Dadanitic --target en
 ```
 
-The original modular package remains intact for imports, API/server integration, testing and maintainability. The single-file implementation loads repository registries when available and has conservative built-in fallback metadata for core scripts.
+For images:
+
+```bash
+python python/NLPScanner_AllInOne.py inscription.jpg --script Dadanitic --target en
+```
+
+OCR confidence/provider metadata is retained. OCR is not treated as proof of an ancient reading. When the extracted reading is not represented by an attested corpus entry or configured translation provider, the application explicitly reports translation unavailable instead of inventing a translation.
 
 ## Complete script report and export
 
