@@ -1,10 +1,10 @@
-# Ancient-language NLP, Unicode scanning, alphabets, and translation architecture
+# Ancient-language NLP, Unicode scanning, alphabets, translation, reports and voice
 
 ## Purpose
 
-The toolkit separates recognition, alphabet/script identification, transliteration and translation into evidence layers:
+The toolkit separates recognition, alphabet/script identification, transliteration, translation, historical metadata and voice into evidence layers:
 
-`source text/image -> script/language profile -> Unicode normalization -> UTF-8 inspection -> alphabet/variant identification -> scholarly transliteration -> corpus/lexicon/NLP model -> target-language translation -> confidence + provenance`
+`source text/image -> script/language profile -> Unicode normalization -> UTF-8 inspection -> alphabet/variant identification -> scholarly transliteration -> corpus/lexicon/NLP model -> target-language translation -> report/export -> voice`
 
 The Python implementation remains CPU-friendly and does not require Tesseract or camel_tools.
 
@@ -12,9 +12,49 @@ The Python implementation remains CPU-friendly and does not require Tesseract or
 
 The canonical alphabet metadata is `data/source_languages/ancient_language_alphabets.json`, exposed through `python/thamudic/ancient_alphabet_registry.py`.
 
-Current registry families include Ancient Egyptian; Akkadian; Sumerian; Ugaritic; Phoenician/Punic; Ancient/Paleo-Hebrew; Aramaic families; Ancient North Arabian; Old South Arabian; Ancient Greek; Latin; historical Chinese; historical Japanese; Old Persian; Sanskrit; Coptic; Hittite; Luwian; Etruscan; Gothic; Old Turkic; Linear B/Mycenaean Greek; and Cypro-Minoan, with documented historical/script variations in each profile.
+Historical metadata is maintained separately in `data/source_languages/ancient_script_metadata.json`. Each registered language can carry:
 
-The registry records language identifiers, scripts, directionality, Unicode blocks and translation modes. It is an extensible foundation for additional ancient scripts and variants.
+- original script/script family
+- script type
+- writing direction
+- human-readable direction notes
+- Unicode blocks
+- historical variants
+- approximate dating and dating-status/uncertainty
+- geographic scope
+- common writing materials
+- related/sister/descendant scripts
+- scholarly transliteration systems
+- research notes
+
+Dates are intentionally broad. They are not a replacement for corpus-specific palaeographic, archaeological or historical dating.
+
+## Complete script reports
+
+`python/thamudic/script_summary.py` provides two levels:
+
+### Metadata summary
+
+`build_script_summary(language)` returns the historical/script profile without requiring a particular inscription.
+
+### Complete source report
+
+`build_script_report(language, original_text, target_language)` combines:
+
+1. exact original source text;
+2. language/script metadata;
+3. script variants;
+4. writing direction;
+5. Unicode blocks;
+6. dating and dating uncertainty;
+7. region and writing materials;
+8. related scripts;
+9. transliteration-system metadata;
+10. scholarly transliteration when a provider supports it;
+11. target-language translation when a provider supports it;
+12. translation status, confidence, provider and provenance.
+
+Reports are exportable as JSON, Markdown and TXT. Unsupported translations remain explicitly unavailable/provider-required rather than being fabricated.
 
 ## Translation directions
 
@@ -23,11 +63,34 @@ The architecture distinguishes four directions:
 1. **Source script → scholarly transliteration** — deterministic or OCR/model-assisted character/sign reading.
 2. **Transliteration → target-language translation** — corpus, dictionary, grammar or trained NLP model.
 3. **Source script/text → target-language translation** — combined reading + translation pipeline.
-4. **Target-language → source-script retrieval/generation** — retrieval from attested corpus first; generative reconstruction must be explicitly labeled and confidence-scored.
+4. **Target-language → source-script retrieval/generation** — retrieval from an attested corpus first; generative reconstruction must be explicitly labeled and confidence-scored.
 
 `python/thamudic/universal_translation.py` implements the provider contract for these directions. It accepts `script`, `transliteration`, or `translation` as the source form and returns a structured result containing source language, target language, transliteration, status, confidence, provider and provenance.
 
-A registered capability does **not** mean that a local model is installed. Without an applicable corpus/model provider the result is `provider_required`; unsupported directions are `direction_not_registered`. This prevents an alphabet table from being mistaken for a translation engine.
+A registered capability does **not** mean that a local model is installed. Without an applicable corpus/model provider the result is `provider_required`; unsupported directions are `direction_not_registered`.
+
+## Voice and pronunciation architecture
+
+The voice layer is `python/thamudic/voice.py`.
+
+Supported control vocabulary includes:
+
+- speak original
+- speak transliteration
+- speak translation
+- pause
+- resume
+- stop
+- repeat
+- slower / faster
+- mute / unmute
+- next / previous
+
+The web application uses browser Speech Synthesis and exposes pause/resume/stop controls. The Python desktop application can use optional `pyttsx3` local TTS.
+
+Ancient-language native pronunciation is deliberately separated from modern-language TTS. If an actual scholarly pronunciation provider is not installed, original-script playback returns `pronunciation_provider_required` rather than using an unrelated modern voice and presenting it as historically correct.
+
+Speech recognition capability is also reported separately so an installation can add voice commands without implying that the recognizer understands the ancient language itself.
 
 ## Unicode and UTF-8
 
@@ -48,22 +111,27 @@ The FastAPI service exposes:
 - `GET /translation-matrix` — directional capability matrix for all registered languages.
 - `POST /scan_language` — Unicode/UTF-8 source-language scanning.
 - `GET /alphabet-languages` — all registered language IDs.
-- `GET /alphabet-languages/{language}` — alphabet/script variants, Unicode blocks and translation capabilities for one language.
+- `GET /alphabet-languages/{language}` — alphabet/script variants, historical metadata and translation capabilities for one language.
+- `GET /script-summary/{language}` — metadata summary.
+- `GET /script-summary/{language}/export` — JSON/Markdown/TXT metadata export.
+- `POST /script-report` — original source + transliteration + translation + complete script metadata.
+- `POST /script-report/export` — complete report export.
+- `GET /voice/capabilities` — TTS/STT capability discovery.
+- `POST /voice/speak` — voice-provider capability request.
 - `POST /validate` — Old North Arabian validation.
 - `POST /scan` and `POST /scan_file` — scanner workflows.
 
-Example universal request:
+Example complete report request:
 
 ```json
 {
-  "text": "ἄνθρωπος",
-  "source_language": "ancient-greek",
-  "source_form": "script",
+  "original_text": "𐪀𐪁𐪂",
+  "source_language": "ancient-north-arabian",
   "target_language": "en"
 }
 ```
 
-A provider-backed installation can return an attested or model-supported translation. The base installation returns an explicit provider status instead of hallucinating one.
+The response preserves the original characters and independently records transliteration, translation, provider, confidence and provenance.
 
 ## Scholarly safety and provenance
 
@@ -76,12 +144,14 @@ A historical alphabet is not automatically a language dictionary, grammar or tra
 - lexical/grammatical interpretation
 - attested translation
 - machine-generated suggestion
+- pronunciation evidence
+- modern TTS playback
 
 Only attested or model-supported translations should be emitted as translations. Unknown material remains `not_available` or `provider_required` rather than being filled with guessed text. Reverse translation should prefer retrieval from attested corpora before any generative reconstruction.
 
 ## Research integration
 
-The architecture can host adapters for cuneiform transliteration/segmentation, Akkadian NMT, Sumerian-English NMT, Ancient North Arabian sequence prediction, Ancient Egyptian text models, historical Chinese/Japanese reading models, Greek/Latin corpora, lexicon retrieval and human scholarly correction. Training corpora, licenses and uncertainty metadata remain attached to each adapter.
+The architecture can host adapters for cuneiform transliteration/segmentation, Akkadian NMT, Sumerian-English NMT, Ancient North Arabian sequence prediction, Ancient Egyptian text models, historical Chinese/Japanese reading models, Greek/Latin corpora, lexicon retrieval, pronunciation resources and human scholarly correction. Training corpora, licenses and uncertainty metadata remain attached to each adapter.
 
 ## References
 
@@ -89,6 +159,7 @@ The architecture can host adapters for cuneiform transliteration/segmentation, A
 - Unicode Character Code Charts: https://www.unicode.org/charts/
 - Unicode Egyptian Hieroglyph Database (Unikemet): https://www.unicode.org/reports/tr57/tr57-7.html
 - OCIANA — Online Corpus of the Inscriptions of Ancient North Arabia: https://ociana.osu.edu/
+- MNAMON Ancient North Arabian overview: https://mnamon.sns.it/index.php?id=66&lang=en&page=Scrittura
 - Predicting Thamudic inscriptions pre and post-sequence using deep learning: https://www.nature.com/articles/s40494-025-02020-2
 - Reading Akkadian cuneiform using natural language processing: https://pmc.ncbi.nlm.nih.gov/articles/PMC7592802/
 - Translating Akkadian to English with neural machine translation: https://pmc.ncbi.nlm.nih.gov/articles/PMC10153418/
