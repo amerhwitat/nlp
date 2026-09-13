@@ -8,6 +8,7 @@ from .script_summary import build_script_summary, build_script_report, export_sc
 from .voice import VoiceRequest, speak as voice_speak, available_tts_backends, voice_control_commands, speech_recognition_capability
 from .translation_log import TranslationLogRecord, make_record, append_record, read_records, verify_records, export_records, default_log_path
 from .artifacts_db import ArtifactDatabase
+from .artifact_legacy_adapter import migrate_legacy_objects, convert_legacy_record
 
 is_thamudic = is_old_north_arabian
 
@@ -17,5 +18,5 @@ def transliterate(text: str, mapping: dict[int, str] | None = None) -> str:
     return transliterate_ona(text)
 
 __all__ = [
-    "BY_CHARACTER", "BY_CODEPOINT", "CHARACTERS", "FIRST", "LAST", "VARIANT_FORMS", "CorpusEntry", "InMemoryCorpus", "OCIANA_SEED", "extract", "is_old_north_arabian", "is_thamudic", "supported_targets", "translate", "transliterate", "transliterate_source", "supported_source_languages", "scan_source_language", "encode_utf8", "utf8_bytes", "load_alphabet_registry", "supported_alphabet_languages", "language_profile", "variations", "translation_capabilities", "translation_directions", "TranslationResult", "TranslationProvider", "translate_ancient", "translation_matrix", "build_script_summary", "build_script_report", "export_script_summary", "export_script_report", "VoiceRequest", "voice_speak", "available_tts_backends", "voice_control_commands", "speech_recognition_capability", "TranslationLogRecord", "make_record", "append_record", "read_records", "verify_records", "export_records", "default_log_path", "ArtifactDatabase",
+    "BY_CHARACTER", "BY_CODEPOINT", "CHARACTERS", "FIRST", "LAST", "VARIANT_FORMS", "CorpusEntry", "InMemoryCorpus", "OCIANA_SEED", "extract", "is_old_north_arabian", "is_thamudic", "supported_targets", "translate", "transliterate", "transliterate_source", "supported_source_languages", "scan_source_language", "encode_utf8", "utf8_bytes", "load_alphabet_registry", "supported_alphabet_languages", "language_profile", "variations", "translation_capabilities", "translation_directions", "TranslationResult", "TranslationProvider", "translate_ancient", "translation_matrix", "build_script_summary", "build_script_report", "export_script_summary", "export_script_report", "VoiceRequest", "voice_speak", "available_tts_backends", "voice_control_commands", "speech_recognition_capability", "TranslationLogRecord", "make_record", "append_record", "read_records", "verify_records", "export_records", "default_log_path", "ArtifactDatabase", "migrate_legacy_objects", "convert_legacy_record",
 ]
