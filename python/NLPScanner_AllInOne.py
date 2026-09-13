@@ -4,11 +4,24 @@
 Supports image/PDF/text import, local extraction/OCR, ancient-script scanning,
 transliteration, evidence-backed translation, and visible desktop voice controls.
 Unsupported OCR or translation is reported rather than fabricated.
+
+The shared runtime guard is initialized before scientific/OCR-backed imports to avoid
+common Windows libiomp5md.dll duplicate OpenMP runtime startup failures.
 """
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
+
+# Put the local package directory on sys.path before importing it.
+HERE = Path(__file__).resolve().parent
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
+from thamudic.runtime import configure_runtime
+configure_runtime()
+
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
@@ -50,7 +63,6 @@ class NLPScannerApp(tk.Tk):
         outer.pack(fill="both", expand=True)
         ttk.Label(outer, text="NLP / Ancient Language Scanner", font=("TkDefaultFont", 18, "bold")).pack(anchor="w")
         ttk.Label(outer, text="Import documents or inscriptions, inspect source scripts, transliterate, translate, and hear the resulting text.").pack(anchor="w", pady=(2, 10))
-
         media = ttk.LabelFrame(outer, text="Import / media")
         media.pack(fill="x", pady=(0, 8))
         ttk.Button(media, text="Import image / PDF", command=self.import_file).pack(side="left", padx=5, pady=6)
@@ -58,7 +70,6 @@ class NLPScannerApp(tk.Tk):
         ttk.Button(media, text="Process imported media", command=self.process).pack(side="left", padx=5, pady=6)
         self.media_status = ttk.Label(media, text="Media: ready")
         self.media_status.pack(side="left", padx=12)
-
         controls = ttk.Frame(outer)
         controls.pack(fill="x", pady=(0, 8))
         ttk.Label(controls, text="Script").pack(side="left")
@@ -73,12 +84,10 @@ class NLPScannerApp(tk.Tk):
         ttk.Button(controls, text="Scan", command=self.scan).pack(side="left", padx=5)
         ttk.Button(controls, text="Scan + translate", command=self.process).pack(side="left", padx=5)
         ttk.Button(controls, text="Script metadata", command=self.metadata).pack(side="left", padx=5)
-
         source_frame = ttk.LabelFrame(outer, text="Extracted source / OCR text")
         source_frame.pack(fill="x", pady=(0, 8))
         self.source = tk.Text(source_frame, height=8, wrap="word")
         self.source.pack(fill="x", padx=6, pady=6)
-
         panes = ttk.Panedwindow(outer, orient="vertical")
         panes.pack(fill="both", expand=True)
         f1 = ttk.LabelFrame(panes, text="Transliteration / script scan")
@@ -89,7 +98,6 @@ class NLPScannerApp(tk.Tk):
         self.trans.pack(fill="both", expand=True, padx=6, pady=6)
         self.out = tk.Text(f2, wrap="word")
         self.out.pack(fill="both", expand=True, padx=6, pady=6)
-
         voice = ttk.LabelFrame(outer, text="Voice controls")
         voice.pack(fill="x", pady=(8, 4))
         ttk.Button(voice, text="▶ Read transliteration", command=self.speak_transliteration).pack(side="left", padx=4, pady=7)
@@ -99,7 +107,6 @@ class NLPScannerApp(tk.Tk):
         self.rate = tk.IntVar(value=160)
         ttk.Scale(voice, from_=60, to=300, variable=self.rate, orient="horizontal", length=190).pack(side="left")
         ttk.Label(voice, text="TTS: available" if self._voice.available() else "TTS: install pyttsx3").pack(side="left", padx=12)
-
         self.status = ttk.Label(outer, text="Ready")
         self.status.pack(anchor="w", pady=(5, 0))
 
