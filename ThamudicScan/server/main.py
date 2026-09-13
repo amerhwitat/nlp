@@ -11,10 +11,10 @@ from .db import Database
 from .exporter import export_results_csv, export_results_json
 from .models import ScanRequest, ScanResponse, ScanResult, ScanSummary, ValidationRequest
 from .progress import emit
-from .scanner_adapter import (alphabet_languages, alphabet_profile, alphabet_variations, scan_source_language_text, translation_directions_for, translation_modes, scan_text, translate_text, validate_text, translate_ancient_text, all_translation_directions, script_summary, voice_speak, voice_backends, voice_commands, speech_recognition)
+from .scanner_adapter import (alphabet_languages, alphabet_profile, alphabet_variations, scan_source_language_text, translation_directions_for, translation_modes, scan_text, translate_text, validate_text, translate_ancient_text, all_translation_directions, script_summary, voice_speak, voice_backends, voice_commands, speech_recognition, translation_log_path, translation_log_records, translation_log_verify, translation_log_export)
 from python.thamudic.script_summary import export_script_summary, build_script_report, export_script_report
 
-APP_VERSION = "1.6.0"
+APP_VERSION = "1.7.0"
 DEFAULT_UPLOADS = {".txt", ".md", ".csv", ".json", ".xml", ".html", ".htm"}
 
 
@@ -70,6 +70,14 @@ def create_app() -> FastAPI:
         text, language, mode = str(request.get("text", "")), str(request.get("language", "en")), str(request.get("mode", "translation"))
         try: return voice_speak(text, language, mode)
         except ValueError as exc: raise HTTPException(status_code=422, detail=str(exc)) from exc
+    @app.get("/translation-log")
+    def translation_log_endpoint():
+        return {"path": translation_log_path(), "records": translation_log_records(), "verification": translation_log_verify()}
+    @app.get("/translation-log/export")
+    def translation_log_export_endpoint(format: str = "json"):
+        try: body, media_type, filename = translation_log_export(format)
+        except ValueError as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return Response(body, media_type=media_type, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
     @app.post("/validate")
     def validate(request: ValidationRequest): return validate_text(request.text)
     @app.post("/translate")
@@ -82,7 +90,7 @@ def create_app() -> FastAPI:
     def translate_ancient_endpoint(request: dict):
         text, language, target, source_form = str(request.get("text", "")), str(request.get("source_language", "")), str(request.get("target_language", "")), str(request.get("source_form", "script"))
         if not text.strip() or not language.strip() or not target.strip(): raise HTTPException(status_code=422, detail="text, source_language and target_language are required")
-        try: return translate_ancient_text(text, language, target, source_form=source_form)
+        try: return translate_ancient_text(text, language, target, source_form=source_form, request_metadata={"api": "/translate_ancient"})
         except ValueError as exc: raise HTTPException(status_code=400, detail=str(exc)) from exc
     @app.post("/scan_language")
     def scan_language_endpoint(request: dict):
