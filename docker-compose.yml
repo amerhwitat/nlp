@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    image: amerhwitat/nlp:local
+    container_name: nlp-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+    volumes:
+      - nlp-data:/app/data
+      - nlp-logs:/app/logs
+    environment:
+      PYTHONUNBUFFERED: "1"
+      THAMUDIC_OCR_TIMEOUT: "45"
+    init: true
+volumes:
+  nlp-data:
+  nlp-logs:
