@@ -20,16 +20,15 @@ from thamudic.resilient_ocr import DEFAULT_TIMEOUT, ocr_image
 def _patch(module):
     original_extract=module.extract
     worker=ROOT/"python"/"thamudic"/"ocr_worker.py"
-
     def extract(path):
         p=Path(path).expanduser(); suffix=p.suffix.casefold()
         if suffix in {".png",".jpg",".jpeg",".webp",".bmp",".tif",".tiff"}:
             r=ocr_image(p,worker,timeout=DEFAULT_TIMEOUT)
-            if r.get("ok"):
-                return str(r.get("text","")), {"provider":"easyocr-subprocess","media_type":"image","source_file":str(p),"ocr_available":bool(r.get("text")),"ocr_error":"","ocr_timed_out":False,"ocr_recoverable":True,"detections":r.get("detections",0),"ocr_confidence":r.get("ocr_confidence",0.0)}
-            return "", {"provider":"easyocr-subprocess","media_type":"image","source_file":str(p),"ocr_available":False,"ocr_error":f"{r.get('error_type','Error')}: {r.get('error','OCR unavailable')}","ocr_timed_out":bool(r.get("timed_out")),"ocr_recoverable":True}
+            meta={"provider":"easyocr-subprocess","media_type":"image","source_file":str(p),"ocr_available":bool(r.get("ok") and r.get("text")),"ocr_error":"" if r.get("ok") else f"{r.get('error_type','Error')}: {r.get('error','OCR unavailable')}","ocr_timed_out":bool(r.get("timed_out")),"ocr_recoverable":True}
+            for k in ("detections","ocr_confidence"):
+                if k in r: meta[k]=r[k]
+            return str(r.get("text","")),meta
         return original_extract(path)
-
     module.extract=extract
     return module
 
@@ -39,9 +38,7 @@ def main(argv=None):
     parser.add_argument("--mode",choices=("nlp","thamudic"),default="nlp")
     known,rest=parser.parse_known_args(argv)
     module_name="NLPScanner_AllInOne" if known.mode=="nlp" else "ThamudicScanner_AllInOne"
-    module=__import__(f"python.{module_name}" if (ROOT/"python"/f"{module_name}.py").exists() else module_name,fromlist=["*"])
-    # The python directory is also placed directly on sys.path for installations
-    # where it is not a package.
+    module=__import__(module_name,fromlist=["*"])
     module=_patch(module)
     return module.cli(rest,module_name)
 
