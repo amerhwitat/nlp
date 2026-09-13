@@ -9,3 +9,5 @@ pypdf>=5.0
 # Optional OCR for images and scanned PDFs:
 easyocr>=1.7
 pypdfium2>=4.30
+# Optional desktop text-to-speech for the Tkinter scanner GUIs:
+pyttsx3>=2.98
