@@ -1,9 +1,9 @@
 """Durable, provenance-first translation history.
 
-Logs are append-only JSON Lines plus an optional human-readable TXT export.
-Sensitive credentials are never accepted as log fields. Translation content is
-recorded together with script metadata, direction, provider, confidence,
-provenance, timestamps, and a deterministic record hash for integrity checks.
+Logs are append-only JSON Lines plus JSON/TXT/PDF exports. Sensitive credentials
+are never accepted as log fields. Translation content is recorded together with
+script metadata, direction, provider, confidence, provenance, timestamps, and a
+deterministic record hash for integrity checks.
 """
 from __future__ import annotations
 
@@ -55,28 +55,17 @@ def compute_record_hash(data: dict[str, Any]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def make_record(
-    *,
-    source: str,
-    source_language: str,
-    source_form: str,
-    target_language: str,
-    target_form: str | None = None,
-    transliteration: str | None = None,
-    translation: str | None = None,
-    status: str = "unknown",
-    confidence: float = 0.0,
-    provider: str = "none",
-    provenance: str | None = None,
-    script_metadata: dict[str, Any] | None = None,
-    request_metadata: dict[str, Any] | None = None,
-) -> TranslationLogRecord:
+def make_record(*, source: str, source_language: str, source_form: str, target_language: str,
+                target_form: str | None = None, transliteration: str | None = None,
+                translation: str | None = None, status: str = "unknown", confidence: float = 0.0,
+                provider: str = "none", provenance: str | None = None,
+                script_metadata: dict[str, Any] | None = None,
+                request_metadata: dict[str, Any] | None = None) -> TranslationLogRecord:
     record = TranslationLogRecord(
         timestamp=_utc(), source=source, source_language=source_language,
-        source_form=source_form, target_language=target_language,
-        target_form=target_form, transliteration=transliteration,
-        translation=translation, status=status, confidence=float(confidence),
-        provider=provider, provenance=provenance,
+        source_form=source_form, target_language=target_language, target_form=target_form,
+        transliteration=transliteration, translation=translation, status=status,
+        confidence=float(confidence), provider=provider, provenance=provenance,
         script_metadata=script_metadata or {}, request_metadata=request_metadata or {},
     )
     record.record_hash = compute_record_hash(asdict(record))
@@ -130,9 +119,11 @@ def export_records(format: str = "json", path: str | Path | None = None) -> tupl
     if fmt == "txt":
         blocks: list[str] = []
         for index, record in enumerate(records, 1):
-            blocks.append("=" * 72)
-            blocks.append(f"Translation record {index}")
+            blocks.append("=" * 72); blocks.append(f"Translation record {index}")
             for key, value in record.items():
                 blocks.append(f"{key}: {json.dumps(value, ensure_ascii=False) if isinstance(value, (dict, list)) else value}")
         return "\n".join(blocks) + ("\n" if blocks else ""), "text/plain; charset=utf-8", "translation-log.txt"
-    raise ValueError("format must be json, jsonl, or txt")
+    if fmt == "pdf":
+        from .pdf_export import records_pdf_bytes
+        return records_pdf_bytes(records), "application/pdf", "translation-log.pdf"
+    raise ValueError("format must be json, jsonl, txt, or pdf")
