@@ -10,6 +10,7 @@ This repository contains Python, C++, .NET, Visual C++ and desktop/web implement
 | Visual C++ | [vcpp/](vcpp/) |
 | .NET | [dotnet/](dotnet/) |
 | Python Thamudic | [python/thamudic/](python/thamudic/) |
+| **Python all-in-one scanner** | **[python/ThamudicScanner_AllInOne.py](python/ThamudicScanner_AllInOne.py)** |
 | Python translation/NLP | [python/thamudic/ancient_translation.py](python/thamudic/ancient_translation.py) |
 | Universal ancient translation facade | [python/thamudic/universal_translation.py](python/thamudic/universal_translation.py) |
 | Translation history/audit logger | [python/thamudic/translation_log.py](python/thamudic/translation_log.py) |
@@ -33,6 +34,27 @@ This repository contains Python, C++, .NET, Visual C++ and desktop/web implement
 | ThamudicScan product docs | [ThamudicScan/](ThamudicScan/) |
 | Apple | [apple/](apple/) |
 
+## All-in-one Python scanner
+
+`python/ThamudicScanner_AllInOne.py` consolidates the Python scanner runtime into one executable/copyable file. It includes Unicode and UTF-8 inspection, Old North Arabian extraction/transliteration, evidence-aware corpus translation, ancient-script metadata/capability reporting, translation-history logging and verification, PDF generation, optional voice capability detection, Tkinter GUI controls, and CLI operation.
+
+Run the GUI with:
+
+```bash
+python python/ThamudicScanner_AllInOne.py --gui
+```
+
+Useful CLI operations:
+
+```bash
+python python/ThamudicScanner_AllInOne.py --text "..." --scan --script ancient-north-arabian
+python python/ThamudicScanner_AllInOne.py --text "..." --translate --script ancient-north-arabian --target en
+python python/ThamudicScanner_AllInOne.py --history-pdf translation-history.pdf
+python python/ThamudicScanner_AllInOne.py --verify-history
+```
+
+The original modular package remains intact for imports, API/server integration, testing and maintainability. The single-file implementation loads repository registries when available and has conservative built-in fallback metadata for core scripts.
+
 ## Complete script report and export
 
 The script-report layer combines one selected script/language with the actual source material. A report can preserve original characters, Unicode/script metadata, writing direction, historical variants, approximate dating, geographic scope, materials, related scripts, transliteration-system metadata, actual transliteration, actual corpus/model translation, target language, confidence, provider and provenance.
@@ -44,15 +66,13 @@ FastAPI endpoints:
 - `POST /script-report`
 - `POST /script-report/export` with `format=json|md|txt|pdf`
 
-PDF generation is provided by `python/thamudic/pdf_export.py` using ReportLab Platypus. ReportLab's Platypus engine supports flowing paragraphs, tables and multi-page documents. urlReportLab Platypus documentationhttps://docs.reportlab.com/reportlab/userguide/ch5_platypus/
-
-Historical dates are intentionally broad research metadata and do not override inscription-specific palaeographic or archaeological dating.
+PDF generation is provided by `python/thamudic/pdf_export.py` using ReportLab Platypus.
 
 ## Translation, transliteration and provenance
 
 The Python scanner has separate translation and transliteration layers. The deterministic baseline supports its documented English/Arabic targets and corpus seed records. Unsupported fragments remain explicitly unavailable rather than receiving fabricated output.
 
-The universal facade accepts `script`, `transliteration`, and `translation` source forms and can delegate to a real corpus/model provider. Every universal translation call can now be persisted to an append-only JSON Lines audit log containing source, target, transliteration, translation, status, confidence, provider, provenance, script metadata, request metadata, timestamp and SHA-256 record hash.
+The universal facade accepts `script`, `transliteration`, and `translation` source forms and can delegate to a real corpus/model provider. Every universal translation call can be persisted to an append-only JSON Lines audit log containing source, target, transliteration, translation, status, confidence, provider, provenance, script metadata, request metadata, timestamp and SHA-256 record hash.
 
 ### Translation history
 
@@ -71,18 +91,6 @@ API:
 
 The integrity checker detects modified records by recomputing each record's deterministic SHA-256 hash. This is an integrity aid, not a substitute for signed or immutable archival storage.
 
-PDF history reports are generated from the same verified records and contain the full provenance fields; PDF is not a second source of truth.
-
-## Scanner/session exports
-
-Persisted scanner sessions support:
-
-- CSV
-- JSON
-- PDF
-
-through `GET /export/{session_id}?format=csv|json|pdf`. The browser application exposes all three export choices.
-
 ## Voice / speech capabilities
 
 - Browser Speech Synthesis playback.
@@ -98,24 +106,6 @@ Native ancient pronunciation is treated as a separate scholarly provider/model p
 
 The registry covers Ancient Egyptian, Akkadian, Sumerian, Ugaritic, Phoenician/Punic, Ancient/Paleo-Hebrew, Aramaic families, Ancient North Arabian and Old South Arabian, Ancient Greek, Latin, historical Chinese, historical Japanese, Old Persian, Sanskrit, Coptic, Hittite, Luwian, Etruscan, Gothic, Old Turkic, Linear B/Mycenaean Greek and Cypro-Minoan.
 
-## Ancient-language source interoperability
-
-Research adapters are designed around public corpus conventions such as OCIANA and ORACC. OCIANA provides Ancient North Arabian readings, translations, commentary, bibliography, provenance and images; ORACC provides structured ATF/JSON conventions for cuneiform language and text editions. External corpus/model adapters remain provenance-aware and license-aware.
-
-See [docs/RESEARCH_SOURCES.md](docs/RESEARCH_SOURCES.md).
-
-## ThamudicScan web application
-
-The browser stack is split into `ThamudicScan/web_ui/` and `ThamudicScan/server/`. The FastAPI service provides scanning, validation, translation, universal translation, source-language scanning, language registry, script reports, voice capabilities, translation history, PDF/JSON/Markdown/TXT/CSV exports, persistence and SSE progress.
-
-## Ancient North Arabian Unicode support
-
-The repository includes a canonical registry at `data/ancient_north_arabian/alphabet.json` covering the Unicode Old North Arabian block `U+10A80–U+10A9F`, with encoded characters, code points, scholarly transliteration, UTF-8 bytes and variant-script metadata.
-
 ## Methodological note
 
 “Thamudic” is retained as a user-facing research category, but the implementation records script variants explicitly. Unicode identifies encoded characters/scripts, not proof of a particular language. Translation requires an attested corpus, lexicon or trained model; unsupported reverse translations remain retrieval/model tasks rather than character substitution.
-
-## Licensing
-
-The repository is licensed under GNU GPL v3 or later; the existing `LICENSE` file contains the full GPLv3 text. Third-party dependencies remain under their respective licenses.
