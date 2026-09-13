@@ -3,16 +3,26 @@ import FileDropzone from './components/FileDropzone'
 import ProgressPanel from './components/ProgressPanel'
 import ResultsTable from './components/ResultsTable'
 import StatsPanel from './components/StatsPanel'
-import { exportSession, getSession, scanFile, scanText, subscribeProgress, translateText, validateText } from './api'
+import { exportSession, getSession, scanFile, scanSourceLanguage, scanText, subscribeProgress, translateText, validateText } from './api'
 
 const EXAMPLE = '𐪀𐪁𐪂 𐪃𐪄'
+const SOURCE_LANGUAGES = [
+  ['', 'Auto detect'],
+  ['ancient-egyptian', 'Ancient Egyptian'],
+  ['chinese', 'Chinese'],
+  ['japanese', 'Japanese'],
+  ['greek', 'Greek / Ancient Greek'],
+  ['latin', 'Latin / Classical Latin'],
+]
 
 export default function App() {
   const [text, setText] = useState(EXAMPLE)
   const [keywords, setKeywords] = useState('')
   const [script, setScript] = useState('Dadanitic')
   const [targetLanguage, setTargetLanguage] = useState('en')
+  const [sourceLanguage, setSourceLanguage] = useState('')
   const [translation, setTranslation] = useState(null)
+  const [sourceScan, setSourceScan] = useState(null)
   const [sessionId, setSessionId] = useState('')
   const [progress, setProgress] = useState(null)
   const [summary, setSummary] = useState(null)
@@ -20,6 +30,7 @@ export default function App() {
   const [validation, setValidation] = useState(null)
   const [busy, setBusy] = useState(false)
   const [translationBusy, setTranslationBusy] = useState(false)
+  const [sourceScanBusy, setSourceScanBusy] = useState(false)
   const [error, setError] = useState('')
 
   const keywordList = useMemo(() => keywords.split(',').map((value) => value.trim()).filter(Boolean), [keywords])
@@ -40,9 +51,14 @@ export default function App() {
 
   async function handleTranslate() {
     setTranslationBusy(true); setError('')
-    try {
-      setTranslation(await translateText(text, script, targetLanguage))
-    } catch (err) { setError(err.message) } finally { setTranslationBusy(false) }
+    try { setTranslation(await translateText(text, script, targetLanguage)) }
+    catch (err) { setError(err.message) } finally { setTranslationBusy(false) }
+  }
+
+  async function handleSourceScan() {
+    setSourceScanBusy(true); setError('')
+    try { setSourceScan(await scanSourceLanguage(text, sourceLanguage)) }
+    catch (err) { setError(err.message) } finally { setSourceScanBusy(false) }
   }
 
   async function handleFile(file) {
@@ -68,13 +84,13 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <div className="brand"><span className="brand-mark">𐪀</span><div><strong>Thamudic Scanner</strong><small>Ancient North Arabian research workspace</small></div></div>
+        <div className="brand"><span className="brand-mark">𐪀</span><div><strong>Thamudic Scanner</strong><small>Ancient North Arabian + ancient/classical source-language workspace</small></div></div>
         <nav><button>File</button><button>Tools</button><button>Help</button></nav>
       </header>
 
       <main>
         <section className="hero">
-          <div><p className="eyebrow">UNICODE · UTF-8 · NLP · RESEARCH</p><h1>Read the script.<br /><span>Preserve the evidence.</span></h1><p>Scan inscriptions, generate scholarly transliteration, and request evidence-backed translations without silently inventing missing readings.</p></div>
+          <div><p className="eyebrow">UNICODE · UTF-8 · NLP · RESEARCH</p><h1>Read the script.<br /><span>Preserve the evidence.</span></h1><p>Scan inscriptions and source-language text, inspect Unicode code points and UTF-8 bytes, generate scholarly transliteration, and request evidence-backed translations without silently inventing missing readings.</p></div>
           <div className="hero-glyphs" aria-hidden="true">𐪀𐪁𐪂</div>
         </section>
 
@@ -88,6 +104,20 @@ export default function App() {
             {error && <div className="error-box" role="alert">{error}</div>}
           </div>
           <aside className="panel tools-panel">
+            <div className="panel-heading">Source-language Unicode scanner</div>
+            <label>Source language
+              <select value={sourceLanguage} onChange={(event) => setSourceLanguage(event.target.value)}>
+                {SOURCE_LANGUAGES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>
+            <button disabled={sourceScanBusy || !text.trim()} onClick={handleSourceScan}>{sourceScanBusy ? 'Scanning Unicode…' : 'Scan source + UTF-8'}</button>
+            {sourceScan && <div className="validation-result">
+              <strong>Detected</strong><div>{sourceScan.detected_languages.join(', ') || 'No requested profile matched'}</div>
+              <strong>Encoding</strong><div>{sourceScan.encoding} · {sourceScan.unicode_normalization}</div>
+              <small>{sourceScan.matched_character_count} matched characters · overlap: {sourceScan.ambiguous_script_overlap ? 'yes' : 'no'}</small>
+              {sourceScan.characters.slice(0, 24).map((item) => <div key={`${item.index}-${item.codepoint}`}><code>{item.character}</code> {item.codepoint} · {item.name} · UTF-8 {item.utf8}</div>)}
+            </div>}
+
             <div className="panel-heading">Translation & transliteration</div>
             <label>Script
               <select value={script} onChange={(event) => setScript(event.target.value)}>
@@ -119,7 +149,7 @@ export default function App() {
 
         {sessionId && <section className="export-bar"><div><strong>Session</strong><code>{sessionId}</code></div><div className="button-row"><button onClick={() => exportSession(sessionId, 'csv')}>Export CSV</button><button onClick={() => exportSession(sessionId, 'json')}>Export JSON</button></div></section>}
       </main>
-      <footer>Canonical range: U+10A80–U+10A9F · Recognition confidence is a model/scanner measure, not historical certainty.</footer>
+      <footer>ANA canonical range: U+10A80–U+10A9F · Ancient Egyptian: U+13000–U+1342F + Extended-A · Scanner confidence is a model/scanner measure, not historical certainty.</footer>
     </div>
   )
 }
