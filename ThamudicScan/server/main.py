@@ -16,9 +16,10 @@ from .progress import emit
 from .scanner_adapter import (
     alphabet_languages, alphabet_profile, alphabet_variations, scan_source_language_text,
     translation_directions_for, translation_modes, scan_text, translate_text, validate_text,
+    translate_ancient_text, all_translation_directions,
 )
 
-APP_VERSION = "1.3.0"
+APP_VERSION = "1.4.0"
 DEFAULT_UPLOADS = {".txt", ".md", ".csv", ".json", ".xml", ".html", ".htm"}
 
 
@@ -62,6 +63,10 @@ def create_app() -> FastAPI:
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
+    @app.get("/translation-matrix")
+    def translation_matrix_endpoint():
+        return {"languages": all_translation_directions()}
+
     @app.post("/validate")
     def validate(request: ValidationRequest):
         return validate_text(request.text)
@@ -76,6 +81,19 @@ def create_app() -> FastAPI:
         if target_language.casefold().split("-")[0] not in {"en", "ar"}:
             raise HTTPException(status_code=400, detail="supported target languages: en, ar in the deterministic baseline")
         return translate_text(text, script=script, target_language=target_language)
+
+    @app.post("/translate_ancient")
+    def translate_ancient_endpoint(request: dict):
+        text = str(request.get("text", ""))
+        language = str(request.get("source_language", ""))
+        target = str(request.get("target_language", ""))
+        source_form = str(request.get("source_form", "script"))
+        if not text.strip() or not language.strip() or not target.strip():
+            raise HTTPException(status_code=422, detail="text, source_language and target_language are required")
+        try:
+            return translate_ancient_text(text, language, target, source_form=source_form)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.post("/scan_language")
     def scan_language_endpoint(request: dict):
