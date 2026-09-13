@@ -1,0 +1,10 @@
+{
+  "name": "nlp-ancient-artifacts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Node.js web/API implementation of the unified ancient-artifact research database",
+  "type": "module",
+  "scripts": {"start": "node server.js", "dev": "node --watch server.js"},
+  "engines": {"node": ">=18"},
+  "dependencies": {"better-sqlite3": "^12.4.1", "cors": "^2.8.5", "express": "^5.1.0", "multer": "^2.0.2"}
+}
