@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "encoding": "UTF-8",
+  "unicode_version_reference": "18.0.0",
+  "description": "Language-oriented scanner profiles. Unicode encodes scripts/characters, not languages; these profiles map requested source-language research categories to their principal Unicode script ranges.",
+  "profiles": [
+    {
+      "id": "ancient-egyptian",
+      "language": "Ancient Egyptian",
+      "iso639": ["egy"],
+      "scripts": ["Egyptian Hieroglyphs"],
+      "direction": "ltr",
+      "ranges": ["U+13000-U+1342F", "U+13460-U+143FF"],
+      "notes": "Hieroglyphic source text. Unicode U+13000-U+1342F is Egyptian Hieroglyphs; U+13460-U+143FF is Egyptian Hieroglyphs Extended-A. Hieratic/Demotic are not assumed to be represented by these hieroglyph blocks."
+    },
+    {
+      "id": "chinese",
+      "language": "Chinese",
+      "iso639": ["zho", "chi"],
+      "scripts": ["Han"],
+      "direction": "ltr",
+      "ranges": ["U+3400-U+4DBF", "U+4E00-U+9FFF", "U+20000-U+2A6DF", "U+2A700-U+2B73F", "U+2B740-U+2B81F", "U+2B820-U+2CEAF", "U+2CEB0-U+2EBEF", "U+2EBF0-U+2EE5F", "U+30000-U+3134F", "U+31350-U+323AF"],
+      "notes": "Han ranges cover common and extension ideographs. Chinese language identification remains contextual because Han is shared with Japanese Kanji and other East Asian writing systems."
+    },
+    {
+      "id": "japanese",
+      "language": "Japanese",
+      "iso639": ["jpn"],
+      "scripts": ["Han", "Hiragana", "Katakana"],
+      "direction": "ltr",
+      "ranges": ["U+3040-U+309F", "U+30A0-U+30FF", "U+31F0-U+31FF", "U+1B000-U+1B0FF", "U+1B100-U+1B12F", "U+1B130-U+1B16F", "U+4E00-U+9FFF", "U+3400-U+4DBF"],
+      "notes": "Japanese commonly mixes Hiragana, Katakana, and Han/Kanji; Latin and punctuation may also occur."
+    },
+    {
+      "id": "greek",
+      "language": "Greek / Ancient Greek",
+      "iso639": ["ell", "grc"],
+      "scripts": ["Greek"],
+      "direction": "ltr",
+      "ranges": ["U+0370-U+03FF", "U+1F00-U+1FFF"],
+      "notes": "The Greek Extended block is important for polytonic and scholarly Ancient Greek text."
+    },
+    {
+      "id": "latin",
+      "language": "Latin / Classical Latin",
+      "iso639": ["lat"],
+      "scripts": ["Latin"],
+      "direction": "ltr",
+      "ranges": ["U+0000-U+007F", "U+0080-U+00FF", "U+0100-U+024F", "U+1E00-U+1EFF", "U+2C60-U+2C7F", "U+A720-U+A7FF"],
+      "notes": "Latin is a script as well as the language family label used by the requested source-language scanner. Classical Latin input can contain basic Latin plus extended scholarly characters."
+    }
+  ]
+}
