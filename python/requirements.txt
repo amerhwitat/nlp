@@ -1,4 +1,10 @@
-fastapi>=0.115
+# FastAPI compatibility matrix:
+# - Python 3.8: FastAPI 0.123.x is the newest supported line before 3.8 support was removed.
+# - Python 3.9: FastAPI 0.128.x is the newest supported line before 3.9 support was removed.
+# - Python >=3.10 (including Python 3.13.x): current 0.141.x line.
+fastapi>=0.123,<0.125; python_version < "3.9"
+fastapi>=0.128,<0.129; python_version >= "3.9" and python_version < "3.10"
+fastapi>=0.141,<0.142; python_version >= "3.10"
 uvicorn>=0.30
 pandas>=2.2
 scikit-learn>=1.5
