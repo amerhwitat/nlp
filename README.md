@@ -11,6 +11,7 @@ This repository contains Python, C++, .NET, Visual C++ and desktop/web implement
 | .NET | [dotnet/](dotnet/) |
 | Python Thamudic | [python/thamudic/](python/thamudic/) |
 | Python translation/NLP | [python/thamudic/ancient_translation.py](python/thamudic/ancient_translation.py) |
+| Universal ancient translation facade | [python/thamudic/universal_translation.py](python/thamudic/universal_translation.py) |
 | Python source-language scanner | [python/thamudic/source_language_scanner.py](python/thamudic/source_language_scanner.py) |
 | Python ancient alphabet registry | [python/thamudic/ancient_alphabet_registry.py](python/thamudic/ancient_alphabet_registry.py) |
 | Python tests | [python/tests/](python/tests/) |
@@ -32,13 +33,29 @@ The Python scanner has a real translation service boundary. The UI action **Tran
 
 Translation results retain script variant, corpus identifier, confidence and provenance. Transliteration is kept separate from translation because a scholarly transliteration is a representation of the reading, not a target-language translation.
 
+## Universal ancient-language translation architecture
+
+`python/thamudic/universal_translation.py` now provides a provider-oriented facade for the entire alphabet/variation registry. A provider can implement:
+
+`source script -> transliteration -> target language`
+
+and, where attested resources permit:
+
+`target language -> source-script retrieval`
+
+The facade supports `script`, `transliteration`, and `translation` source forms, returns confidence/provider/provenance metadata, and reports `provider_required` when a registered direction has no local corpus/model. It never fabricates an ancient-language translation merely from an alphabet table.
+
+FastAPI now exposes:
+
+- `POST /translate_ancient` — universal provider-facing translation contract.
+- `GET /translation-matrix` — registered bidirectional capability matrix.
+- Existing `/translate` remains the audited Ancient North Arabian deterministic baseline.
+
 ## Ancient alphabet, script and historical-variation registry
 
-The new `data/source_languages/ancient_language_alphabets.json` registry provides a common metadata table for ancient/classical source languages and their documented writing variations. It currently covers Ancient Egyptian, Akkadian, Sumerian, Ugaritic, Phoenician/Punic, Ancient/Paleo-Hebrew, Aramaic families, Ancient North Arabian and Old South Arabian, Ancient Greek, Latin, historical Chinese, historical Japanese, Old Persian, Sanskrit, Coptic, Hittite, Luwian, Etruscan, Gothic, Old Turkic, Linear B/Mycenaean Greek and Cypro-Minoan.
+The `data/source_languages/ancient_language_alphabets.json` registry provides common metadata for Ancient Egyptian, Akkadian, Sumerian, Ugaritic, Phoenician/Punic, Ancient/Paleo-Hebrew, Aramaic families, Ancient North Arabian and Old South Arabian, Ancient Greek, Latin, historical Chinese, historical Japanese, Old Persian, Sanskrit, Coptic, Hittite, Luwian, Etruscan, Gothic, Old Turkic, Linear B/Mycenaean Greek and Cypro-Minoan.
 
-Each entry records language identifiers, script families, historical/orthographic variations, directionality, relevant Unicode blocks and translation-capability modes. The Python registry exposes `language_profile()`, `variations()`, `translation_capabilities()` and `translation_directions()` and the FastAPI service exposes `/alphabet-languages` and `/alphabet-languages/{language}`.
-
-The registry is intentionally capability-aware rather than claiming that every listed language already has a production translation model. Source-to-transliteration, transliteration-to-translation and reverse script retrieval are represented as explicit capabilities so model/corpus adapters can be attached without confusing an alphabet table with a translation engine.
+Each entry records language identifiers, script families, historical/orthographic variations, directionality, relevant Unicode blocks and translation-capability modes. The Python registry exposes `language_profile()`, `variations()`, `translation_capabilities()` and `translation_directions()`.
 
 ## Ancient Egyptian, Chinese, Japanese, Greek and Latin source scanner
 
@@ -51,7 +68,7 @@ This is deliberately a scanner rather than a false language classifier: Unicode 
 The browser stack is split into:
 
 - `ThamudicScan/web_ui/` — React + Vite interface with scanning, validation, source-language Unicode/UTF-8 scanning, translation, transliteration, target-language selection and export.
-- `ThamudicScan/server/` — FastAPI API with `/scan`, `/validate`, `/translate`, `/scan_language`, `/alphabet-languages`, file upload, persistence, SSE progress and exporters.
+- `ThamudicScan/server/` — FastAPI API with `/scan`, `/validate`, `/translate`, `/translate_ancient`, `/scan_language`, `/alphabet-languages`, `/translation-matrix`, file upload, persistence, SSE progress and exporters.
 - `ThamudicScan/server/tests/` — pytest contracts.
 
 The web layer reuses `python/thamudic` rather than copying Old North Arabian mapping tables.
@@ -69,8 +86,8 @@ The repository documents an adapter architecture for Thamudic sequence predictio
 - `cpp/thamudic/` — C++20 library and Unicode registry.
 - `vcpp/` — Visual Studio native Windows desktop scanner.
 - `dotnet/` — CLI, WPF desktop and web implementations.
-- `python/thamudic/` — Python Unicode/UTF-8/transliteration, translation API, alphabet registry and universal source-language scanner.
-- `python/tests/` — Unicode, transliteration, translation, source-language scanner and alphabet-registry regression tests.
+- `python/thamudic/` — Python Unicode/UTF-8/transliteration, deterministic translation, universal translation facade, alphabet registry and source-language scanner.
+- `python/tests/` — Unicode, transliteration, translation, source-language scanner, alphabet-registry and universal-translation regression tests.
 - `data/ancient_north_arabian/` — language-neutral Ancient North Arabian registry.
 - `data/source_languages/` — language-oriented Unicode/UTF-8 and historical alphabet/variation registries.
 - `ThamudicScan/` — React/FastAPI web application and documentation.
