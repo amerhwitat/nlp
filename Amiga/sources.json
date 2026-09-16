@@ -1,0 +1,37 @@
+{
+  "sources": [
+    {
+      "name": "Scripted Amiga Emulator",
+      "short_name": "SAE",
+      "repository": "https://github.com/naTmeg/ScriptedAmigaEmulator",
+      "license": "GPL-2.0-or-later",
+      "integration": "vendor/sae",
+      "role": "JavaScript/HTML5 Amiga emulator core and browser API"
+    },
+    {
+      "name": "vAmigaWeb",
+      "short_name": "vAmigaWeb",
+      "repository": "https://github.com/vAmigaWeb/vAmigaWeb",
+      "license": "GPL-3.0",
+      "integration": "vendor/vamigaweb",
+      "role": "C++ vAmiga core and WebAssembly/browser integration reference"
+    },
+    {
+      "name": "UAE",
+      "short_name": "UAE",
+      "repository": "https://github.com/bernds/UAE",
+      "license": "GPL-2.0",
+      "integration": "research-reference",
+      "role": "Historical Amiga emulator architecture and OCS-era implementation reference"
+    },
+    {
+      "name": "FS-UAE",
+      "short_name": "FS-UAE",
+      "repository": "https://github.com/FrodeSolheim/fs-uae",
+      "license": "GPL-2.0",
+      "integration": "research-reference",
+      "role": "Modern UAE/WinUAE-derived architecture reference"
+    }
+  ],
+  "policy": "Do not distribute Kickstart ROMs or commercial Amiga software without appropriate rights."
+}
