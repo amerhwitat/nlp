@@ -34,26 +34,31 @@ class P2PPeer:
     def __init__(self, node_id: str, on_message: Callable[[PeerMessage], Awaitable[None]] | None = None):
         self.node_id = node_id
         self.on_message = on_message
+        self.server: asyncio.AbstractServer | None = None
+
+    async def _handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        try:
+            line = await reader.readline()
+            if not line:
+                return
+            obj = json.loads(line.decode("utf-8"))
+            msg = PeerMessage(**obj)
+            if not msg.verify():
+                return
+            if self.on_message:
+                await self.on_message(msg)
+        finally:
+            writer.close()
+            await writer.wait_closed()
 
     async def serve(self, host: str = "127.0.0.1", port: int = 8765, ssl_context: ssl.SSLContext | None = None):
-        async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
-            try:
-                line = await reader.readline()
-                if not line:
-                    return
-                obj = json.loads(line.decode("utf-8"))
-                msg = PeerMessage(**obj)
-                if not msg.verify():
-                    return
-                if self.on_message:
-                    await self.on_message(msg)
-            finally:
-                writer.close()
-                await writer.wait_closed()
+        self.server = await asyncio.start_server(self._handle_connection, host, port, ssl=ssl_context)
+        async with self.server:
+            await self.server.serve_forever()
 
-        server = await asyncio.start_server(handle, host, port, ssl=ssl_context)
-        async with server:
-            await server.serve_forever()
+    def stop(self) -> None:
+        if self.server is not None:
+            self.server.close()
 
     async def send(self, host: str, port: int, message: PeerMessage,
                    ssl_context: ssl.SSLContext | None = None) -> None:
