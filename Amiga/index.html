@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Chimera Amiga Web</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><strong>CHIMERA AMIGA WEB</strong><span id="engineStatus"> Engine: detecting…</span></div>
+    <div class="toolbar">
+      <select id="model"><option>A500</option><option>A500+</option><option>A600</option><option>A1200</option><option>A2000</option><option>A3000</option><option>A4000/030</option></select>
+      <select id="video"><option value="pal">PAL</option><option value="ntsc">NTSC</option></select>
+      <button id="start">Start</button><button id="pause">Pause</button><button id="reset">Reset</button>
+      <button id="fullscreen">Fullscreen</button>
+    </div>
+  </header>
+  <main class="workspace">
+    <section class="screen-panel">
+      <div class="screen-title">AMIGA DISPLAY</div>
+      <div id="screenHost" class="screen-host">
+        <canvas id="amigaCanvas" width="720" height="576"></canvas>
+        <div id="placeholder">Load a licensed/local Amiga emulator bundle into <code>Amiga/vendor/sae</code> and press Start.</div>
+      </div>
+      <div class="statusbar"><span id="runState">Stopped</span><span id="fps">FPS: —</span><span id="cpu">CPU: 68000</span><span id="chipset">Chipset: OCS</span></div>
+    </section>
+    <aside class="control-panel">
+      <h2>Workbench Controls</h2>
+      <label>Kickstart / ROM<input id="rom" type="file" accept=".rom,.bin"></label>
+      <label>Floppy DF0<input id="df0" type="file" accept=".adf,.adz,.dms,.ipf"></label>
+      <label>Floppy DF1<input id="df1" type="file" accept=".adf,.adz,.dms,.ipf"></label>
+      <label>Hardfile<input id="hdf" type="file" accept=".hdf,.vhd"></label>
+      <div class="buttons"><button id="insert0">Insert DF0</button><button id="eject0">Eject DF0</button></div>
+      <h3>Memory</h3>
+      <div class="grid"><label>Chip RAM<select id="chipram"><option>512K</option><option selected>1M</option><option>2M</option><option>8M</option></select></label><label>Fast RAM<select id="fastram"><option>None</option><option>1M</option><option>4M</option><option selected>8M</option></select></label></div>
+      <h3>Input</h3>
+      <p class="hint">Click the display to capture keyboard/mouse input. Keyboard mapping is forwarded to the emulator when the bundled engine exposes its input API.</p>
+      <button id="joystick">Gamepad status</button>
+      <h3>Diagnostics</h3>
+      <pre id="log"></pre>
+    </aside>
+  </main>
+  <footer>Open-source emulator integration layer • ROMs and software are user-supplied</footer>
+  <script src="emulator_adapter.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
