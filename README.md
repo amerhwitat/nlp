@@ -2,17 +2,28 @@
 
 This repository contains Python, C++, .NET, Visual C++ and desktop/web implementations for Thamudic and Ancient North Arabian language research.
 
+## AI disciplines layer
+
+The repository now includes `python/ai_disciplines/` and `cpp/ai/discipline_registry.hpp`, providing a provider-neutral contract for Machine Learning, Deep Learning, Reinforcement Learning, Symbolic AI, Computer Vision and NLP. The ancient-language/OCR pipeline can therefore combine deterministic script metadata with optional statistical, neural, visual, symbolic and language-model stages without treating model output as scholarly proof.
+
+Reference provider families include scikit-learn, PyTorch, TensorFlow/JAX, Gymnasium, Stable-Baselines3, SymPy, OpenCV/scikit-image, spaCy and Hugging Face Transformers. Optional providers are imported lazily; unavailable dependencies are reported rather than silently replaced.
+
+The intended flow is **image/PDF → CV/OCR → script detection → NLP/tokenization → transliteration → symbolic/corpus checks → translation/model stage → provenance/audit report**.
+
 ## Complete source-code citation index
 
 | Area | Source |
 |---|---|
 | C++ Thamudic | [cpp/thamudic/](cpp/thamudic/) |
+| C++ AI discipline registry | [cpp/ai/discipline_registry.hpp](cpp/ai/discipline_registry.hpp) |
 | Visual C++ | [vcpp/](vcpp/) |
 | .NET | [dotnet/](dotnet/) |
 | Python Thamudic | [python/thamudic/](python/thamudic/) |
-| **Python all-in-one scanner** | **[python/ThamudicScanner_AllInOne.py](python/ThamudicScanner_AllInOne.py)** |
-| **Python all-in-one NLP/media scanner** | **[python/NLPScanner_AllInOne.py](python/NLPScanner_AllInOne.py)** |
-| **Image/PDF media pipeline** | [python/thamudic/media_pipeline.py](python/thamudic/media_pipeline.py) |
+| Python AI discipline registry | [python/ai_disciplines/discipline_registry.py](python/ai_disciplines/discipline_registry.py) |
+| Python AI pipeline dispatcher | [python/ai_disciplines/pipeline.py](python/ai_disciplines/pipeline.py) |
+| Python all-in-one scanner | [python/ThamudicScanner_AllInOne.py](python/ThamudicScanner_AllInOne.py) |
+| Python all-in-one NLP/media scanner | [python/NLPScanner_AllInOne.py](python/NLPScanner_AllInOne.py) |
+| Image/PDF media pipeline | [python/thamudic/media_pipeline.py](python/thamudic/media_pipeline.py) |
 | Python translation/NLP | [python/thamudic/ancient_translation.py](python/thamudic/ancient_translation.py) |
 | Universal ancient translation facade | [python/thamudic/universal_translation.py](python/thamudic/universal_translation.py) |
 | Translation history/audit logger | [python/thamudic/translation_log.py](python/thamudic/translation_log.py) |
@@ -34,29 +45,11 @@ This repository contains Python, C++, .NET, Visual C++ and desktop/web implement
 | Web API documentation | [ThamudicScan/docs/WEB_API.md](ThamudicScan/docs/WEB_API.md) |
 | Web architecture | [ThamudicScan/docs/ARCHITECTURE.md](ThamudicScan/docs/ARCHITECTURE.md) |
 | Apple | [apple/](apple/) |
-| **Amiga Web Emulator** | **[Amiga/](Amiga/)** |
+| Amiga Web Emulator | [Amiga/](Amiga/) |
 
-## Amiga Web Emulator
+## Existing Amiga Web Emulator
 
-`Amiga/` is the browser-based Amiga emulation integration for the repository. It provides an Amiga-style web console, model/PAL-NTSC selection, ROM/floppy/hardfile pickers, memory controls, input hooks, diagnostics and an adapter for a locally vendored open-source emulator core.
-
-The implementation was researched against Scripted Amiga Emulator (SAE), vAmigaWeb, UAE and FS-UAE. SAE is specifically designed for HTML5/JavaScript browser emulation and documents Amiga models, 68000-family CPUs, OCS/ECS/AGA, PAL/NTSC, Canvas/WebGL, WebAudio, keyboard/mouse/gamepad and disk-image support. vAmigaWeb exposes a C++ Amiga core to JavaScript/WebAssembly. The Library's existing Chimera II Web OS research also specifies an Amiga browser profile and browser-sandbox security model.
-
-Start the web shell with:
-
-```bash
-python -m http.server 8080 --directory Amiga
-```
-
-The upstream fetch scripts are intentionally separate from the UI so that open-source emulator code can be reviewed and updated under its own license terms:
-
-```bash
-./Amiga/fetch_upstream.sh
-# or
-./Amiga/fetch_upstream.ps1
-```
-
-Kickstart ROMs and commercial Amiga software are not included. Users provide files for which they have the necessary rights.
+`Amiga/` provides the browser-based Amiga emulation integration with model/PAL-NTSC selection, ROM/floppy/hardfile pickers, memory controls, input hooks, diagnostics and an adapter for an open-source emulator core. Upstream fetch scripts remain separate so licenses and provenance can be reviewed before importing source.
 
 ## All-in-one Python scanner
 
@@ -70,72 +63,33 @@ python python/ThamudicScanner_AllInOne.py --gui
 
 ## Media import: image/PDF → OCR/text → transliteration → translation
 
-Both the modular Thamudic GUI and the standalone NLP scanner now support importing images, PDFs and text files. Text PDFs are extracted with `pypdf`. Images and scanned PDFs can use the optional EasyOCR + pypdfium2 pipeline. After extraction/OCR, the same scanner passes the resulting text through script detection, transliteration and the evidence-backed translation layer.
+Both the modular Thamudic GUI and standalone NLP scanner support importing images, PDFs and text files. Text PDFs are extracted with `pypdf`. Images and scanned PDFs can use the optional EasyOCR + pypdfium2 pipeline. After extraction/OCR, the scanner passes the resulting text through script detection, transliteration and evidence-backed translation.
 
 ```bash
 python python/NLPScanner_AllInOne.py --gui
 python python/NLPScanner_AllInOne.py inscription.pdf --script Dadanitic --target en
 ```
 
-For images:
+OCR confidence/provider metadata is retained. OCR is not treated as proof of an ancient reading. When the extracted reading is not represented by an attested corpus entry or configured translation provider, the application reports translation unavailable instead of inventing a translation.
 
-```bash
-python python/NLPScanner_AllInOne.py inscription.jpg --script Dadanitic --target en
-```
+## Script reports and exports
 
-OCR confidence/provider metadata is retained. OCR is not treated as proof of an ancient reading. When the extracted reading is not represented by an attested corpus entry or configured translation provider, the application explicitly reports translation unavailable instead of inventing a translation.
+The script-report layer can preserve original characters, Unicode/script metadata, writing direction, historical variants, approximate dating, geographic scope, materials, related scripts, transliteration metadata, actual transliteration, actual corpus/model translation, target language, confidence, provider and provenance.
 
-## Complete script report and export
-
-The script-report layer combines one selected script/language with the actual source material. A report can preserve original characters, Unicode/script metadata, writing direction, historical variants, approximate dating, geographic scope, materials, related scripts, transliteration-system metadata, actual transliteration, actual corpus/model translation, target language, confidence, provider and provenance.
-
-FastAPI endpoints:
-
-- `GET /script-summary/{language}`
-- `GET /script-summary/{language}/export?format=json|md|txt|pdf`
-- `POST /script-report`
-- `POST /script-report/export` with `format=json|md|txt|pdf`
-
-PDF generation is provided by `python/thamudic/pdf_export.py` using ReportLab Platypus.
+FastAPI endpoints include `/script-summary/{language}`, `/script-report`, `/script-report/export`, `/translation-log` and `/translation-log/export`. PDF generation uses ReportLab Platypus.
 
 ## Translation, transliteration and provenance
 
-The Python scanner has separate translation and transliteration layers. The deterministic baseline supports its documented English/Arabic targets and corpus seed records. Unsupported fragments remain explicitly unavailable rather than receiving fabricated output.
-
-The universal facade accepts `script`, `transliteration`, and `translation` source forms and can delegate to a real corpus/model provider. Every universal translation call can be persisted to an append-only JSON Lines audit log containing source, target, transliteration, translation, status, confidence, provider, provenance, script metadata, request metadata, timestamp and SHA-256 record hash.
-
-### Translation history
-
-Default log:
-
-```text
-translation_logs/translations.jsonl
-```
-
-Override with `THAMUDIC_TRANSLATION_LOG`.
-
-API:
-
-- `GET /translation-log`
-- `GET /translation-log/export?format=json|jsonl|txt|pdf`
-
-The integrity checker detects modified records by recomputing each record's deterministic SHA-256 hash. This is an integrity aid, not a substitute for signed or immutable archival storage.
+The Python scanner has separate translation and transliteration layers. Unsupported fragments remain explicitly unavailable rather than receiving fabricated output. Universal translation calls can be persisted to an append-only JSON Lines audit log with source, target, transliteration, translation, status, confidence, provider, provenance, script metadata, request metadata, timestamp and SHA-256 record hash.
 
 ## Voice / speech capabilities
 
-- Browser Speech Synthesis playback.
-- Original, transliteration and translation playback.
-- Pause, resume and stop.
-- Voice capability discovery.
-- Optional Python `pyttsx3` local TTS.
-- Speech-recognition capability reporting.
+Browser Speech Synthesis, optional Python `pyttsx3`, speech-recognition capability reporting and original/transliteration/translation playback are supported. Native ancient pronunciation is treated as a separate scholarly provider/model problem and is not silently represented by a modern voice.
 
-Native ancient pronunciation is treated as a separate scholarly provider/model problem. The application does not silently use a modern voice and label it as an authenticated ancient pronunciation.
+## Ancient alphabet and historical-variation registry
 
-## Ancient alphabet, script and historical-variation registry
-
-The registry covers Ancient Egyptian, Akkadian, Sumerian, Ugaritic, Phoenician/Punic, Ancient/Paleo-Hebrew, Aramaic families, Ancient North Arabian and Old South Arabian, Ancient Greek, Latin, historical Chinese, historical Japanese, Old Persian, Sanskrit, Coptic, Hittite, Luwian, Etruscan, Gothic, Old Turkic, Linear B/Mycenaean Greek and Cypro-Minoan.
+The registry covers Ancient Egyptian, Akkadian, Sumerian, Ugaritic, Phoenician/Punic, Ancient/Paleo-Hebrew, Aramaic families, Ancient North Arabian and Old South Arabian, Ancient Greek, Latin, historical Chinese/Japanese, Old Persian, Sanskrit, Coptic, Hittite, Luwian, Etruscan, Gothic, Old Turkic, Linear B/Mycenaean Greek and Cypro-Minoan.
 
 ## Methodological note
 
-“Thamudic” is retained as a user-facing research category, but the implementation records script variants explicitly. Unicode identifies encoded characters/scripts, not proof of a particular language. Translation requires an attested corpus, lexicon or trained model; unsupported reverse translations remain retrieval/model tasks rather than character substitution.
+“Thamudic” is retained as a user-facing research category, but implementation records script variants explicitly. Unicode identifies encoded characters/scripts, not proof of a particular language. Translation requires an attested corpus, lexicon or trained model; unsupported reverse translations remain retrieval/model tasks rather than character substitution.
