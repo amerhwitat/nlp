@@ -1,0 +1,10 @@
+vendor/
+SAE_COMMIT.txt
+*.rom
+*.bin
+*.adf
+*.adz
+*.dms
+*.ipf
+*.hdf
+*.vhd
