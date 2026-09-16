@@ -1,0 +1,26 @@
+name: Crypto Research App GUI tests
+
+on:
+  push:
+    paths:
+      - 'crypot-app/**'
+      - '.github/workflows/crypot-app-gui-tests.yml'
+  pull_request:
+    paths:
+      - 'crypot-app/**'
+      - '.github/workflows/crypot-app-gui-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Tkinter
+        run: sudo apt-get update && sudo apt-get install -y python3-tk
+      - name: Compile Python modules
+        run: python -m compileall -q crypot-app
+      - name: Run tests
+        run: python -m pytest -q crypot-app/tests
