@@ -12,7 +12,7 @@ This repository contains Python, C++, .NET, Visual C++ and desktop/web implement
 | Python Thamudic | [python/thamudic/](python/thamudic/) |
 | **Python all-in-one scanner** | **[python/ThamudicScanner_AllInOne.py](python/ThamudicScanner_AllInOne.py)** |
 | **Python all-in-one NLP/media scanner** | **[python/NLPScanner_AllInOne.py](python/NLPScanner_AllInOne.py)** |
-| **Image/PDF media pipeline** | **[python/thamudic/media_pipeline.py](python/thamudic/media_pipeline.py)** |
+| **Image/PDF media pipeline** | [python/thamudic/media_pipeline.py](python/thamudic/media_pipeline.py) |
 | Python translation/NLP | [python/thamudic/ancient_translation.py](python/thamudic/ancient_translation.py) |
 | Universal ancient translation facade | [python/thamudic/universal_translation.py](python/thamudic/universal_translation.py) |
 | Translation history/audit logger | [python/thamudic/translation_log.py](python/thamudic/translation_log.py) |
@@ -33,8 +33,30 @@ This repository contains Python, C++, .NET, Visual C++ and desktop/web implement
 | ThamudicScan FastAPI backend | [ThamudicScan/server/](ThamudicScan/server/) |
 | Web API documentation | [ThamudicScan/docs/WEB_API.md](ThamudicScan/docs/WEB_API.md) |
 | Web architecture | [ThamudicScan/docs/ARCHITECTURE.md](ThamudicScan/docs/ARCHITECTURE.md) |
-| ThamudicScan product docs | [ThamudicScan/](ThamudicScan/) |
 | Apple | [apple/](apple/) |
+| **Amiga Web Emulator** | **[Amiga/](Amiga/)** |
+
+## Amiga Web Emulator
+
+`Amiga/` is the browser-based Amiga emulation integration for the repository. It provides an Amiga-style web console, model/PAL-NTSC selection, ROM/floppy/hardfile pickers, memory controls, input hooks, diagnostics and an adapter for a locally vendored open-source emulator core.
+
+The implementation was researched against Scripted Amiga Emulator (SAE), vAmigaWeb, UAE and FS-UAE. SAE is specifically designed for HTML5/JavaScript browser emulation and documents Amiga models, 68000-family CPUs, OCS/ECS/AGA, PAL/NTSC, Canvas/WebGL, WebAudio, keyboard/mouse/gamepad and disk-image support. vAmigaWeb exposes a C++ Amiga core to JavaScript/WebAssembly. The Library's existing Chimera II Web OS research also specifies an Amiga browser profile and browser-sandbox security model.
+
+Start the web shell with:
+
+```bash
+python -m http.server 8080 --directory Amiga
+```
+
+The upstream fetch scripts are intentionally separate from the UI so that open-source emulator code can be reviewed and updated under its own license terms:
+
+```bash
+./Amiga/fetch_upstream.sh
+# or
+./Amiga/fetch_upstream.ps1
+```
+
+Kickstart ROMs and commercial Amiga software are not included. Users provide files for which they have the necessary rights.
 
 ## All-in-one Python scanner
 
