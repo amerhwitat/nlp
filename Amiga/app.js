@@ -1,0 +1,20 @@
+document.addEventListener('DOMContentLoaded',async()=>{
+  const $=id=>document.getElementById(id); const log=m=>window.ChimeraAmiga.log(m);
+  const ok=await window.ChimeraAmiga.load();
+  $('engineStatus').textContent=ok?' Engine: local bundle detected':' Engine: integration layer / bundle missing';
+  $('cpu').textContent='CPU: 68000';
+  $('chipset').textContent='Chipset: OCS';
+  $('model').addEventListener('change',e=>{const m=e.target.value;$('cpu').textContent=m.includes('030')?'CPU: 68030':'CPU: 68000';$('chipset').textContent=(m==='A1200'||m==='A4000/030')?'Chipset: AGA':'Chipset: OCS/ECS';log('Model selected: '+m);});
+  $('start').onclick=async()=>{const started=await window.ChimeraAmiga.start($('amigaCanvas'));$('runState').textContent=started?'Running':'Integration Ready';};
+  $('pause').onclick=()=>{window.ChimeraAmiga.pause();$('runState').textContent='Paused';};
+  $('reset').onclick=()=>{window.ChimeraAmiga.reset();$('runState').textContent='Stopped';};
+  $('fullscreen').onclick=()=>window.ChimeraAmiga.fullscreen();
+  $('rom').onchange=e=>e.target.files[0]&&window.ChimeraAmiga.file('ROM',e.target.files[0]);
+  $('df0').onchange=e=>e.target.files[0]&&window.ChimeraAmiga.file('DF0',e.target.files[0]);
+  $('df1').onchange=e=>e.target.files[0]&&window.ChimeraAmiga.file('DF1',e.target.files[0]);
+  $('hdf').onchange=e=>e.target.files[0]&&window.ChimeraAmiga.file('HDF',e.target.files[0]);
+  $('insert0').onclick=()=>log($('df0').files[0]?`DF0 inserted: ${$('df0').files[0].name}`:'Select a DF0 image first.');
+  $('eject0').onclick=()=>log('DF0 ejected.');
+  $('joystick').onclick=()=>log(navigator.getGamepads?'Gamepad API available. Press a controller button to activate it.':'Gamepad API unavailable.');
+  $('screenHost').addEventListener('click',()=>log('Display focused; keyboard/mouse capture is available to a compatible emulator core.'));
+});
