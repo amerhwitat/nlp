@@ -1,0 +1,4 @@
+# Optional dependencies for extended wallet/address research adapters
+# Keep the core application dependency-free beyond Python's standard library.
+# web3>=7,<8
+# hdwallet>=3,<4
