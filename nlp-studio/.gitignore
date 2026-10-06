@@ -1,0 +1,15 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local environment / secrets
+.env
+
+# Runtime data (generated at run time; the committed static lookup tables under
+# web/data/ are intentionally tracked).
+data/uploads/
+data/results/
+data/translations.jsonl

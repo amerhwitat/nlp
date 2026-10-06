@@ -1,0 +1,46 @@
+[
+  {
+    "identifier": "TIJ 503",
+    "script": "Safaitic",
+    "transliteration": "ytm bn ʿbny w wgm ʿl- ḫll -h",
+    "translations": {
+      "en": "Ytm son ʿbny and he grieved for his friend",
+      "ar": "يتم بن عبني وحزن على صديقه"
+    },
+    "source_url": "https://ociana.osu.edu/inscriptions/2400",
+    "confidence": "scholarly"
+  },
+  {
+    "identifier": "AH 311",
+    "script": "Dadanitic",
+    "transliteration": "bḏkrh wdd ḏ{h}k",
+    "translations": {
+      "en": "Bḏkrh loves {Ḏhk}",
+      "ar": "بذَكرَه يحب {ذهك}"
+    },
+    "source_url": "https://ociana.osu.edu/inscriptions/13954",
+    "confidence": "scholarly"
+  },
+  {
+    "identifier": "Is.H 806",
+    "script": "Thamudic B",
+    "transliteration": "l ḍtm h- s¹fr w h- frs¹",
+    "translations": {
+      "en": "By Ḍtm are the inscription and the horse",
+      "ar": "لِضَتم النقش والحصان"
+    },
+    "source_url": "https://ociana.osu.edu/inscriptions/5826",
+    "confidence": "scholarly"
+  },
+  {
+    "identifier": "GETham 2",
+    "script": "Thamudic B",
+    "transliteration": "l (l)hn wdd ns²l ḏ ʿtq",
+    "translations": {
+      "en": "By Ḏ son of . (Llhn) greets Ns²l who was freed",
+      "ar": "من Ḏ بن . (للهن) يحيّي نس²ل الذي أُعتق"
+    },
+    "source_url": "https://ociana.osu.edu/inscriptions/44105",
+    "confidence": "scholarly"
+  }
+]

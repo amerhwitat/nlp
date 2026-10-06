@@ -1,0 +1,272 @@
+{
+  "first": 68224,
+  "last": 68255,
+  "variant_forms": [
+    "Dadanitic",
+    "Safaitic",
+    "Hismaic",
+    "Taymanitic",
+    "Minaic",
+    "Thamudic B"
+  ],
+  "characters": [
+    {
+      "codepoint": 68224,
+      "character": "𐪀",
+      "name": "OLD NORTH ARABIAN LETTER HEH",
+      "transliteration": "h",
+      "utf8_hex": "F0 90 AA 80"
+    },
+    {
+      "codepoint": 68225,
+      "character": "𐪁",
+      "name": "OLD NORTH ARABIAN LETTER LAM",
+      "transliteration": "l",
+      "utf8_hex": "F0 90 AA 81"
+    },
+    {
+      "codepoint": 68226,
+      "character": "𐪂",
+      "name": "OLD NORTH ARABIAN LETTER HAH",
+      "transliteration": "ḥ",
+      "utf8_hex": "F0 90 AA 82"
+    },
+    {
+      "codepoint": 68227,
+      "character": "𐪃",
+      "name": "OLD NORTH ARABIAN LETTER MEEM",
+      "transliteration": "m",
+      "utf8_hex": "F0 90 AA 83"
+    },
+    {
+      "codepoint": 68228,
+      "character": "𐪄",
+      "name": "OLD NORTH ARABIAN LETTER QAF",
+      "transliteration": "q",
+      "utf8_hex": "F0 90 AA 84"
+    },
+    {
+      "codepoint": 68229,
+      "character": "𐪅",
+      "name": "OLD NORTH ARABIAN LETTER WAW",
+      "transliteration": "w",
+      "utf8_hex": "F0 90 AA 85"
+    },
+    {
+      "codepoint": 68230,
+      "character": "𐪆",
+      "name": "OLD NORTH ARABIAN LETTER ES-2",
+      "transliteration": "s2",
+      "utf8_hex": "F0 90 AA 86"
+    },
+    {
+      "codepoint": 68231,
+      "character": "𐪇",
+      "name": "OLD NORTH ARABIAN LETTER REH",
+      "transliteration": "r",
+      "utf8_hex": "F0 90 AA 87"
+    },
+    {
+      "codepoint": 68232,
+      "character": "𐪈",
+      "name": "OLD NORTH ARABIAN LETTER BEH",
+      "transliteration": "b",
+      "utf8_hex": "F0 90 AA 88"
+    },
+    {
+      "codepoint": 68233,
+      "character": "𐪉",
+      "name": "OLD NORTH ARABIAN LETTER TEH",
+      "transliteration": "t",
+      "utf8_hex": "F0 90 AA 89"
+    },
+    {
+      "codepoint": 68234,
+      "character": "𐪊",
+      "name": "OLD NORTH ARABIAN LETTER ES-1",
+      "transliteration": "s1",
+      "utf8_hex": "F0 90 AA 8A"
+    },
+    {
+      "codepoint": 68235,
+      "character": "𐪋",
+      "name": "OLD NORTH ARABIAN LETTER KAF",
+      "transliteration": "k",
+      "utf8_hex": "F0 90 AA 8B"
+    },
+    {
+      "codepoint": 68236,
+      "character": "𐪌",
+      "name": "OLD NORTH ARABIAN LETTER NOON",
+      "transliteration": "n",
+      "utf8_hex": "F0 90 AA 8C"
+    },
+    {
+      "codepoint": 68237,
+      "character": "𐪍",
+      "name": "OLD NORTH ARABIAN LETTER KHAH",
+      "transliteration": "ḫ",
+      "utf8_hex": "F0 90 AA 8D"
+    },
+    {
+      "codepoint": 68238,
+      "character": "𐪎",
+      "name": "OLD NORTH ARABIAN LETTER SAD",
+      "transliteration": "ṣ",
+      "utf8_hex": "F0 90 AA 8E"
+    },
+    {
+      "codepoint": 68239,
+      "character": "𐪏",
+      "name": "OLD NORTH ARABIAN LETTER ES-3",
+      "transliteration": "s3",
+      "utf8_hex": "F0 90 AA 8F"
+    },
+    {
+      "codepoint": 68240,
+      "character": "𐪐",
+      "name": "OLD NORTH ARABIAN LETTER FEH",
+      "transliteration": "f",
+      "utf8_hex": "F0 90 AA 90"
+    },
+    {
+      "codepoint": 68241,
+      "character": "𐪑",
+      "name": "OLD NORTH ARABIAN LETTER ALEF",
+      "transliteration": "ʼ",
+      "utf8_hex": "F0 90 AA 91"
+    },
+    {
+      "codepoint": 68242,
+      "character": "𐪒",
+      "name": "OLD NORTH ARABIAN LETTER AIN",
+      "transliteration": "ʽ",
+      "utf8_hex": "F0 90 AA 92"
+    },
+    {
+      "codepoint": 68243,
+      "character": "𐪓",
+      "name": "OLD NORTH ARABIAN LETTER DAD",
+      "transliteration": "ḍ",
+      "utf8_hex": "F0 90 AA 93"
+    },
+    {
+      "codepoint": 68244,
+      "character": "𐪔",
+      "name": "OLD NORTH ARABIAN LETTER GEEM",
+      "transliteration": "g",
+      "utf8_hex": "F0 90 AA 94"
+    },
+    {
+      "codepoint": 68245,
+      "character": "𐪕",
+      "name": "OLD NORTH ARABIAN LETTER DAL",
+      "transliteration": "d",
+      "utf8_hex": "F0 90 AA 95"
+    },
+    {
+      "codepoint": 68246,
+      "character": "𐪖",
+      "name": "OLD NORTH ARABIAN LETTER GHAIN",
+      "transliteration": "ġ",
+      "utf8_hex": "F0 90 AA 96"
+    },
+    {
+      "codepoint": 68247,
+      "character": "𐪗",
+      "name": "OLD NORTH ARABIAN LETTER TAH",
+      "transliteration": "ṭ",
+      "utf8_hex": "F0 90 AA 97"
+    },
+    {
+      "codepoint": 68248,
+      "character": "𐪘",
+      "name": "OLD NORTH ARABIAN LETTER ZAIN",
+      "transliteration": "z",
+      "utf8_hex": "F0 90 AA 98"
+    },
+    {
+      "codepoint": 68249,
+      "character": "𐪙",
+      "name": "OLD NORTH ARABIAN LETTER THAL",
+      "transliteration": "ḏ",
+      "utf8_hex": "F0 90 AA 99"
+    },
+    {
+      "codepoint": 68250,
+      "character": "𐪚",
+      "name": "OLD NORTH ARABIAN LETTER YEH",
+      "transliteration": "y",
+      "utf8_hex": "F0 90 AA 9A"
+    },
+    {
+      "codepoint": 68251,
+      "character": "𐪛",
+      "name": "OLD NORTH ARABIAN LETTER THEH",
+      "transliteration": "ṯ",
+      "utf8_hex": "F0 90 AA 9B"
+    },
+    {
+      "codepoint": 68252,
+      "character": "𐪜",
+      "name": "OLD NORTH ARABIAN LETTER ZAH",
+      "transliteration": "ẓ",
+      "utf8_hex": "F0 90 AA 9C"
+    },
+    {
+      "codepoint": 68253,
+      "character": "𐪝",
+      "name": "OLD NORTH ARABIAN NUMBER ONE",
+      "transliteration": "1",
+      "utf8_hex": "F0 90 AA 9D"
+    },
+    {
+      "codepoint": 68254,
+      "character": "𐪞",
+      "name": "OLD NORTH ARABIAN NUMBER TEN",
+      "transliteration": "10",
+      "utf8_hex": "F0 90 AA 9E"
+    },
+    {
+      "codepoint": 68255,
+      "character": "𐪟",
+      "name": "OLD NORTH ARABIAN NUMBER TWENTY",
+      "transliteration": "20",
+      "utf8_hex": "F0 90 AA 9F"
+    }
+  ],
+  "by_character": {
+    "𐪀": "h",
+    "𐪁": "l",
+    "𐪂": "ḥ",
+    "𐪃": "m",
+    "𐪄": "q",
+    "𐪅": "w",
+    "𐪆": "s2",
+    "𐪇": "r",
+    "𐪈": "b",
+    "𐪉": "t",
+    "𐪊": "s1",
+    "𐪋": "k",
+    "𐪌": "n",
+    "𐪍": "ḫ",
+    "𐪎": "ṣ",
+    "𐪏": "s3",
+    "𐪐": "f",
+    "𐪑": "ʼ",
+    "𐪒": "ʽ",
+    "𐪓": "ḍ",
+    "𐪔": "g",
+    "𐪕": "d",
+    "𐪖": "ġ",
+    "𐪗": "ṭ",
+    "𐪘": "z",
+    "𐪙": "ḏ",
+    "𐪚": "y",
+    "𐪛": "ṯ",
+    "𐪜": "ẓ",
+    "𐪝": "1",
+    "𐪞": "10",
+    "𐪟": "20"
+  }
+}

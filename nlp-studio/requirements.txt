@@ -1,0 +1,23 @@
+# NLP / Ancient Script Studio — backend runtime.
+# The app reuses the existing python/thamudic package (no install needed for it).
+
+fastapi>=0.110
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+Pillow>=10.0
+pypdf>=5.0
+reportlab>=5.0
+
+# Testing (also used by the automated test suite).
+pytest>=8.0
+httpx>=0.27
+
+# Optional lightweight OCR fallbacks. EasyOCR/PyTorch (used first by the existing
+# media_pipeline) is heavy and intentionally optional; when it is absent the app
+# falls back to Tesseract (image OCR) and PyMuPDF (scanned-PDF rasterization).
+pytesseract>=0.3.10
+PyMuPDF>=1.24
+
+# Optional native OCR engine (large download; only if you want the primary path):
+# easyocr>=1.7
+# pypdfium2>=4.30
