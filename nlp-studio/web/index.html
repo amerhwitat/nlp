@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>NLP / Ancient Script Studio</title>
+  <meta name="description" content="Upload or photograph an ancient inscription, run OCR, then view transliteration and translation." />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-glyph" aria-hidden="true">𐪀</span>
+        <div class="brand-text">
+          <h1>NLP / Ancient Script Studio</h1>
+          <p class="tagline">OCR · Transliteration · Translation for ancient inscriptions</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="mode-badge" id="modeBadge">detecting…</span>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="card input-card" aria-label="Input">
+        <div class="tabs" role="tablist">
+          <button class="tab is-active" data-tab="upload" role="tab">Upload image / PDF</button>
+          <button class="tab" data-tab="camera" role="tab">Camera</button>
+          <button class="tab" data-tab="text" role="tab">Type / paste text</button>
+        </div>
+
+        <div class="tab-panel is-active" data-panel="upload">
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload an image or PDF">
+            <div class="dropzone-icon" aria-hidden="true">⇪</div>
+            <p class="dropzone-title">Drag &amp; drop an inscription image or PDF</p>
+            <p class="dropzone-hint">or <span class="link">browse files</span> — PNG, JPG, WEBP, BMP, TIFF, PDF (max 10&nbsp;MB)</p>
+            <input type="file" id="fileInput" accept="image/*,.pdf" hidden />
+          </div>
+          <div class="picked-file" id="pickedFile" hidden></div>
+        </div>
+
+        <div class="tab-panel" data-panel="camera">
+          <div class="camera-box">
+            <button class="btn btn-secondary" id="cameraBtn" type="button">📷 Open camera</button>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden />
+            <p class="dropzone-hint">Uses your device camera to photograph an inscription.</p>
+            <div class="picked-file" id="cameraPicked" hidden></div>
+            <img id="cameraPreview" class="preview" alt="Captured preview" hidden />
+          </div>
+        </div>
+
+        <div class="tab-panel" data-panel="text">
+          <textarea id="textInput" rows="4" placeholder="Type or paste inscription text — original script characters or scholarly transliteration."></textarea>
+        </div>
+
+        <div class="controls">
+          <label class="field">
+            <span>Script</span>
+            <select id="scriptSelect"></select>
+          </label>
+          <label class="field">
+            <span>Source language</span>
+            <select id="languageSelect"></select>
+          </label>
+          <label class="field">
+            <span>Target</span>
+            <select id="targetSelect">
+              <option value="en">English</option>
+              <option value="ar">العربية (Arabic)</option>
+            </select>
+          </label>
+          <button class="btn btn-primary" id="runBtn" type="button">Decipher ✦</button>
+        </div>
+      </section>
+
+      <section class="card progress-card" id="progressCard" hidden aria-label="Processing">
+        <div class="progress-head">
+          <span id="progressLabel">Working…</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <ol class="steps" id="steps">
+          <li data-step="upload">Upload</li>
+          <li data-step="ocr">OCR</li>
+          <li data-step="scan">Scan</li>
+          <li data-step="transliterate">Transliteration</li>
+          <li data-step="translate">Translation</li>
+        </ol>
+      </section>
+
+      <section class="card results-card" id="resultsCard" hidden aria-label="Results">
+        <div class="results-head">
+          <h2>Results</h2>
+          <div class="export-buttons" id="exportButtons"></div>
+        </div>
+
+        <div class="result-grid">
+          <article class="result-block">
+            <div class="block-head">
+              <h3>Original text</h3>
+              <button class="icon-btn" data-copy="original" title="Copy">⧉</button>
+              <button class="icon-btn" data-speak="transliteration" title="Speak transliteration">🔊</button>
+            </div>
+            <pre class="mono original" id="originalText">—</pre>
+          </article>
+
+          <article class="result-block">
+            <div class="block-head">
+              <h3>Transliteration</h3>
+              <button class="icon-btn" data-copy="transliteration" title="Copy">⧉</button>
+              <button class="icon-btn" data-speak="transliteration" title="Speak">🔊</button>
+            </div>
+            <pre class="mono transliteration" dir="ltr" id="transliterationText">—</pre>
+          </article>
+
+          <article class="result-block">
+            <div class="block-head">
+              <h3>Translation</h3>
+              <button class="icon-btn" data-copy="translation" title="Copy">⧉</button>
+              <button class="icon-btn" data-speak="translation" title="Speak">🔊</button>
+            </div>
+            <p class="translation" id="translationText">—</p>
+            <div class="badges" id="translationBadges"></div>
+          </article>
+
+          <article class="result-block metadata-block">
+            <div class="block-head"><h3>Unicode &amp; script metadata</h3></div>
+            <div id="metadata" class="metadata"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="card history-card" id="historyCard" hidden aria-label="History">
+        <div class="block-head">
+          <h2>Translation history</h2>
+          <button class="btn btn-secondary btn-sm" id="historyRefresh" type="button">Refresh</button>
+        </div>
+        <ul class="history-list" id="historyList"></ul>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>NLP / Ancient Script Studio</span>
+      <span class="dot">·</span>
+      <span>Evidence-first: attested original · scholarly transliteration · corpus-backed translation</span>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
+  <script src="./app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+name: Deploy NLP Studio (static)
+
+# Publishes the fully client-side "NLP / Ancient Script Studio" build to
+# GitHub Pages. Because this repository is "amerhwitat/nlp", the Pages site
+# root is served at https://amerhwitat.github.io/nlp/.
+#
+# The static build lives in nlp-studio/web/ and works with no backend:
+# Tesseract.js (CDN) performs OCR and bundled JSON lookup tables — generated
+# here from the Python registry/corpus — perform transliteration, script
+# detection, and offline translation.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'nlp-studio/**'
+      - 'python/thamudic/**'
+      - 'data/**'
+      - '.github/workflows/nlp-studio-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: nlp-studio-pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Regenerate the bundled lookup tables so the static app stays in sync
+      # with python/thamudic (Old North Arabian table, alphabet registry,
+      # OCIANA seed corpus, and Unicode source-language profiles).
+      - name: Export static data
+        run: python nlp-studio/scripts/export_static_data.py
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./nlp-studio/web
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
