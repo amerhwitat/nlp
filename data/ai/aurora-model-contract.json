@@ -1,0 +1,1 @@
+{"schema":"chimera-ai-model/v1","providers":["browser-rnn","transformers-js","authorized-chimera-backend"],"learning_event_schema":"chimera-user-learning/v1","guest_execution":"never","credentials":"never stored in frontend","advisory_only":true}
