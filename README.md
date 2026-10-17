@@ -93,3 +93,8 @@ The registry covers Ancient Egyptian, Akkadian, Sumerian, Ugaritic, Phoenician/P
 ## Methodological note
 
 “Thamudic” is retained as a user-facing research category, but implementation records script variants explicitly. Unicode identifies encoded characters/scripts, not proof of a particular language. Translation requires an attested corpus, lexicon or trained model; unsupported reverse translations remain retrieval/model tasks rather than character substitution.
+
+
+## ISO-Tool browser planner
+
+The portfolio includes a [browser-native ISO-Tool Planner](https://amerhwitat.github.io/apps/iso-tool/index.html) for public GitHub repository tree inventory, language/build-manifest detection, and heuristic build-plan export. It does not execute commands, clone local files, install dependencies, or create ISO images. Run the Python ISO-Tool locally for actual builds and platform-specific boot validation.
